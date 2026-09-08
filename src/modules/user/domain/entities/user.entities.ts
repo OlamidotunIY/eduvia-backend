@@ -50,10 +50,6 @@ class User extends AggregateRoot<number> {
     return this._status === UserStatus.SUSPENDED;
   }
 
-  public isDeactivated(): boolean {
-    return this._status === UserStatus.DEACTIVATED;
-  }
-
   public get firstName(): string {
     return this._firstName;
   }
@@ -188,13 +184,6 @@ class User extends AggregateRoot<number> {
         'User is already suspended');
     }
 
-    if(this.isDeactivated()){
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'Cannot suspend a deactivated user'
-      );
-    }
-
     this._status = UserStatus.SUSPENDED;
     this._updatedAt = new Date();
   }
@@ -204,25 +193,10 @@ class User extends AggregateRoot<number> {
       return;
     }
 
-    if (this.isDeactivated()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'A deactivated user cannot be activated'
-      );
-    }
-
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
   }
 
-  public deactivate(): void {
-    if (this.isDeactivated()) {
-      return;
-    }
-
-    this._status = UserStatus.DEACTIVATED;
-    this._updatedAt = new Date();
-  }
 
   public static reconstitute(params: {
     id: number;

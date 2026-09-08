@@ -9,7 +9,7 @@ export class GetVerificationHandler implements IQueryHandler<GetVerificationQuer
     private readonly verificationRepository: IVerificationRepository,
   ) {}
 
-  async execute(query: GetVerificationQuery): Promise<VerificationDTO | null> {
+  async execute(query: GetVerificationQuery): Promise<VerificationDTO> {
     const { payload } = query;
 
     const verification = await this.verificationRepository.findById(
@@ -17,7 +17,7 @@ export class GetVerificationHandler implements IQueryHandler<GetVerificationQuer
     );
 
     if (!verification) {
-      return null;
+      throw new Error("");
     }
 
     return {

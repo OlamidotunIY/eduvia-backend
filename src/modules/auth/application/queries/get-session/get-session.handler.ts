@@ -7,13 +7,13 @@ import { ISessionRepository } from "../../../domain/repository/session.repositor
 export class GetSessionHandler implements IQueryHandler<GetSessionQuery> {
   constructor(private readonly sessionRepository: ISessionRepository) {}
 
-  async execute(query: GetSessionQuery): Promise<SessionDTO | null> {
+  async execute(query: GetSessionQuery): Promise<SessionDTO> {
     const { payload } = query;
 
     const session = await this.sessionRepository.findById(payload.sessionId);
 
     if (!session) {
-      return null;
+      throw new Error("Session not found");
     }
 
     return {

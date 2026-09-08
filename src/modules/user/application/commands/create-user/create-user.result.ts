@@ -11,8 +11,4 @@ export interface CreateUserPayload {
 
 export interface CreateUserResult {
     id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    userType: UserType;
 }

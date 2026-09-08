@@ -1,7 +1,7 @@
 import { Command } from "@nestjs/cqrs";
-import { UpdateUserPayload } from "./update-user.result";
+import { UpdateUserPayload, UpdateUserResult } from "./update-user.result";
 
-export class UpdateUserCommand extends Command<void>{
+export class UpdateUserCommand extends Command<UpdateUserResult>{
     constructor(
         public readonly payload: UpdateUserPayload
     ){
