@@ -131,11 +131,25 @@ class AuthAccount extends AggregateRoot<number> {
     return authAccount;
   }
 
+  public updateCredentials(
+    credentialHash: string
+  ): void {
+    if (!credentialHash.trim()) {
+      throw new BusinessRuleViolationError(
+        DomainErrorCode.INVALID_ARGUMENT,
+        'Credential hash cannot be empty',
+      );
+    }
+
+    this._credentialHash = credentialHash;
+    this.touch();
+  }
+
   public suspend(correlationId: string): void {
     if (this.isSuspended()) {
       throw new ConflictError(
         DomainErrorCode.AUTH_ACCOUNT_ALREADY_SUSPENDED,
-        'AuthAccount is already suspended'
+        'AuthAccount is already suspended',
       );
     }
 
