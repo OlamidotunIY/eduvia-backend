@@ -8,3 +8,7 @@ export interface CreateAuthAccountPayload {
     scope: string;
     correlationId: string;
 }
+
+export interface CreateAuthAccountResult {
+  id: number;
+}

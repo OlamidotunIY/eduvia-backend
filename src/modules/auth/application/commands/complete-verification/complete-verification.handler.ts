@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
 import { IVerificationRepository } from '../../../domain/repository/verification.repository';
 import { CompleteVerificationCommand } from './complete-verification.command';
@@ -13,6 +13,7 @@ export class CompleteVerificationHandler implements ICommandHandler<CompleteVeri
     private readonly verificationRepository: IVerificationRepository,
     private readonly authAccountRepository: IAuthAccountRepository,
     private readonly hashService: IHashService,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: CompleteVerificationCommand): Promise<void> {
@@ -43,5 +44,10 @@ export class CompleteVerificationHandler implements ICommandHandler<CompleteVeri
     authAccount.activate();
 
     await this.authAccountRepository.save(authAccount);
+
+    const events = verification.pullDomainEvents();
+    for (const event of events) {
+      this.eventBus.publish(event);
+    }
   }
 }
