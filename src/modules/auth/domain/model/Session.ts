@@ -1,6 +1,4 @@
-import { AggregateRoot } from '../../../shared/domain/aggregate-root';
-import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation-error';
-import { DomainErrorCode } from '../../../shared/domain/errors/domain-error-code';
+import { AggregateRoot, BusinessRuleViolationError } from '../../../shared';
 import { UserType } from '../../../user/domain/value-objects/user-type.v0';
 import { AuthSessionCreatedEvent } from '../events/auth-session-created';
 import { TokenIssuedEvent } from '../events/token-issued';
@@ -116,21 +114,18 @@ class Session extends AggregateRoot<number> {
   }): Session {
     if (!params.refreshTokenHash.trim()) {
       throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
         'Refresh token hash cannot be empty',
       );
     }
 
     if (!params.ipAddress.trim()) {
       throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
         'IP address cannot be empty',
       );
     }
 
     if (!params.userAgent.trim()) {
       throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
         'User agent cannot be empty',
       );
     }
