@@ -1,27 +1,30 @@
-import { BaseDomainEvent } from "../../../shared/domain/domain-event";
+import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 
-class AuthSessionCreatedEvent extends BaseDomainEvent<number, AuthSessionCreatedEvent.Payload>{
-    constructor(
-        aggregateId: number,
-        payload: AuthSessionCreatedEvent.Payload,
-        correlationId: string
-    ){
-        super({
-            aggregateId,
-            eventName: AuthSessionCreatedEvent.name,
-            payload,
-            correlationId
-        })
-    }
+class AuthSessionCreatedEvent extends BaseDomainEvent<
+  number,
+  AuthSessionCreatedEvent.Payload
+> {
+  constructor(
+    aggregateId: number,
+    payload: AuthSessionCreatedEvent.Payload,
+    correlationId: string,
+  ) {
+    super({
+      aggregateId,
+      eventName: AuthSessionCreatedEvent.name,
+      payload,
+      correlationId,
+    });
+  }
 }
 
 namespace AuthSessionCreatedEvent {
-    export class Payload{
-        constructor(
-          public readonly authAccountId: number,
-          public readonly userId:number  
-        ){}
-    }
+  export class Payload {
+    constructor(
+      public readonly authAccountId: number,
+      public readonly userId: number,
+    ) {}
+  }
 }
 
-export { AuthSessionCreatedEvent }
+export { AuthSessionCreatedEvent };

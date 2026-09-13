@@ -1,6 +1,6 @@
 import { AggregateRoot } from '../../../shared/domain/aggregate-root';
-import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation-error';
-import { ConflictError } from '../../../shared/domain/errors/conflict-error';
+import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation.error';
+import { ConflictError } from '../../../shared/domain/errors/conflict.error';
 import { DomainErrorCode } from '../../../shared/domain/errors/domain-error-code';
 import { InvalidDomainArgumentError } from '../../../shared/domain/errors/invalid-domain-error-argument';
 import { UserCreatedEvent } from '../events/user-created-event';
@@ -85,14 +85,14 @@ class User extends AggregateRoot<number> {
     if (!email) {
       throw new BusinessRuleViolationError(
         DomainErrorCode.INVALID_ARGUMENT,
-        `Invalid email: ${email}`
+        `Invalid email: ${email}`,
       );
     }
 
     if (!firstName || !lastName) {
       throw new BusinessRuleViolationError(
         DomainErrorCode.INVALID_ARGUMENT,
-        'firstName and lastName are required'
+        'firstName and lastName are required',
       );
     }
 
@@ -112,13 +112,9 @@ class User extends AggregateRoot<number> {
     user.addDomainEvent(
       new UserCreatedEvent(
         user.id,
-        new UserCreatedEvent.Payload(
-          user.id,
-          user.userType,
-          user.email
-        ),
-        params.correlationId
-      )
+        new UserCreatedEvent.Payload(user.id, user.userType, user.email),
+        params.correlationId,
+      ),
     );
 
     return user;
@@ -134,32 +130,32 @@ class User extends AggregateRoot<number> {
     const lastName = params.lastName?.trim();
     const email = params.email?.trim().toLowerCase();
 
-    if(firstName !== undefined && !firstName) {
+    if (firstName !== undefined && !firstName) {
       throw new InvalidDomainArgumentError(
         DomainErrorCode.INVALID_ARGUMENT,
-        'firstName cannot be empty'
+        'firstName cannot be empty',
       );
     }
-    if(lastName !== undefined && !lastName) {
+    if (lastName !== undefined && !lastName) {
       throw new InvalidDomainArgumentError(
         DomainErrorCode.INVALID_ARGUMENT,
-        'lastName cannot be empty'
+        'lastName cannot be empty',
       );
     }
-    if(email !== undefined && !email) {
+    if (email !== undefined && !email) {
       throw new InvalidDomainArgumentError(
         DomainErrorCode.INVALID_ARGUMENT,
-        'email cannot be empty'
+        'email cannot be empty',
       );
     }
 
-    if(firstName !== undefined) {
+    if (firstName !== undefined) {
       this._firstName = firstName;
     }
-    if(lastName !== undefined) {
+    if (lastName !== undefined) {
       this._lastName = lastName;
     }
-    if(email !== undefined) {
+    if (email !== undefined) {
       this._email = email;
     }
     this._updatedAt = new Date();
@@ -167,21 +163,25 @@ class User extends AggregateRoot<number> {
     this.addDomainEvent(
       new UserUpdatedEvent(
         this.id,
-        new UserUpdatedEvent.Payload(
-          this.id,
-          this.userType,
-          this.email
-        ),
-        params.correlationId
-      )
-    )
+        new UserUpdatedEvent.Payload(this.id, this.userType, this.email),
+        params.correlationId,
+      ),
+    );
   }
 
   public suspend(): void {
-    if(this.isSuspended()) {
+    if (this.isSuspended()) {
       throw new ConflictError(
         DomainErrorCode.USER_ALREADY_SUSPENDED,
-        'User is already suspended');
+        'User is already suspended',
+      );
+    }
+
+    if (this.isDeactivated()) {
+      throw new BusinessRuleViolationError(
+        DomainErrorCode.INVALID_ARGUMENT,
+        'Cannot suspend a deactivated user',
+      );
     }
 
     this._status = UserStatus.SUSPENDED;
@@ -191,6 +191,13 @@ class User extends AggregateRoot<number> {
   public activate(): void {
     if (this.isActive()) {
       return;
+    }
+
+    if (this.isDeactivated()) {
+      throw new BusinessRuleViolationError(
+        DomainErrorCode.INVALID_ARGUMENT,
+        'A deactivated user cannot be activated',
+      );
     }
 
     this._status = UserStatus.ACTIVE;
@@ -216,8 +223,8 @@ class User extends AggregateRoot<number> {
       params.email,
       params.status,
       params.createdAt,
-      params.updatedAt
-    )
+      params.updatedAt,
+    );
   }
 }
 

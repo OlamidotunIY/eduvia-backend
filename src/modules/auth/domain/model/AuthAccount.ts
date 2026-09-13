@@ -1,11 +1,11 @@
-import { AggregateRoot } from '../../../shared/domain/aggregate-root';
-import { AuthStatus } from '../value-objects/auth-status.v0';
 import { UserType } from '../../../user/domain/value-objects/user-type.v0';
 import { AuthAccountCreatedEvent } from '../events/auth-account-created';
 import { AccountSuspendedEvent } from '../events/account-suspended';
-import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation-error';
-import { DomainErrorCode } from '../../../shared/domain/errors/domain-error-code';
-import { ConflictError } from '../../../shared/domain/errors/conflict-error';
+import { AuthStatus } from '../value-objects/auth-status.v0';
+import {
+  AggregateRoot,
+} from '../../../shared';
+import { AuthAccountAlreadySuspendedError, InvariantError } from '../errors';
 
 class AuthAccount extends AggregateRoot<number> {
   public readonly userId: number;
@@ -92,17 +92,11 @@ class AuthAccount extends AggregateRoot<number> {
     correlationId: string;
   }): AuthAccount {
     if (!params.credentialHash.trim()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'Credential hash cannot be empty',
-      );
+      throw new InvariantError('Credential hash cannot be empty');
     }
 
     if (!params.scope.trim()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'Scope cannot be empty',
-      );
+      throw new InvariantError('Scope cannot be empty');
     }
 
     const now = new Date();
@@ -147,10 +141,7 @@ class AuthAccount extends AggregateRoot<number> {
 
   public suspend(correlationId: string): void {
     if (this.isSuspended()) {
-      throw new ConflictError(
-        DomainErrorCode.AUTH_ACCOUNT_ALREADY_SUSPENDED,
-        'AuthAccount is already suspended',
-      );
+      throw new AuthAccountAlreadySuspendedError();
     }
 
     this._authStatus = AuthStatus.SUSPENDED;
@@ -182,8 +173,7 @@ class AuthAccount extends AggregateRoot<number> {
     }
 
     if (this.isSuspended()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.AUTH_ACCOUNT_SUSPENDED,
+      throw new InvariantError(
         'A suspended account cannot be marked pending email verification',
       );
     }
@@ -199,8 +189,7 @@ class AuthAccount extends AggregateRoot<number> {
     }
 
     if (this.isSuspended()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.AUTH_ACCOUNT_SUSPENDED,
+      throw new InvariantError(
         'A suspended account cannot be marked pending password reset',
       );
     }
@@ -212,15 +201,13 @@ class AuthAccount extends AggregateRoot<number> {
 
   public enableTotp(secret: string): void {
     if (!secret.trim()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
+      throw new InvariantError(
         'TOTP secret cannot be empty',
       );
     }
 
     if (this._totpEnabled) {
-      throw new ConflictError(
-        DomainErrorCode.TOTP_ALREADY_ENABLED,
+      throw new InvariantError(
         'TOTP is already enabled',
       );
     }

@@ -1,4 +1,5 @@
-import { DomainEvent } from "./domain-event";
+import { DomainEvent } from "../events";
+
 
 abstract class AggregateRoot< T extends number> {
     readonly id: T;

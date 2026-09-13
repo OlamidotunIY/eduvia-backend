@@ -1,9 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { BusinessRuleViolationError } from '../../../domain/errors/business-rule-violation-error';
-import { ConflictError } from '../../../domain/errors/conflict-error';
-import { DomainError } from '../../../domain/errors/domain-error';
-import { InvalidDomainArgumentError } from '../../../domain/errors/invalid-domain-error-argument';
-import { NotFoundError } from '../../../domain/errors/not-found.error';
+import { BadRequestError, BusinessRuleViolationError, ConflictError, DomainError, NotFoundError } from '../../../domain';
 
 @Catch(DomainError)
 export class DomainExceptionFilter implements ExceptionFilter<DomainError> {
@@ -33,7 +29,7 @@ export class DomainExceptionFilter implements ExceptionFilter<DomainError> {
       return 404;
     }
 
-    if (error instanceof InvalidDomainArgumentError) {
+    if (error instanceof BadRequestError) {
       return 400;
     }
 

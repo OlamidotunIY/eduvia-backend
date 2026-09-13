@@ -2,7 +2,7 @@ import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { VerificationType } from '../value-objects/verification-type.v0';
 import { VerificationStatus } from '../value-objects/verification-status.v0';
 import { AuthVerificationCreatedEvent } from '../events/auth-verification-created';
-import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation-error';
+import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation.error';
 import { DomainErrorCode } from '../../../shared/domain/errors/domain-error-code';
 import { InvalidDomainArgumentError } from '../../../shared/domain/errors/invalid-domain-error-argument';
 
@@ -191,8 +191,7 @@ class Verification extends AggregateRoot<number> {
 
     if (!isValid) {
       if (this.hasExceededMaxAttempts()) {
-        this._verificationStatus =
-          VerificationStatus.MAX_ATTEMPTS_EXCEEDED;
+        this._verificationStatus = VerificationStatus.MAX_ATTEMPTS_EXCEEDED;
 
         this.touch();
 
