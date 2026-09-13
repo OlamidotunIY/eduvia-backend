@@ -22,7 +22,6 @@ namespace TokenIssuedEvent {
   export class Payload {
     constructor(
       public readonly authAccountId: number,
-      public readonly userId: number,
     ) {}
   }
 }

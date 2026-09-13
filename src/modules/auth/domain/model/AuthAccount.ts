@@ -129,8 +129,7 @@ class AuthAccount extends AggregateRoot<number> {
     credentialHash: string
   ): void {
     if (!credentialHash.trim()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
+      throw new InvariantError(
         'Credential hash cannot be empty',
       );
     }

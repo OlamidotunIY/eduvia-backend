@@ -21,8 +21,7 @@ class AuthSessionCreatedEvent extends BaseDomainEvent<
 namespace AuthSessionCreatedEvent {
   export class Payload {
     constructor(
-      public readonly authAccountId: number,
-      public readonly userId: number,
+      public readonly authAccountId: number
     ) {}
   }
 }

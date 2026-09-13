@@ -1,13 +1,12 @@
 import { AggregateRoot, BusinessRuleViolationError } from '../../../shared';
 import { UserType } from '../../../user/domain/value-objects/user-type.v0';
+import { InvariantError } from '../errors';
 import { AuthSessionCreatedEvent } from '../events/auth-session-created';
 import { TokenIssuedEvent } from '../events/token-issued';
 import { SessionStatus } from '../value-objects/session-stutus.v0';
 
 class Session extends AggregateRoot<number> {
   public readonly authAccountId: number;
-  public readonly userId: number;
-  public readonly userType: UserType;
   public readonly createdAt: Date;
   private _refreshTokenHash: string;
   private _accessTokenExpiresAt: Date;
@@ -21,8 +20,6 @@ class Session extends AggregateRoot<number> {
   private constructor(params: {
     id: number;
     authAccountId: number;
-    userId: number;
-    userType: UserType;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -36,8 +33,6 @@ class Session extends AggregateRoot<number> {
     super(params.id);
 
     this.authAccountId = params.authAccountId;
-    this.userId = params.userId;
-    this.userType = params.userType;
     this._refreshTokenHash = params.refreshTokenHash;
     this._accessTokenExpiresAt = params.accessTokenExpiresAt;
     this._refreshTokenExpiresAt = params.refreshTokenExpiresAt;
@@ -103,8 +98,6 @@ class Session extends AggregateRoot<number> {
   public static create(params: {
     id: number;
     authAccountId: number;
-    userId: number;
-    userType: UserType;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -113,19 +106,19 @@ class Session extends AggregateRoot<number> {
     correlationId: string;
   }): Session {
     if (!params.refreshTokenHash.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new InvariantError(
         'Refresh token hash cannot be empty',
       );
     }
 
     if (!params.ipAddress.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new InvariantError(
         'IP address cannot be empty',
       );
     }
 
     if (!params.userAgent.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new InvariantError(
         'User agent cannot be empty',
       );
     }
@@ -135,8 +128,6 @@ class Session extends AggregateRoot<number> {
     const session = new Session({
       id: params.id,
       authAccountId: params.authAccountId,
-      userId: params.userId,
-      userType: params.userType,
       refreshTokenHash: params.refreshTokenHash,
       accessTokenExpiresAt: params.accessTokenExpiresAt,
       refreshTokenExpiresAt: params.refreshTokenExpiresAt,
@@ -152,8 +143,7 @@ class Session extends AggregateRoot<number> {
       new AuthSessionCreatedEvent(
         session.id,
         new AuthSessionCreatedEvent.Payload(
-          session.authAccountId,
-          session.userId,
+          session.authAccountId
         ),
         params.correlationId,
       ),
@@ -162,7 +152,7 @@ class Session extends AggregateRoot<number> {
     session.addDomainEvent(
       new TokenIssuedEvent(
         session.id,
-        new TokenIssuedEvent.Payload(session.authAccountId, session.userId),
+        new TokenIssuedEvent.Payload(session.authAccountId),
         params.correlationId,
       ),
     );
@@ -197,8 +187,6 @@ class Session extends AggregateRoot<number> {
   public static reconstitute(params: {
     id: number;
     authAccountId: number;
-    userId: number;
-    userType: UserType;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
