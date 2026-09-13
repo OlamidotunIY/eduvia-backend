@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UpdateCredentialsCommand } from "./update-credential.command";
 import { IAuthAccountRepository } from "../../../domain/repository/auth-account.repository";
 
@@ -8,7 +8,6 @@ export class UpdateCredentialsHandler
 {
   constructor(
     private readonly authAccountRepository: IAuthAccountRepository,
-    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: UpdateCredentialsCommand): Promise<void> {
@@ -29,9 +28,5 @@ export class UpdateCredentialsHandler
     await this.authAccountRepository.save(authAccount);
 
     const events = authAccount.pullDomainEvents();
-
-    for (const event of events) {
-      this.eventBus.publish(event);
-    }
   }
 }

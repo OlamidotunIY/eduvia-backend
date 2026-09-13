@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
 import { AuthAccount } from '../../../domain/model/AuthAccount';
 import { CreateAuthAccountCommand } from './create-auth-account.command';
@@ -8,7 +8,6 @@ import { CreateAuthAccountResult } from './create-auth-account.result';
 export class CreateAuthAccountHandler implements ICommandHandler<CreateAuthAccountCommand, CreateAuthAccountResult> {
   constructor(
     private readonly authAccountRepository: IAuthAccountRepository,
-    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: CreateAuthAccountCommand): Promise<CreateAuthAccountResult> {
@@ -26,9 +25,6 @@ export class CreateAuthAccountHandler implements ICommandHandler<CreateAuthAccou
     await this.authAccountRepository.save(authAccount);
 
     const events = authAccount.pullDomainEvents();
-    for (const event of events) {
-      this.eventBus.publish(event);
-    }
 
     return {
   id: authAccount.getId(),

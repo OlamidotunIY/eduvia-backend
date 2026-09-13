@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IUserRepository } from '../../../domain/repository/user.repository';
 import { UpdateUserCommand } from './update-user.command';
 import { UpdateUserResult } from './update-user.result';
@@ -9,8 +9,7 @@ export class UpdateUserHandler implements ICommandHandler<
   UpdateUserResult
 > {
   constructor(
-    private readonly userRepository: IUserRepository,
-    private readonly eventBus: EventBus,
+    private readonly userRepository: IUserRepository
   ) {}
 
   async execute(command: UpdateUserCommand): Promise<UpdateUserResult> {
@@ -31,9 +30,6 @@ export class UpdateUserHandler implements ICommandHandler<
     await this.userRepository.save(user);
 
     const events = user.pullDomainEvents();
-    for (const event of events) {
-      this.eventBus.publish(event);
-    }
 
     return {
       id: user.getId(),

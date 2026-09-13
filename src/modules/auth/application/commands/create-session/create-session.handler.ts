@@ -20,8 +20,6 @@ export class CreateSessionHandler
         const session = Session.create({
             id: payload.id,
             authAccountId: payload.authAccountId,
-            userId: payload.userId,
-            userType: payload.userType,
             refreshTokenHash: payload.refreshTokenHash,
             accessTokenExpiresAt: payload.accessTokenExpiresAt,
             refreshTokenExpiresAt: payload.refreshTokenExpiresAt,
