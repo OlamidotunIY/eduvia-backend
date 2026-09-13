@@ -5,7 +5,7 @@ import { AuthStatus } from '../value-objects/auth-status.v0';
 import {
   AggregateRoot,
 } from '../../../shared';
-import { AuthAccountAlreadySuspendedError, InvariantError } from '../errors';
+import { AuthAccountAlreadySuspendedError, AuthInvariantError,  } from '../errors';
 
 class AuthAccount extends AggregateRoot<number> {
   public readonly userId: number;
@@ -92,11 +92,11 @@ class AuthAccount extends AggregateRoot<number> {
     correlationId: string;
   }): AuthAccount {
     if (!params.credentialHash.trim()) {
-      throw new InvariantError('Credential hash cannot be empty');
+      throw new AuthInvariantError('Credential hash cannot be empty');
     }
 
     if (!params.scope.trim()) {
-      throw new InvariantError('Scope cannot be empty');
+      throw new AuthInvariantError('Scope cannot be empty');
     }
 
     const now = new Date();
@@ -129,7 +129,7 @@ class AuthAccount extends AggregateRoot<number> {
     credentialHash: string
   ): void {
     if (!credentialHash.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Credential hash cannot be empty',
       );
     }
@@ -172,7 +172,7 @@ class AuthAccount extends AggregateRoot<number> {
     }
 
     if (this.isSuspended()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'A suspended account cannot be marked pending email verification',
       );
     }
@@ -188,7 +188,7 @@ class AuthAccount extends AggregateRoot<number> {
     }
 
     if (this.isSuspended()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'A suspended account cannot be marked pending password reset',
       );
     }
@@ -200,13 +200,13 @@ class AuthAccount extends AggregateRoot<number> {
 
   public enableTotp(secret: string): void {
     if (!secret.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'TOTP secret cannot be empty',
       );
     }
 
     if (this._totpEnabled) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'TOTP is already enabled',
       );
     }
