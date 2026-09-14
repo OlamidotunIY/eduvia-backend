@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Verification as PrismaVerification } from '@prisma/client';
+import { Verification as PrismaVerification } from '@generated/prisma';
 import { Verification } from '../../domain/model/Verification';
 import { IVerificationRepository } from '../../domain/repository/verification.repository';
 import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';

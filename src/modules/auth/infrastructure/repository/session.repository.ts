@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Session as PrismaSession } from '@prisma/client';
+import { Session as PrismaSession } from '@generated/prisma';
 import { Session } from '../../domain/model/Session';
 import { ISessionRepository } from '../../domain/repository/session.repository';
 import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';

@@ -3,7 +3,7 @@ import {
   Verification as PrismaVerification,
   VerificationStatus as PrismaVerificationStatus,
   VerificationType as PrismaVerificationType,
-} from '@prisma/client';
+} from '@generated/prisma';
 import { Verification } from '../../domain/model/Verification';
 import { VerificationStatus } from '../../domain/value-objects/verification-status.v0';
 import { VerificationType } from '../../domain/value-objects/verification-type.v0';

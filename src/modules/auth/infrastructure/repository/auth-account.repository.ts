@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuthAccount as PrismaAuthAccount } from '@prisma/client';
+import { AuthAccount as PrismaAuthAccount } from '@generated/prisma';
 import { AuthAccount } from '../../domain/model/AuthAccount';
 import { IAuthAccountRepository } from '../../domain/repository/auth-account.repository';
 import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';

@@ -3,7 +3,7 @@ import {
   AuthAccount as PrismaAuthAccount,
   AuthStatus as PrismaAuthStatus,
   UserType as PrismaUserType,
-} from '../../../../generated/prisma/client';
+} from '@generated/prisma';
 import { AuthAccount } from '../../domain/model/AuthAccount';
 import { AuthStatus } from '../../domain/value-objects/auth-status.v0';
 import { UserType } from '../../../user/domain/value-objects/user-type.v0';
