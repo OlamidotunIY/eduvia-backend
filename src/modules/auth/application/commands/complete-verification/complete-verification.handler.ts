@@ -1,18 +1,17 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
 import { IVerificationRepository } from '../../../domain/repository/verification.repository';
+import { IPasswordHashPort } from '../../../domain/ports';
 import { CompleteVerificationCommand } from './complete-verification.command';
 
-export interface IHashService {
-  compare(value: string, hash: string): Promise<boolean>;
-}
-
 @CommandHandler(CompleteVerificationCommand)
-export class CompleteVerificationHandler implements ICommandHandler<CompleteVerificationCommand> {
+export class CompleteVerificationHandler
+  implements ICommandHandler<CompleteVerificationCommand>
+{
   constructor(
     private readonly verificationRepository: IVerificationRepository,
     private readonly authAccountRepository: IAuthAccountRepository,
-    private readonly hashService: IHashService
+    private readonly passwordHashPort: IPasswordHashPort,
   ) {}
 
   async execute(command: CompleteVerificationCommand): Promise<void> {
@@ -26,8 +25,9 @@ export class CompleteVerificationHandler implements ICommandHandler<CompleteVeri
       throw new Error('Verification not found');
     }
 
-    await verification.verify(payload.value, (value, hash) =>
-      this.hashService.compare(value, hash),
+    await verification.verify(
+      payload.value,
+      (value, hash) => this.passwordHashPort.compare(value, hash),
     );
 
     await this.verificationRepository.save(verification);
@@ -43,7 +43,5 @@ export class CompleteVerificationHandler implements ICommandHandler<CompleteVeri
     authAccount.activate();
 
     await this.authAccountRepository.save(authAccount);
-
-    const events = verification.pullDomainEvents();
   }
 }
