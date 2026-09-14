@@ -1,0 +1,23 @@
+// use prisma-8
+
+model Session {
+  id                    Int           @id @default(autoincrement())
+  authAccountId         Int
+  refreshTokenHash      String
+  accessTokenExpiresAt  DateTime
+  refreshTokenExpiresAt DateTime
+  ipAddress             String
+  userAgent             String
+  sessionStatus         SessionStatus
+  revokedAt             DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  authAccount           AuthAccount   @relation(fields: [authAccountId], references: [id])
+}
+
+enum SessionStatus {
+  revoked
+  active
+  expired
+}

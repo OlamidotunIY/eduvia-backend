@@ -1,0 +1,17 @@
+// use prisma-8
+
+model OutboxMessage {
+  id            Int          @id @default(autoincrement())
+  type          String
+  payload       Json
+  aggregateType String
+  aggregateId   Int
+  status        OutboxStatus
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSED
+}
