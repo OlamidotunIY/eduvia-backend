@@ -1,6 +1,5 @@
-import { AggregateRoot, BusinessRuleViolationError } from '../../../shared';
-import { UserType } from '../../../user/domain/value-objects/user-type.v0';
-import { InvariantError } from '../errors';
+import { AggregateRoot } from '../../../shared';
+import { AuthInvariantError } from '../errors';
 import { AuthSessionCreatedEvent } from '../events/auth-session-created';
 import { TokenIssuedEvent } from '../events/token-issued';
 import { SessionStatus } from '../value-objects/session-stutus.v0';
@@ -106,19 +105,19 @@ class Session extends AggregateRoot<number> {
     correlationId: string;
   }): Session {
     if (!params.refreshTokenHash.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Refresh token hash cannot be empty',
       );
     }
 
     if (!params.ipAddress.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'IP address cannot be empty',
       );
     }
 
     if (!params.userAgent.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'User agent cannot be empty',
       );
     }
