@@ -23,6 +23,7 @@ namespace AuthAccountCreatedEvent {
     constructor(
       public readonly authAccountId: number,
       public readonly userId: number,
+      public readonly preAuthToken: string,
     ) {}
   }
 }
