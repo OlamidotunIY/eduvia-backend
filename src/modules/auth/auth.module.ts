@@ -34,7 +34,8 @@ import { VerificationMapper } from './infrastructure/mappers/verification.mapper
 import { CreateAuthAccountHandler } from './application/commands/create-auth-account/create-auth-account.handler';
 import { CompleteVerificationHandler } from './application/commands/complete-verification/complete-verification.handler';
 import { SuspendAuthAccountHandler } from './application/commands/suspend-auth-account/suspend-auth-account.handler';
-import { UpdateCredentialsHandler } from './application/commands/update-credential/update-credential.handler';
+import { UpdateCredentialHandler } from './application/commands/update-credential/update-credential.handler';
+import { LoginHandler } from './application/commands/login/login.handler';
 import { RevokeAllSessionsHandler } from './application/commands/revoke-all-sessions/revoke-all-sessions.handler';
 import { IssueAuthTokensHandler } from './application/commands/issue-auth-tokens/issue-auth-tokens.handler';
 import { LogoutHandler } from './application/commands/logout/logout.handler';
@@ -62,6 +63,7 @@ const CommandHandlers = [
   IssueAuthTokensHandler,
   LogoutHandler,
   ResendOtpHandler,
+  LoginHandler,
 ];
 
 const QueryHandlers = [
@@ -72,20 +74,16 @@ const QueryHandlers = [
   GetPendingVerificationHandler,
 ];
 
-const Mappers = [
-  AuthAccountMapper,
-  SessionMapper,
-  VerificationMapper,
-];
+const Mappers = [AuthAccountMapper, SessionMapper, VerificationMapper];
 
 const PortBindings = [
-  { provide: IPasswordHashPort,      useClass: BcryptPasswordHashAdapter },
-  { provide: ITokenPort,             useClass: JwtTokenAdapter },
-  { provide: IOtpPort,               useClass: CryptoOtpAdapter },
-  { provide: ITotpPort,              useClass: SpeakeasyTotpAdapter },
-  { provide: ITokenRevocationPort,   useClass: RedisTokenRevocationAdapter },
+  { provide: IPasswordHashPort, useClass: BcryptPasswordHashAdapter },
+  { provide: ITokenPort, useClass: JwtTokenAdapter },
+  { provide: IOtpPort, useClass: CryptoOtpAdapter },
+  { provide: ITotpPort, useClass: SpeakeasyTotpAdapter },
+  { provide: ITokenRevocationPort, useClass: RedisTokenRevocationAdapter },
   { provide: IAuthAccountRepository, useClass: PrismaAuthAccountRepository },
-  { provide: ISessionRepository,     useClass: PrismaSessionRepository },
+  { provide: ISessionRepository, useClass: PrismaSessionRepository },
   { provide: IVerificationRepository, useClass: PrismaVerificationRepository },
 ];
 

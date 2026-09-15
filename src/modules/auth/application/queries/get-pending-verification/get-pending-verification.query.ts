@@ -1,7 +1,5 @@
-import { IQuery } from "@nestjs/cqrs";
+import { IQuery } from '@nestjs/cqrs';
 
 export class GetPendingVerificationQuery implements IQuery {
-    constructor(
-        public readonly payload: { authAccountId: number }
-    ) {}
+  constructor(public readonly payload: { authAccountId: number }) {}
 }

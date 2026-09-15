@@ -15,13 +15,12 @@ export class GetAuthAccountByUserIdHandler implements IQueryHandler<GetAuthAccou
     );
 
     if (!authAccount) {
-      throw new Error("Auth Account not found");
+      throw new Error('Auth Account not found');
     }
 
     return {
       id: authAccount.getId(),
       userId: authAccount.userId,
-      userType: authAccount.userType,
       credentialHash: authAccount.credentialHash,
       scope: authAccount.scope,
       totpEnabled: authAccount.totpEnabled,

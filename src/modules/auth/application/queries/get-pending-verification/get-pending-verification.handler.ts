@@ -5,17 +5,20 @@ import { VerificationDTO } from '../get-verification/get-verification.query.payl
 
 @QueryHandler(GetPendingVerificationQuery)
 export class GetPendingVerificationHandler implements IQueryHandler<GetPendingVerificationQuery> {
-  constructor(private readonly verificationRepository: IVerificationRepository) {}
+  constructor(
+    private readonly verificationRepository: IVerificationRepository,
+  ) {}
 
   async execute(query: GetPendingVerificationQuery): Promise<VerificationDTO> {
     const { payload } = query;
 
-    const verification = await this.verificationRepository.findPendingVerification(
-      payload.authAccountId,
-    );
+    const verification =
+      await this.verificationRepository.findPendingVerification(
+        payload.authAccountId,
+      );
 
     if (!verification) {
-      throw new Error("No pending verification found");
+      throw new Error('No pending verification found');
     }
 
     return {

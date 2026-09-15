@@ -17,13 +17,15 @@ export class PrismaVerificationRepository
     return this.prisma.verification;
   }
 
-  async findPendingVerification(authAccountId: number): Promise<Verification | null> {
+  async findPendingVerification(
+    authAccountId: number,
+  ): Promise<Verification | null> {
     const record = await this.delegate.findFirst({
       where: {
         authAccountId,
         verificationStatus: 'pending', // adjust enum value if needed based on Prisma schema
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
     if (!record) return null;
     return this.mapper.toDomain(record);

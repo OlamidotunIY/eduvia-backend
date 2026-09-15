@@ -1,5 +1,9 @@
+import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.result';
+
 export interface CompleteVerificationPayload {
-    verificationId: number;
+    authAccountId: number;
     value: string;
+    ipAddress: string;
+    userAgent: string;
     correlationId: string;
 }
