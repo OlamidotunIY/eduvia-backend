@@ -3,8 +3,6 @@ import { LoginCommand } from './login.command';
 import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.result';
 import {
   AccountPendingVerificationError,
-  AuthAccountAlreadySuspendedError,
-  AuthStatus,
   IAuthAccountRepository,
   InvalidCredentialsError,
   IOtpPort,
@@ -56,11 +54,7 @@ export class LoginHandler implements ICommandHandler<
       throw new InvalidCredentialsError();
     }
 
-    if (authAccount.authStatus === AuthStatus.SUSPENDED) {
-      throw new AuthAccountAlreadySuspendedError();
-    }
-
-    if (authAccount.authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION) {
+    if (!authAccount.canAuthenticate()) {
       const { hash } = await this.otpPort.generate();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 

@@ -243,6 +243,18 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     return this._authStatus === AuthStatus.SUSPENDED;
   }
 
+  public canAuthenticate() : boolean {
+    if (this.authStatus === AuthStatus.SUSPENDED) {
+      throw new AuthAccountAlreadySuspendedError();
+    }
+
+     if (this.authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION) {
+      return false;
+     }
+
+     return this._authStatus === AuthStatus.ACTIVE;
+  }
+
   public isPendingEmailVerification(): boolean {
     return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION;
   }
