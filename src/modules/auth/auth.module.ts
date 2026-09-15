@@ -42,11 +42,16 @@ import { ResendOtpHandler } from './application/commands/resend-otp/resend-otp.h
 
 // Query handlers
 import { GetAuthAccountHandler } from './application/queries/get-auth-account/get-auth-account.handler';
+import { GetAuthAccountByUserIdHandler } from './application/queries/get-auth-account-by-user-id/get-auth-account-by-user-id.handler';
 import { GetSessionHandler } from './application/queries/get-session/get-session.handler';
 import { GetVerificationHandler } from './application/queries/get-verification/get-verification.handler';
+import { GetPendingVerificationHandler } from './application/queries/get-pending-verification/get-pending-verification.handler';
 
 // Shared
 import { PrismaService } from '../shared/infrastructure/prisma.service';
+
+// Services
+import { AuthService } from './presentation/services/auth.service';
 
 const CommandHandlers = [
   CreateAuthAccountHandler,
@@ -61,8 +66,10 @@ const CommandHandlers = [
 
 const QueryHandlers = [
   GetAuthAccountHandler,
+  GetAuthAccountByUserIdHandler,
   GetSessionHandler,
   GetVerificationHandler,
+  GetPendingVerificationHandler,
 ];
 
 const Mappers = [
@@ -86,6 +93,7 @@ const PortBindings = [
   imports: [CqrsModule],
   providers: [
     PrismaService,
+    AuthService,
     ...Mappers,
     ...PortBindings,
     ...CommandHandlers,
@@ -98,6 +106,7 @@ const PortBindings = [
     ITotpPort,
     ITokenRevocationPort,
     PrismaService,
+    AuthService,
   ],
 })
 export class AuthModule {}

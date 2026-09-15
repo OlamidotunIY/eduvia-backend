@@ -1,9 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IssueAuthTokensCommand } from './issue-auth-tokens.command';
 import { IssueAuthTokensResult } from './issue-auth-tokens.result';
-import { ISessionRepository } from '../../../domain/repository/session.repository';
-import { ITokenPort } from '../../../domain/ports';
-import { Session } from '../../../domain/model/Session';
+import { ISessionRepository, ITokenPort, Session } from '../../../domain/';
 
 @CommandHandler(IssueAuthTokensCommand)
 export class IssueAuthTokensHandler

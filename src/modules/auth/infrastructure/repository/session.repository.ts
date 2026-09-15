@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Session as PrismaSession } from '@generated/prisma';
-import { Session } from '../../domain/model/Session';
-import { ISessionRepository } from '../../domain/repository/session.repository';
-import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';
-import { PrismaService } from '../../../../shared/infrastructure/prisma.service';
-import { SessionMapper } from '../mappers/session.mapper';
+import { Session as PrismaSession } from '@generated/prisma/client';
+import { SessionMapper } from '../mappers';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
+import { ISessionRepository, Session } from '../../domain';
 
 @Injectable()
 export class PrismaSessionRepository

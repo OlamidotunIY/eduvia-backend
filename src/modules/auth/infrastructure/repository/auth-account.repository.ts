@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AuthAccount as PrismaAuthAccount } from '@generated/prisma';
-import { AuthAccount } from '../../domain/model/AuthAccount';
-import { IAuthAccountRepository } from '../../domain/repository/auth-account.repository';
-import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';
-import { PrismaService } from '../../../../shared/infrastructure/prisma.service';
-import { AuthAccountMapper } from '../mappers/auth-account.mapper';
+import { AuthAccount as PrismaAuthAccount } from '@generated/prisma/client';
+import { AuthAccountMapper } from '../mappers';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
+import { AuthAccount, IAuthAccountRepository } from '../../domain';
 
 @Injectable()
 export class PrismaAuthAccountRepository
@@ -17,5 +15,13 @@ export class PrismaAuthAccountRepository
 
   protected get delegate() {
     return this.prisma.authAccount;
+  }
+
+  async findByUserId(userId: number): Promise<AuthAccount | null> {
+    const record = await this.delegate.findUnique({
+      where: { userId },
+    });
+    if (!record) return null;
+    return this.mapper.toDomain(record);
   }
 }

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UpdateCredentialsCommand } from "./update-credential.command";
-import { IAuthAccountRepository } from "../../../domain/repository/auth-account.repository";
+import { IAuthAccountRepository } from "../../../domain";
 
 @CommandHandler(UpdateCredentialsCommand)
 export class UpdateCredentialsHandler
@@ -26,7 +26,5 @@ export class UpdateCredentialsHandler
     );
 
     await this.authAccountRepository.save(authAccount);
-
-    const events = authAccount.pullDomainEvents();
   }
 }

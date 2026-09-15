@@ -1,4 +1,4 @@
-import { UserType } from '../../../../user/domain/value-objects/user-type.v0';
+import { UserType } from "@modules/user";
 
 export interface IssueAuthTokensPayload {
   id: number;

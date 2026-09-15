@@ -33,6 +33,9 @@ export { GetAuthAccountHandler } from './queries/get-auth-account/get-auth-accou
 export { GetAuthAccountQuery } from './queries/get-auth-account/get-auth-account-query';
 export type { GetAuthAccountPayload, AuthAccountDTO } from './queries/get-auth-account/get-auth-account.query.payload';
 
+export { GetAuthAccountByUserIdHandler } from './queries/get-auth-account-by-user-id/get-auth-account-by-user-id.handler';
+export { GetAuthAccountByUserIdQuery } from './queries/get-auth-account-by-user-id/get-auth-account-by-user-id.query';
+
 export { GetSessionHandler } from './queries/get-session/get-session.handler';
 export { GetSessionQuery } from './queries/get-session/get-session.query';
 export type { GetSessionPayload, SessionDTO } from './queries/get-session/get-session.query.payload';
@@ -40,3 +43,6 @@ export type { GetSessionPayload, SessionDTO } from './queries/get-session/get-se
 export { GetVerificationHandler } from './queries/get-verification/get-verification.handler';
 export { GetVerificationQuery } from './queries/get-verification/get-verivication.query';
 export type { GetVerificationPayload, VerificationDTO } from './queries/get-verification/get-verification.query.payload';
+
+export { GetPendingVerificationHandler } from './queries/get-pending-verification/get-pending-verification.handler';
+export { GetPendingVerificationQuery } from './queries/get-pending-verification/get-pending-verification.query';

@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Verification as PrismaVerification } from '@generated/prisma';
-import { Verification } from '../../domain/model/Verification';
-import { IVerificationRepository } from '../../domain/repository/verification.repository';
-import { PrismaBaseRepository } from '../../../../shared/repository/prisma-base.repository';
-import { PrismaService } from '../../../../shared/infrastructure/prisma.service';
-import { VerificationMapper } from '../mappers/verification.mapper';
+import { Verification as PrismaVerification } from '@generated/prisma/client';
+import { VerificationMapper } from '../mappers';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
+import { IVerificationRepository, Verification } from '../../domain';
 
 @Injectable()
 export class PrismaVerificationRepository
@@ -17,5 +15,17 @@ export class PrismaVerificationRepository
 
   protected get delegate() {
     return this.prisma.verification;
+  }
+
+  async findPendingVerification(authAccountId: number): Promise<Verification | null> {
+    const record = await this.delegate.findFirst({
+      where: {
+        authAccountId,
+        verificationStatus: 'pending', // adjust enum value if needed based on Prisma schema
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (!record) return null;
+    return this.mapper.toDomain(record);
   }
 }

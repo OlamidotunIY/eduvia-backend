@@ -2,11 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   AuthAccount as PrismaAuthAccount,
   AuthStatus as PrismaAuthStatus,
-  UserType as PrismaUserType,
 } from '@generated/prisma/client';
 import { AuthAccount, AuthStatus } from '../../domain';
-import { UserType } from '@module/user';
-import { IMapper } from '@module/shared';
+import { IMapper } from '@modules/shared';
 
 @Injectable()
 export class AuthAccountMapper implements IMapper<
@@ -17,7 +15,6 @@ export class AuthAccountMapper implements IMapper<
     return AuthAccount.reconstitute({
       id: record.id,
       userId: record.userId,
-      userType: record.userType as unknown as UserType,
       credentialHash: record.credentialHash,
       scope: record.scope,
       totpSecret: record.totpSecret,
@@ -31,7 +28,6 @@ export class AuthAccountMapper implements IMapper<
   toPersistence(entity: AuthAccount): Omit<PrismaAuthAccount, 'id'> {
     return {
       userId: entity.userId,
-      userType: entity.userType as unknown as PrismaUserType,
       credentialHash: entity.credentialHash,
       scope: entity.scope,
       totpSecret: entity.getTotpSecretForPersistence(),

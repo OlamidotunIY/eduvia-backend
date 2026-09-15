@@ -3,11 +3,9 @@ import {
   Verification as PrismaVerification,
   VerificationStatus as PrismaVerificationStatus,
   VerificationType as PrismaVerificationType,
-} from '@generated/prisma';
-import { Verification } from '../../domain/model/Verification';
-import { VerificationStatus } from '../../domain/value-objects/verification-status.v0';
-import { VerificationType } from '../../domain/value-objects/verification-type.v0';
-import { IMapper } from '../../../../shared/repository/prisma-base.repository';
+} from '@generated/prisma/client';
+import { IMapper } from '@modules/shared';
+import { Verification, VerificationStatus, VerificationType } from '../../domain';
 
 @Injectable()
 export class VerificationMapper implements IMapper<Verification, PrismaVerification> {

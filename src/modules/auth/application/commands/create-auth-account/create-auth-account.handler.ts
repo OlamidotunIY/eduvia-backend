@@ -1,7 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
-import { ITokenPort } from '../../../domain/ports';
-import { AuthAccount } from '../../../domain/model/AuthAccount';
+import { AuthAccount, IAuthAccountRepository, ITokenPort } from '../../../domain';
 import { CreateAuthAccountCommand } from './create-auth-account.command';
 import { CreateAuthAccountResult } from './create-auth-account.result';
 
@@ -26,7 +24,6 @@ export class CreateAuthAccountHandler
     const authAccount = AuthAccount.create({
       id: payload.id,
       userId: payload.userId,
-      userType: payload.userType,
       credentialHash: payload.credentialHash,
       scope: payload.scope,
       preAuthToken: preAuthResult.token,

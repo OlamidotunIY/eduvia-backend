@@ -1,7 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { LogoutCommand } from './logout.command';
-import { ISessionRepository } from '../../../domain/repository/session.repository';
-import { ITokenRevocationPort } from '../../../domain/ports';
+import { ISessionRepository, ITokenRevocationPort } from '../../../domain/';
 
 @CommandHandler(LogoutCommand)
 export class LogoutHandler implements ICommandHandler<LogoutCommand> {

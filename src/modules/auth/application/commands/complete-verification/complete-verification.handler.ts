@@ -1,8 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
-import { IVerificationRepository } from '../../../domain/repository/verification.repository';
-import { IPasswordHashPort } from '../../../domain/ports';
 import { CompleteVerificationCommand } from './complete-verification.command';
+import { IAuthAccountRepository, IPasswordHashPort, IVerificationRepository } from '../../../domain';
 
 @CommandHandler(CompleteVerificationCommand)
 export class CompleteVerificationHandler

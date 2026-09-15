@@ -1,11 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ResendOtpCommand } from './resend-otp.command';
-import { IAuthAccountRepository } from '../../../domain/repository/auth-account.repository';
-import { IVerificationRepository } from '../../../domain/repository/verification.repository';
-import { IOtpPort } from '../../../domain/ports';
-import { Verification } from '../../../domain/model/Verification';
-import { VerificationType } from '../../../domain/value-objects/verification-type.v0';
-import { AuthStatus } from '../../../domain/value-objects/auth-status.v0';
+import { AuthStatus, IAuthAccountRepository, IOtpPort, IVerificationRepository, Verification, VerificationType } from '../../../domain';
 
 @CommandHandler(ResendOtpCommand)
 export class ResendOtpHandler implements ICommandHandler<ResendOtpCommand> {

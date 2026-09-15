@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Session as PrismaSession, SessionStatus as PrismaSessionStatus } from '@generated/prisma';
-import { Session } from '../../domain/model/Session';
-import { SessionStatus } from '../../domain/value-objects/session-stutus.v0';
-import { IMapper } from '../../../../shared/repository/prisma-base.repository';
+import { Session as PrismaSession, SessionStatus as PrismaSessionStatus } from '@generated/prisma/client';
+import { IMapper } from '@modules/shared';
+import { Session, SessionStatus } from '../../domain';
 
 @Injectable()
 export class SessionMapper implements IMapper<Session, PrismaSession> {

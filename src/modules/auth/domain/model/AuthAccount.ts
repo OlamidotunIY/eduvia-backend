@@ -1,16 +1,13 @@
-import { UserType } from '../../../user/domain/value-objects/user-type.v0';
-import { AuthAccountCreatedEvent } from '../events/auth-account-created';
-import { AccountSuspendedEvent } from '../events/account-suspended';
+import { AccountSuspendedEvent, AuthAccountCreatedEvent } from '../events';
 import { AuthStatus } from '../value-objects/auth-status.v0';
-import { AggregateRoot } from '../../../shared';
 import {
   AuthAccountAlreadySuspendedError,
   AuthInvariantError,
 } from '../errors';
+import { AggregateRoot } from '@modules/shared';
 
 class AuthAccount extends AggregateRoot<number> {
   public readonly userId: number;
-  public readonly userType: UserType;
   private _credentialHash: string;
   private _scope: string;
   private _totpSecret: string | null;
@@ -22,7 +19,6 @@ class AuthAccount extends AggregateRoot<number> {
   private constructor(params: {
     id: number;
     userId: number;
-    userType: UserType;
     credentialHash: string;
     scope: string;
     totpSecret: string | null;
@@ -34,7 +30,6 @@ class AuthAccount extends AggregateRoot<number> {
     super(params.id);
 
     this.userId = params.userId;
-    this.userType = params.userType;
     this._credentialHash = params.credentialHash;
     this._scope = params.scope;
     this._totpSecret = params.totpSecret;
@@ -47,7 +42,6 @@ class AuthAccount extends AggregateRoot<number> {
   public static reconstitute(params: {
     id: number;
     userId: number;
-    userType: UserType;
     credentialHash: string;
     scope: string;
     totpSecret: string | null;
@@ -62,7 +56,6 @@ class AuthAccount extends AggregateRoot<number> {
   public static create(params: {
     id: number;
     userId: number;
-    userType: UserType;
     credentialHash: string;
     scope: string;
     correlationId: string;
@@ -81,7 +74,6 @@ class AuthAccount extends AggregateRoot<number> {
     const authAccount = new AuthAccount({
       id: params.id,
       userId: params.userId,
-      userType: params.userType,
       credentialHash: params.credentialHash,
       scope: params.scope.trim(),
       totpSecret: null,

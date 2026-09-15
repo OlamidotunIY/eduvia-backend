@@ -3,7 +3,6 @@
 model AuthAccount {
   id             Int          @id @default(autoincrement())
   userId         Int
-  userType       UserType
   credentialHash String
   scope          String
   totpSecret     String?
