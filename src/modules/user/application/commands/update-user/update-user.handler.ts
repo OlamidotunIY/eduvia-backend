@@ -29,8 +29,6 @@ export class UpdateUserHandler implements ICommandHandler<
 
     await this.userRepository.save(user);
 
-    const events = user.pullDomainEvents();
-
     return {
       id: user.getId(),
     };

@@ -22,8 +22,5 @@ export class SuspendUserHandler
         user.suspend();
 
         await this.userRepository.save(user);
-
-        const events = user.pullDomainEvents();
-            
     }
 }

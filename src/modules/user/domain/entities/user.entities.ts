@@ -9,12 +9,13 @@ import {
 } from '../errors';
 import { UserCreatedEvent } from '../events/user-created-event';
 import { UserUpdatedEvent } from '../events/user-updated-event';
+import { UserId } from '../value-objects/user-id.vo';
 import { UserStatus } from '../value-objects/user-status.v0';
 import { UserType } from '../value-objects/user-type.v0';
 
-class User extends AggregateRoot<number> {
+class User extends AggregateRoot<UserId> {
   constructor(
-    id: number,
+    id: UserId,
     public readonly userType: UserType,
     private _firstName: string,
     private _lastName: string,
@@ -24,10 +25,6 @@ class User extends AggregateRoot<number> {
     private _updatedAt: Date,
   ) {
     super(id);
-  }
-
-  public getId(): number {
-    return this.id;
   }
 
   public isTeacher(): boolean {
@@ -75,13 +72,13 @@ class User extends AggregateRoot<number> {
   }
 
   public static create(params: {
-    id: number;
+    id: UserId;
     userType: UserType;
     email: string;
     firstName: string;
     lastName: string;
     correlationId: string;
-    authAccountId?: number;
+    authAccountId?: string;
   }): User {
     const email = params.email.trim().toLowerCase();
     const firstName = params.firstName.trim();
@@ -110,9 +107,9 @@ class User extends AggregateRoot<number> {
 
     user.addDomainEvent(
       new UserCreatedEvent(
-        user.id,
+        user.getId(),
         new UserCreatedEvent.Payload(
-          user.id,
+          user.getId(),
           user.userType,
           user.email,
           params.authAccountId,
@@ -157,8 +154,8 @@ class User extends AggregateRoot<number> {
 
     this.addDomainEvent(
       new UserUpdatedEvent(
-        this.id,
-        new UserUpdatedEvent.Payload(this.id, this.userType, this.email),
+        this.getId(),
+        new UserUpdatedEvent.Payload(this.getId(), this.userType, this.email),
         params.correlationId,
       ),
     );
@@ -183,7 +180,7 @@ class User extends AggregateRoot<number> {
   }
 
   public static reconstitute(params: {
-    id: number;
+    id: UserId;
     userType: UserType;
     firstName: string;
     lastName: string;

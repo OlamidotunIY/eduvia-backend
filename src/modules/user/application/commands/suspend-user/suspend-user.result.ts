@@ -1,3 +1,3 @@
 export interface SuspendUserPayload {
-    userId: number;
+    userId: string;
 }

@@ -3,6 +3,7 @@ import { CreateUserCommand } from './create-user.command';
 import { IUserRepository } from '../../../domain/repository/user.repository';
 import { User } from '../../../domain/entities/user.entities';
 import { CreateUserResult } from './create-user.result';
+import { UserId } from '../../../domain/value-objects/user-id.vo';
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler implements ICommandHandler<
@@ -15,7 +16,7 @@ export class CreateUserHandler implements ICommandHandler<
     const { payload } = command;
 
     const user = User.create({
-      id: payload.id,
+      id: UserId.create(),
       userType: payload.userType,
       email: payload.email,
       firstName: payload.firstName,
@@ -25,8 +26,6 @@ export class CreateUserHandler implements ICommandHandler<
     });
 
     await this.userRepository.save(user);
-
-    const events = user.pullDomainEvents();
 
     return {
       id: user.getId(),

@@ -4,10 +4,11 @@ import { User } from '../../domain/entities';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { UserMapper } from '../mappers';
 import { User as PrismaUser } from '@generated/prisma/client';
+import { UserId } from '../../domain/value-objects/user-id.vo';
 
 @Injectable()
 export class PrismaUserRepository
-  extends PrismaBaseRepository<User, PrismaUser>
+  extends PrismaBaseRepository<UserId, User, PrismaUser>
   implements IUserRepository
 {
   constructor(
@@ -30,9 +31,9 @@ export class PrismaUserRepository
     return this.mapper.toDomain(userRecord);
   }
 
-  public async updateUserEmail(userId: number, email: string): Promise<void> {
+  public async updateUserEmail(userId: UserId | string, email: string): Promise<void> {
     await this.delegate.update({
-      where: { id: userId },
+      where: { id: String(userId) },
       data: { email: email.toLowerCase() },
     });
   }

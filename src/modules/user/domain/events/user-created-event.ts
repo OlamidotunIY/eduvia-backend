@@ -2,11 +2,10 @@ import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 import { UserType } from '../value-objects/user-type.v0';
 
 class UserCreatedEvent extends BaseDomainEvent<
-  number,
   UserCreatedEvent.Payload
 > {
   constructor(
-    aggregateId: number,
+    aggregateId: string,
     payload: UserCreatedEvent.Payload,
     correlationId: string,
   ) {
@@ -22,10 +21,10 @@ class UserCreatedEvent extends BaseDomainEvent<
 namespace UserCreatedEvent {
   export class Payload {
     constructor(
-      public readonly userId: number,
+      public readonly userId: string,
       public readonly userType: UserType,
       public readonly email: string,
-      public readonly authAccountId?: number,
+      public readonly authAccountId?: string,
     ) {}
   }
 }

@@ -1,5 +1,5 @@
 export interface UpdateUserPayload {
-    userId: number;
+    userId: string;
     firstName?: string;
     lastName?: string;
     email?: string;
@@ -7,5 +7,5 @@ export interface UpdateUserPayload {
 }
 
 export interface UpdateUserResult{
-    id: number
+    id: string
 }

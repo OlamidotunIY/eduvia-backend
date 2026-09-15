@@ -1,1 +1,1 @@
-export { UserRepositoryAdapter } from './user-repository.adapter';
+export { PrismaUserRepository } from './user-repository.adapter';

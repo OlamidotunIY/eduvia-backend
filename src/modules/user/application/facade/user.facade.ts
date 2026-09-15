@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IUserRepository } from '../../domain/repository/user.repository';
 
 export interface UserDTO {
-  id: number;
+  id: string;
   userType: string;
   email: string;
   firstName: string;
@@ -27,7 +27,7 @@ export class UserFacade {
     };
   }
 
-  async getUserById(id: number): Promise<UserDTO | null> {
+  async getUserById(id: string): Promise<UserDTO | null> {
     const user = await this.userRepository.findById(id);
 
     if (!user) return null;
