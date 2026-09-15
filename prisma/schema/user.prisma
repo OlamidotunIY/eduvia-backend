@@ -1,7 +1,7 @@
 // use prisma-8
 
 model User {
-  id           Int           @id @default(autoincrement())
+  id           String @id @db.Uuid
   userType     UserType
   firstName    String
   lastName     String

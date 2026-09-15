@@ -1,8 +1,8 @@
 // use prisma-8
 
 model Verification {
-  id                 Int                @id @default(autoincrement())
-  authAccountId      Int
+  id                String @id @db.Uuid
+  authAccountId      String @id @db.Uuid
   identifier         String
   valueHash          String
   verificationType   VerificationType

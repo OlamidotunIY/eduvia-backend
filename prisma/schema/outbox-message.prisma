@@ -1,7 +1,7 @@
 // use prisma-8
 
 model OutboxMessage {
-  id            Int          @id @default(autoincrement())
+  id            String @id @db.Uuid
   type          String
   payload       Json
   aggregateType String

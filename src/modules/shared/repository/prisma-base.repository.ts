@@ -1,8 +1,8 @@
-import { AggregateRoot } from '../domain/model/aggregate-root';
-import { DomainEvent } from '../domain/events/domain-event';
+import { OutboxStatus } from '@generated/prisma/enums';
+import { AggregateRoot, DomainEvent } from '../domain';
+import { PrismaService } from '../infrastructure';
 import { BaseRepository } from './base.repository';
-import { PrismaService } from '../infrastructure/prisma.service';
-import { OutboxStatus } from '../domain/value-object/outbox-status.v0';
+import { PrismaPromise } from '@generated/prisma/internal/prismaNamespace';
 
 export interface IMapper<TDomain, TRecord> {
   toDomain(record: TRecord): TDomain;
@@ -16,7 +16,7 @@ type PrismaDelegate<TRecord> = {
     where: { id: number };
     create: TRecord;
     update: Omit<TRecord, 'id'>;
-  }): Promise<TRecord>;
+  }): PrismaPromise<TRecord>;
   delete(args: { where: { id: number } }): Promise<TRecord>;
 };
 
