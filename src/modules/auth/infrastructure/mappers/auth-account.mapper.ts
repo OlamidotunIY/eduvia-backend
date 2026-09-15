@@ -3,11 +3,10 @@ import {
   AuthAccount as PrismaAuthAccount,
   AuthStatus as PrismaAuthStatus,
   UserType as PrismaUserType,
-} from '@generated/prisma';
-import { AuthAccount } from '../../domain/model/AuthAccount';
-import { AuthStatus } from '../../domain/value-objects/auth-status.v0';
-import { UserType } from '../../../user/domain/value-objects/user-type.v0';
-import { IMapper } from '../../../shared/repository/prisma-base.repository';
+} from '@generated/prisma/client';
+import { AuthAccount, AuthStatus } from '../../domain';
+import { UserType } from '@module/user';
+import { IMapper } from '@module/shared';
 
 @Injectable()
 export class AuthAccountMapper implements IMapper<

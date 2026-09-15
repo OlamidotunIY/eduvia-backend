@@ -25,12 +25,9 @@
     "baseUrl": ".",
     "paths": {
       "@src/*":              ["src/*"],
-      "@modules/*":          ["src/modules/*"],
+      "@module/*":           ["src/modules/*"],
       "@generated/prisma":   ["src/generated/prisma"],
-      "@generated/prisma/*": ["src/generated/prisma/*"],
-      "@module/auth":        ["src/modules/auth/index.ts"],
-      "@module/user":        ["src/modules/user/index.ts"],
-      "@module/shared":      ["src/modules/shared/index.ts"]
+      "@generated/prisma/*": ["src/generated/prisma/*"]
     }
   }
 }
