@@ -1,18 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { LoginDto, LogoutDto, ResendOtpDto, VerifyOtpDto } from '../dto/auth.dto';
-import { 
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import {
+  LoginDto,
+  LogoutDto,
+  ResendOtpDto,
+  VerifyOtpDto,
+  RegisterDto,
+} from '../dto/auth.dto';
+import {
   LoginCommand,
   LogoutCommand,
   ResendOtpCommand,
   CompleteVerificationCommand,
+  CreateAuthAccountCommand,
 } from '../../application';
 import crypto from 'crypto';
+
+import { GetMeQuery } from '@modules/user';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   async login(dto: LoginDto, ipAddress: string, userAgent: string) {
@@ -23,7 +33,7 @@ export class AuthService {
         ipAddress,
         userAgent,
         correlationId: crypto.randomUUID(),
-      })
+      }),
     );
   }
 
@@ -33,7 +43,7 @@ export class AuthService {
         sessionId: dto.sessionId,
         jti: dto.jti,
         correlationId: crypto.randomUUID(),
-      })
+      }),
     );
   }
 
@@ -45,7 +55,7 @@ export class AuthService {
         ipAddress,
         userAgent,
         correlationId: crypto.randomUUID(),
-      } as any)
+      } as any),
     );
   }
 
@@ -54,7 +64,28 @@ export class AuthService {
       new ResendOtpCommand({
         authAccountId: dto.authAccountId,
         correlationId: crypto.randomUUID(),
-      })
+      }),
     );
+  }
+
+  async register(dto: RegisterDto) {
+    return this.commandBus.execute(
+      new CreateAuthAccountCommand({
+        id: 0, // Prisma will auto-increment
+        credentialHash: dto.password, // Will be hashed in the handler
+        scope: 'user', // Default scope
+        profileData: {
+          email: dto.email,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          userType: dto.userType,
+        },
+        correlationId: crypto.randomUUID(),
+      }),
+    );
+  }
+
+  async getMe(userId: number) {
+    return this.queryBus.execute(new GetMeQuery({ userId }));
   }
 }

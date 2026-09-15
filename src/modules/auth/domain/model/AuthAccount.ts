@@ -7,7 +7,7 @@ import {
 import { AggregateRoot } from '@modules/shared';
 
 class AuthAccount extends AggregateRoot<number> {
-  public readonly userId: number;
+  public userId: number | null;
   private _credentialHash: string;
   private _scope: string;
   private _totpSecret: string | null;
@@ -18,7 +18,7 @@ class AuthAccount extends AggregateRoot<number> {
 
   private constructor(params: {
     id: number;
-    userId: number;
+    userId: number | null;
     credentialHash: string;
     scope: string;
     totpSecret: string | null;
@@ -41,7 +41,7 @@ class AuthAccount extends AggregateRoot<number> {
 
   public static reconstitute(params: {
     id: number;
-    userId: number;
+    userId: number | null;
     credentialHash: string;
     scope: string;
     totpSecret: string | null;
@@ -55,11 +55,16 @@ class AuthAccount extends AggregateRoot<number> {
 
   public static create(params: {
     id: number;
-    userId: number;
     credentialHash: string;
     scope: string;
     correlationId: string;
     preAuthToken: string;
+    profileData: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      userType: string;
+    };
   }): AuthAccount {
     if (!params.credentialHash.trim()) {
       throw new AuthInvariantError('Credential hash cannot be empty');
@@ -73,7 +78,7 @@ class AuthAccount extends AggregateRoot<number> {
 
     const authAccount = new AuthAccount({
       id: params.id,
-      userId: params.userId,
+      userId: null,
       credentialHash: params.credentialHash,
       scope: params.scope.trim(),
       totpSecret: null,
@@ -86,12 +91,24 @@ class AuthAccount extends AggregateRoot<number> {
     authAccount.addDomainEvent(
       new AuthAccountCreatedEvent(
         authAccount.id,
-        new AuthAccountCreatedEvent.Payload(authAccount.id, authAccount.userId, params.preAuthToken),
+        new AuthAccountCreatedEvent.Payload(
+          authAccount.id,
+          params.preAuthToken,
+          params.profileData,
+        ),
         params.correlationId,
       ),
     );
 
     return authAccount;
+  }
+
+  public linkUser(userId: number): void {
+    if (this.userId !== null) {
+      throw new AuthInvariantError('AuthAccount is already linked to a user');
+    }
+    this.userId = userId;
+    this.touch();
   }
 
   public updateCredentials(credentialHash: string): void {
@@ -115,7 +132,7 @@ class AuthAccount extends AggregateRoot<number> {
     this.addDomainEvent(
       new AccountSuspendedEvent(
         this.id,
-        new AccountSuspendedEvent.Payload(this.id, this.userId),
+        new AccountSuspendedEvent.Payload(this.id, this.userId as number),
         correlationId,
       ),
     );

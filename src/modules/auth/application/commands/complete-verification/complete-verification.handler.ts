@@ -6,38 +6,41 @@ import {
   IPasswordHashPort,
   ISessionRepository,
   ITokenPort,
-  IUserLookupPort,
   IVerificationRepository,
   Session,
 } from '../../../domain';
+import { UserFacade } from '@modules/user';
 
 @CommandHandler(CompleteVerificationCommand)
-export class CompleteVerificationHandler
-  implements ICommandHandler<CompleteVerificationCommand, IssueAuthTokensResult>
-{
+export class CompleteVerificationHandler implements ICommandHandler<
+  CompleteVerificationCommand,
+  IssueAuthTokensResult
+> {
   constructor(
     private readonly verificationRepository: IVerificationRepository,
     private readonly authAccountRepository: IAuthAccountRepository,
     private readonly passwordHashPort: IPasswordHashPort,
     private readonly sessionRepository: ISessionRepository,
     private readonly tokenPort: ITokenPort,
-    private readonly userLookupPort: IUserLookupPort,
+    private readonly userFacade: UserFacade,
   ) {}
 
-  async execute(command: CompleteVerificationCommand): Promise<IssueAuthTokensResult> {
+  async execute(
+    command: CompleteVerificationCommand,
+  ): Promise<IssueAuthTokensResult> {
     const { payload } = command;
 
-    const verification = await this.verificationRepository.findPendingVerification(
-      payload.authAccountId,
-    );
+    const verification =
+      await this.verificationRepository.findPendingVerification(
+        payload.authAccountId,
+      );
 
     if (!verification) {
       throw new Error('Verification not found');
     }
 
-    await verification.verify(
-      payload.value,
-      (value, hash) => this.passwordHashPort.compare(value, hash),
+    await verification.verify(payload.value, (value, hash) =>
+      this.passwordHashPort.compare(value, hash),
     );
 
     await this.verificationRepository.save(verification);
@@ -54,7 +57,7 @@ export class CompleteVerificationHandler
     await this.authAccountRepository.save(authAccount);
 
     // Issue tokens after verification (Option A)
-    const user = await this.userLookupPort.getUserById(authAccount.userId);
+    const user = await this.userFacade.getUserById(authAccount.userId);
     if (!user) {
       throw new Error('User not found');
     }

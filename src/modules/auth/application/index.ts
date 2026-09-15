@@ -13,9 +13,9 @@ export type { CompleteVerificationPayload } from './commands/complete-verificati
 export { SuspendAuthAccountHandler } from './commands/suspend-auth-account/suspend-auth-account.handler';
 export { SuspendAuthAccountCommand } from './commands/suspend-auth-account/suspend-auth-account.command';
 
-export { UpdateCredentialHandler } from './commands/update-credential/update-credential.handler';
-export { UpdateCredentialCommand } from './commands/update-credential/update-credential.command';
-export type { UpdateCredentialPayload } from './commands/update-credential/update-credential.result';
+export { UpdateCredentialsHandler } from './commands/update-credential/update-credential.handler';
+export { UpdateCredentialsCommand } from './commands/update-credential/update-credential.command';
+export type { UpdateCredentialsPayload } from './commands/update-credential/update-credential.result';
 
 export { LoginHandler } from './commands/login/login.handler';
 export { LoginCommand } from './commands/login/login.command';
@@ -49,6 +49,7 @@ export { GetAuthAccountByUserIdHandler } from './queries/get-auth-account-by-use
 export { GetAuthAccountByUserIdQuery } from './queries/get-auth-account-by-user-id/get-auth-account-by-user-id.query';
 
 export { GetSessionHandler } from './queries/get-session/get-session.handler';
+export * from './events/handlers/auth.processor';
 export { GetSessionQuery } from './queries/get-session/get-session.query';
 export type {
   GetSessionPayload,
@@ -64,3 +65,5 @@ export type {
 
 export { GetPendingVerificationHandler } from './queries/get-pending-verification/get-pending-verification.handler';
 export { GetPendingVerificationQuery } from './queries/get-pending-verification/get-pending-verification.query';
+
+export * from './events';

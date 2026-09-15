@@ -4,26 +4,27 @@ import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.re
 import {
   AccountPendingVerificationError,
   AuthAccountAlreadySuspendedError,
-  InvalidCredentialsError
-} from '../../../domain/errors';
-import {
   AuthStatus,
   IAuthAccountRepository,
+  InvalidCredentialsError,
   IOtpPort,
   IPasswordHashPort,
   ISessionRepository,
   ITokenPort,
-  IUserLookupPort,
   IVerificationRepository,
   Session,
   Verification,
   VerificationType,
 } from '../../../domain';
+import { UserFacade } from '@modules/user';
 
 @CommandHandler(LoginCommand)
-export class LoginHandler implements ICommandHandler<LoginCommand, IssueAuthTokensResult> {
+export class LoginHandler implements ICommandHandler<
+  LoginCommand,
+  IssueAuthTokensResult
+> {
   constructor(
-    private readonly userLookupPort: IUserLookupPort,
+    private readonly userFacade: UserFacade,
     private readonly authAccountRepository: IAuthAccountRepository,
     private readonly passwordHashPort: IPasswordHashPort,
     private readonly otpPort: IOtpPort,
@@ -35,7 +36,7 @@ export class LoginHandler implements ICommandHandler<LoginCommand, IssueAuthToke
   async execute(command: LoginCommand): Promise<IssueAuthTokensResult> {
     const { payload } = command;
 
-    const user = await this.userLookupPort.getUserIdByEmail(payload.email);
+    const user = await this.userFacade.getUserIdByEmail(payload.email);
     if (!user) {
       throw new InvalidCredentialsError();
     }
