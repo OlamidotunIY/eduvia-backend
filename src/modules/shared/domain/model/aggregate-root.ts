@@ -1,11 +1,11 @@
-import { DomainEvent } from "../events";
+import { DomainEvent } from '../events';
+import { BaseEntityId } from '../value-object/base-entity-id.vo';
 
+abstract class AggregateRoot<TId extends BaseEntityId> {
+    readonly id: TId;
+    private _domainEvents: DomainEvent[] = [];
 
-abstract class AggregateRoot< T extends number> {
-    readonly id: T;
-    private _domainEvents: DomainEvent[] =[];
-
-    protected constructor(id: T) {
+    protected constructor(id: TId) {
         this.id = id;
     }
 
@@ -19,7 +19,9 @@ abstract class AggregateRoot< T extends number> {
         return events;
     }
 
-    public abstract getId(): T;
+    public getId(): string {
+        return this.id.value;
+    }
 }
 
-export { AggregateRoot }
+export { AggregateRoot };
