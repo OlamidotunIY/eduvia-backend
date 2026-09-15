@@ -9,9 +9,7 @@ export class CreateUserHandler implements ICommandHandler<
   CreateUserCommand,
   CreateUserResult
 > {
-  constructor(
-    private readonly userRepository: IUserRepository
-  ) {}
+  constructor(private readonly userRepository: IUserRepository) {}
 
   async execute(command: CreateUserCommand): Promise<CreateUserResult> {
     const { payload } = command;
@@ -22,6 +20,7 @@ export class CreateUserHandler implements ICommandHandler<
       email: payload.email,
       firstName: payload.firstName,
       lastName: payload.lastName,
+      authAccountId: payload.authAccountId,
       correlationId: payload.correlationId,
     });
 

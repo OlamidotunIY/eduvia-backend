@@ -1,7 +1,12 @@
 import { AggregateRoot } from '../../../shared';
 import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation.error';
 import { ConflictError } from '../../../shared/domain/errors/conflict.error';
-import { EmailRequired, NameRequiredError, UserAlreadySuspendedError, UserInvariantError } from '../errors';
+import {
+  EmailRequired,
+  NameRequiredError,
+  UserAlreadySuspendedError,
+  UserInvariantError,
+} from '../errors';
 import { UserCreatedEvent } from '../events/user-created-event';
 import { UserUpdatedEvent } from '../events/user-updated-event';
 import { UserStatus } from '../value-objects/user-status.v0';
@@ -76,17 +81,18 @@ class User extends AggregateRoot<number> {
     firstName: string;
     lastName: string;
     correlationId: string;
+    authAccountId?: number;
   }): User {
     const email = params.email.trim().toLowerCase();
     const firstName = params.firstName.trim();
     const lastName = params.lastName.trim();
 
     if (!email) {
-      throw new EmailRequired()
+      throw new EmailRequired();
     }
 
     if (!firstName || !lastName) {
-      throw new NameRequiredError()
+      throw new NameRequiredError();
     }
 
     const now = new Date();
@@ -105,7 +111,12 @@ class User extends AggregateRoot<number> {
     user.addDomainEvent(
       new UserCreatedEvent(
         user.id,
-        new UserCreatedEvent.Payload(user.id, user.userType, user.email),
+        new UserCreatedEvent.Payload(
+          user.id,
+          user.userType,
+          user.email,
+          params.authAccountId,
+        ),
         params.correlationId,
       ),
     );
@@ -124,19 +135,13 @@ class User extends AggregateRoot<number> {
     const email = params.email?.trim().toLowerCase();
 
     if (firstName !== undefined && !firstName) {
-      throw new UserInvariantError(
-        'firstName cannot be empty',
-      );
+      throw new UserInvariantError('firstName cannot be empty');
     }
     if (lastName !== undefined && !lastName) {
-      throw new UserInvariantError(
-        'lastName cannot be empty',
-      );
+      throw new UserInvariantError('lastName cannot be empty');
     }
     if (email !== undefined && !email) {
-      throw new UserInvariantError(
-        'email cannot be empty',
-      );
+      throw new UserInvariantError('email cannot be empty');
     }
 
     if (firstName !== undefined) {
@@ -161,7 +166,7 @@ class User extends AggregateRoot<number> {
 
   public suspend(): void {
     if (this.isSuspended()) {
-      throw new UserAlreadySuspendedError()
+      throw new UserAlreadySuspendedError();
     }
 
     this._status = UserStatus.SUSPENDED;
@@ -176,7 +181,6 @@ class User extends AggregateRoot<number> {
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
   }
-
 
   public static reconstitute(params: {
     id: number;
