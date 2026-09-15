@@ -3,10 +3,11 @@ import { Verification as PrismaVerification } from '@generated/prisma/client';
 import { VerificationMapper } from '../mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { IVerificationRepository, Verification } from '../../domain';
+import { VerificationId } from '../../domain/value-objects/verification-id.vo';
 
 @Injectable()
 export class PrismaVerificationRepository
-  extends PrismaBaseRepository<Verification, PrismaVerification>
+  extends PrismaBaseRepository<VerificationId, Verification, PrismaVerification>
   implements IVerificationRepository
 {
   constructor(prisma: PrismaService, mapper: VerificationMapper) {
@@ -18,7 +19,7 @@ export class PrismaVerificationRepository
   }
 
   async findPendingVerification(
-    authAccountId: number,
+    authAccountId: string,
   ): Promise<Verification | null> {
     const record = await this.delegate.findFirst({
       where: {

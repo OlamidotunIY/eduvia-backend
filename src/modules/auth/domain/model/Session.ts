@@ -2,10 +2,11 @@ import { AggregateRoot } from '../../../shared';
 import { AuthInvariantError } from '../errors';
 import { AuthSessionCreatedEvent } from '../events/auth-session-created';
 import { TokenIssuedEvent } from '../events/token-issued';
+import { SessionId } from '../value-objects/session-id.vo';
 import { SessionStatus } from '../value-objects/session-stutus.v0';
 
-class Session extends AggregateRoot<number> {
-  public readonly authAccountId: number;
+class Session extends AggregateRoot<SessionId> {
+  public readonly authAccountId: string;
   public readonly createdAt: Date;
   private _refreshTokenHash: string;
   private _accessTokenExpiresAt: Date;
@@ -17,8 +18,8 @@ class Session extends AggregateRoot<number> {
   private _updatedAt: Date;
 
   private constructor(params: {
-    id: number;
-    authAccountId: number;
+    id: SessionId;
+    authAccountId: string;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -41,10 +42,6 @@ class Session extends AggregateRoot<number> {
     this._revokedAt = params.revokedAt;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
-  }
-
-  public getId(): number {
-    return this.id;
   }
 
   public get refreshTokenHash(): string {
@@ -95,8 +92,8 @@ class Session extends AggregateRoot<number> {
   }
 
   public static create(params: {
-    id: number;
-    authAccountId: number;
+    id: SessionId;
+    authAccountId: string;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -140,7 +137,7 @@ class Session extends AggregateRoot<number> {
 
     session.addDomainEvent(
       new AuthSessionCreatedEvent(
-        session.id,
+        session.getId(),
         new AuthSessionCreatedEvent.Payload(
           session.authAccountId
         ),
@@ -150,7 +147,7 @@ class Session extends AggregateRoot<number> {
 
     session.addDomainEvent(
       new TokenIssuedEvent(
-        session.id,
+        session.getId(),
         new TokenIssuedEvent.Payload(session.authAccountId),
         params.correlationId,
       ),
@@ -184,8 +181,8 @@ class Session extends AggregateRoot<number> {
   }
 
   public static reconstitute(params: {
-    id: number;
-    authAccountId: number;
+    id: SessionId;
+    authAccountId: string;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;

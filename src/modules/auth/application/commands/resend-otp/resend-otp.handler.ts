@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ResendOtpCommand } from './resend-otp.command';
-import { AuthStatus, IAuthAccountRepository, IOtpPort, IVerificationRepository, Verification, VerificationType } from '../../../domain';
+import { AuthStatus, IAuthAccountRepository, IOtpPort, IVerificationRepository, Verification, VerificationId, VerificationType } from '../../../domain';
 
 @CommandHandler(ResendOtpCommand)
 export class ResendOtpHandler implements ICommandHandler<ResendOtpCommand> {
@@ -32,9 +32,9 @@ export class ResendOtpHandler implements ICommandHandler<ResendOtpCommand> {
     // Creating a new Verification fires AuthVerificationCreatedEvent,
     // which the notification module listens to and sends the OTP email
     const verification = Verification.create({
-      id: 0,
+      id: VerificationId.create(),
       authAccountId: payload.authAccountId,
-      identifier: String(payload.authAccountId),
+      identifier: payload.authAccountId,
       valueHash: hash,
       verificationType: VerificationType.EMAIL_VERIFICATION,
       expiresAt,

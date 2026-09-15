@@ -19,8 +19,6 @@ export class GetSessionHandler implements IQueryHandler<GetSessionQuery> {
     return {
       id: session.getId(),
       authAccountId: session.authAccountId,
-      userId: session.userId,
-      userType: session.userType,
       accessTokenExpiresAt: session.accessTokenExpiresAt,
       refreshTokenExpiresAt: session.refreshTokenExpiresAt,
       ipAddress: session.ipAddress,

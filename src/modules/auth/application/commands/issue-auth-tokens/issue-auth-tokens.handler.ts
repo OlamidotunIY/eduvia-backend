@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IssueAuthTokensCommand } from './issue-auth-tokens.command';
 import { IssueAuthTokensResult } from './issue-auth-tokens.result';
-import { ISessionRepository, ITokenPort, Session } from '../../../domain/';
+import { ISessionRepository, ITokenPort, Session, SessionId } from '../../../domain/';
 
 @CommandHandler(IssueAuthTokensCommand)
 export class IssueAuthTokensHandler
@@ -26,7 +26,7 @@ export class IssueAuthTokensHandler
     ]);
 
     const session = Session.create({
-      id: payload.id,
+      id: SessionId.create(),
       authAccountId: payload.authAccountId,
       refreshTokenHash: refreshTokenResult.hash,
       accessTokenExpiresAt: accessTokenResult.expiresAt,

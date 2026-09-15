@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Session as PrismaSession, SessionStatus as PrismaSessionStatus } from '@generated/prisma/client';
 import { IMapper } from '@modules/shared';
 import { Session, SessionStatus } from '../../domain';
+import { SessionId } from '../../domain/value-objects/session-id.vo';
 
 @Injectable()
 export class SessionMapper implements IMapper<Session, PrismaSession> {
   toDomain(record: PrismaSession): Session {
     return Session.reconstitute({
-      id: record.id,
+      id: SessionId.from(record.id),
       authAccountId: record.authAccountId,
       refreshTokenHash: record.refreshTokenHash,
       accessTokenExpiresAt: record.accessTokenExpiresAt,

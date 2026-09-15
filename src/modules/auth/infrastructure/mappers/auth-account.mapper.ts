@@ -5,6 +5,7 @@ import {
 } from '@generated/prisma/client';
 import { AuthAccount, AuthStatus } from '../../domain';
 import { IMapper } from '@modules/shared';
+import { AuthAccountId } from '../../domain/value-objects/auth-account-id.vo';
 
 @Injectable()
 export class AuthAccountMapper implements IMapper<
@@ -13,7 +14,7 @@ export class AuthAccountMapper implements IMapper<
 > {
   toDomain(record: PrismaAuthAccount): AuthAccount {
     return AuthAccount.reconstitute({
-      id: record.id,
+      id: AuthAccountId.from(record.id),
       userId: record.userId,
       credentialHash: record.credentialHash,
       scope: record.scope,

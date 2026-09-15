@@ -1,5 +1,5 @@
 export interface LogoutPayload {
-  sessionId: number;
+  sessionId: string;
   jti: string;
   correlationId: string;
 }

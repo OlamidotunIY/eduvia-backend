@@ -1,5 +1,4 @@
 export interface CreateAuthAccountPayload {
-  id: number;
   credentialHash: string;
   scope: string;
   correlationId: string;
@@ -12,7 +11,7 @@ export interface CreateAuthAccountPayload {
 }
 
 export interface CreateAuthAccountResult {
-  id: number;
+  id: string;
   preAuthToken: string;
   preAuthTokenExpiresAt: Date;
 }

@@ -1,4 +1,4 @@
 export interface SuspendAuthAccountPayload {
-    authAccountId: number;
+    authAccountId: string;
     correlationId: string;
 }

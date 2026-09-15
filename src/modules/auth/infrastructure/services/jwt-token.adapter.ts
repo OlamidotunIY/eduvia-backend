@@ -65,7 +65,7 @@ export class JwtTokenAdapter implements ITokenPort {
   }
 
   async generatePreAuthToken(params: {
-    authAccountId: number;
+    authAccountId: string;
   }): Promise<GeneratePreAuthTokenResult> {
     const now = Math.floor(Date.now() / 1000);
 

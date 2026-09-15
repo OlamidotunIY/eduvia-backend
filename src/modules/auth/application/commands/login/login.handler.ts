@@ -13,7 +13,9 @@ import {
   ITokenPort,
   IVerificationRepository,
   Session,
+  SessionId,
   Verification,
+  VerificationId,
   VerificationType,
 } from '../../../domain';
 import { UserFacade } from '@modules/user';
@@ -63,9 +65,9 @@ export class LoginHandler implements ICommandHandler<
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       const verification = Verification.create({
-        id: 0,
-        authAccountId: authAccount.id,
-        identifier: String(authAccount.id),
+        id: VerificationId.create(),
+        authAccountId: authAccount.getId(),
+        identifier: user.email,
         valueHash: hash,
         verificationType: VerificationType.EMAIL_VERIFICATION,
         expiresAt,
@@ -84,7 +86,7 @@ export class LoginHandler implements ICommandHandler<
 
     const [accessTokenResult, refreshTokenResult] = await Promise.all([
       this.tokenPort.generateAccessToken({
-        sub: authAccount.id,
+        sub: authAccount.getId(),
         userId: user.id,
         userType: userType,
         scope: authAccount.scope,
@@ -94,8 +96,8 @@ export class LoginHandler implements ICommandHandler<
 
     // 7. Create Session
     const session = Session.create({
-      id: 0,
-      authAccountId: authAccount.id,
+      id: SessionId.create(),
+      authAccountId: authAccount.getId(),
       refreshTokenHash: refreshTokenResult.hash,
       accessTokenExpiresAt: accessTokenResult.expiresAt,
       refreshTokenExpiresAt: refreshTokenResult.expiresAt,

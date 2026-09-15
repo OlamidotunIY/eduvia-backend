@@ -1,9 +1,8 @@
 import { UserType } from "@modules/user";
 
 export interface IssueAuthTokensPayload {
-  id: number;
-  authAccountId: number;
-  userId: number;
+  authAccountId: string;
+  userId: string;
   userType: UserType;
   scope: string;
   ipAddress: string;
@@ -12,7 +11,7 @@ export interface IssueAuthTokensPayload {
 }
 
 export interface IssueAuthTokensResult {
-  sessionId: number;
+  sessionId: string;
   accessToken: string;
   accessTokenExpiresAt: Date;
   refreshToken: string;

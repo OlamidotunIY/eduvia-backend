@@ -1,6 +1,6 @@
 export interface AccessTokenPayload {
-  sub: number;
-  userId: number;
+  sub: string;
+  userId: string;
   userType: string;
   scope: string;
   jti: string;
@@ -9,7 +9,7 @@ export interface AccessTokenPayload {
 }
 
 export interface PreAuthTokenPayload {
-  authAccountId: number;
+  authAccountId: string;
   purpose: 'email_verification';
   iat: number;
   exp: number;
@@ -42,7 +42,7 @@ export abstract class ITokenPort {
   abstract generateRefreshToken(): Promise<GenerateRefreshTokenResult>;
 
   abstract generatePreAuthToken(params: {
-    authAccountId: number;
+    authAccountId: string;
   }): Promise<GeneratePreAuthTokenResult>;
 
   abstract verifyPreAuthToken(token: string): Promise<PreAuthTokenPayload>;

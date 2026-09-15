@@ -1,13 +1,13 @@
 import { VerificationType } from '../value-objects/verification-type.v0';
 import { VerificationStatus } from '../value-objects/verification-status.v0';
 import { AuthVerificationCreatedEvent } from '../events/auth-verification-created';
-import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation.error';
 import { AggregateRoot } from '../../../shared';
-import { InvalidVerificationValue, InvariantError } from '../errors';
+import { InvalidVerificationValue, AuthInvariantError } from '../errors';
 import { VerificationNotPending } from '../errors/verification-not-pending.error';
+import { VerificationId } from '../value-objects/verification-id.vo';
 
-class Verification extends AggregateRoot<number> {
-  public readonly authAccountId: number;
+class Verification extends AggregateRoot<VerificationId> {
+  public readonly authAccountId: string;
   public readonly verificationType: VerificationType;
   public readonly expiresAt: Date;
   public readonly createdAt: Date;
@@ -19,8 +19,8 @@ class Verification extends AggregateRoot<number> {
   private _updatedAt: Date;
 
   private constructor(params: {
-    id: number;
-    authAccountId: number;
+    id: VerificationId;
+    authAccountId: string;
     identifier: string;
     valueHash: string;
     verificationType: VerificationType;
@@ -43,10 +43,6 @@ class Verification extends AggregateRoot<number> {
     this._maxAttempts = params.maxAttempts;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
-  }
-
-  public getId(): number {
-    return this.id;
   }
 
   public get identifier(): string {
@@ -93,8 +89,8 @@ class Verification extends AggregateRoot<number> {
   }
 
   public static create(params: {
-    id: number;
-    authAccountId: number;
+    id: VerificationId;
+    authAccountId: string;
     identifier: string;
     valueHash: string;
     verificationType: VerificationType;
@@ -103,19 +99,19 @@ class Verification extends AggregateRoot<number> {
     correlationId: string;
   }): Verification {
     if (!params.identifier.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Verification identifier cannot be empty',
       );
     }
 
     if (!params.valueHash.trim()) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Verification value hash cannot be empty',
       );
     }
 
     if (params.maxAttempts <= 0) {
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'maxAttempts must be greater than zero',
       );
     }
@@ -138,10 +134,12 @@ class Verification extends AggregateRoot<number> {
 
     verification.addDomainEvent(
       new AuthVerificationCreatedEvent(
-        verification.id,
+        verification.getId(),
         new AuthVerificationCreatedEvent.Payload(
-          verification.id,
+          verification.getId(),
           verification.authAccountId,
+          verification.identifier,
+          verification.verificationType,
         ),
         params.correlationId,
       ),
@@ -162,7 +160,7 @@ class Verification extends AggregateRoot<number> {
       this._verificationStatus = VerificationStatus.EXPIRED;
       this.touch();
 
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Verification has expired',
       );
     }
@@ -171,7 +169,7 @@ class Verification extends AggregateRoot<number> {
       this._verificationStatus = VerificationStatus.MAX_ATTEMPTS_EXCEEDED;
       this.touch();
 
-      throw new InvariantError(
+      throw new AuthInvariantError(
         'Maximum verification attempts exceeded',
       );
     }
@@ -187,7 +185,7 @@ class Verification extends AggregateRoot<number> {
 
         this.touch();
 
-        throw new InvariantError(
+        throw new AuthInvariantError(
           'Maximum verification attempts exceeded',
         );
       }
@@ -218,8 +216,8 @@ class Verification extends AggregateRoot<number> {
   }
 
   public static reconstitute(params: {
-    id: number;
-    authAccountId: number;
+    id: VerificationId;
+    authAccountId: string;
     identifier: string;
     valueHash: string;
     verificationType: VerificationType;

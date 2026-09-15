@@ -1,9 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   AuthAccount,
+  AuthAccountId,
   IAuthAccountRepository,
+  IOtpPort,
   ITokenPort,
   IPasswordHashPort,
+  IVerificationRepository,
+  Verification,
+  VerificationId,
+  VerificationType,
 } from '../../../domain';
 import { CreateAuthAccountCommand } from './create-auth-account.command';
 import { CreateAuthAccountResult } from './create-auth-account.result';
@@ -15,8 +21,10 @@ export class CreateAuthAccountHandler implements ICommandHandler<
 > {
   constructor(
     private readonly authAccountRepository: IAuthAccountRepository,
+    private readonly verificationRepository: IVerificationRepository,
     private readonly tokenPort: ITokenPort,
     private readonly passwordHashPort: IPasswordHashPort,
+    private readonly otpPort: IOtpPort,
   ) {}
 
   async execute(
@@ -24,11 +32,10 @@ export class CreateAuthAccountHandler implements ICommandHandler<
   ): Promise<CreateAuthAccountResult> {
     const { payload } = command;
 
-    // Generate pre-auth token first so it can be embedded in the domain event
-    // payload — the event will be routed to the frontend via WebSocket (outbox)
-    // Generate pre-auth token first
+    const authAccountId = AuthAccountId.create();
+
     const preAuthResult = await this.tokenPort.generatePreAuthToken({
-      authAccountId: payload.id,
+      authAccountId: authAccountId.value,
     });
 
     const hashedPassword = await this.passwordHashPort.hash(
@@ -36,7 +43,7 @@ export class CreateAuthAccountHandler implements ICommandHandler<
     );
 
     const authAccount = AuthAccount.create({
-      id: payload.id,
+      id: authAccountId,
       credentialHash: hashedPassword,
       scope: payload.scope,
       preAuthToken: preAuthResult.token,
@@ -44,8 +51,21 @@ export class CreateAuthAccountHandler implements ICommandHandler<
       correlationId: payload.correlationId,
     });
 
-    // Base repo pulls domain events and writes them to outbox atomically
     await this.authAccountRepository.save(authAccount);
+
+    const otp = await this.otpPort.generate();
+    const verification = Verification.create({
+      id: VerificationId.create(),
+      authAccountId: authAccount.getId(),
+      identifier: payload.profileData.email.trim().toLowerCase(),
+      valueHash: otp.hash,
+      verificationType: VerificationType.EMAIL_VERIFICATION,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      maxAttempts: 5,
+      correlationId: payload.correlationId,
+    });
+
+    await this.verificationRepository.save(verification);
 
     return {
       id: authAccount.getId(),

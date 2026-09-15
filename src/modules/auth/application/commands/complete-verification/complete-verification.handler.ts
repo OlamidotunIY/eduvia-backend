@@ -8,6 +8,7 @@ import {
   ITokenPort,
   IVerificationRepository,
   Session,
+  SessionId,
 } from '../../../domain';
 import { UserFacade } from '@modules/user';
 
@@ -56,7 +57,10 @@ export class CompleteVerificationHandler implements ICommandHandler<
     authAccount.activate();
     await this.authAccountRepository.save(authAccount);
 
-    // Issue tokens after verification (Option A)
+    if (!authAccount.userId) {
+      throw new Error('Auth account is not linked to a user');
+    }
+
     const user = await this.userFacade.getUserById(authAccount.userId);
     if (!user) {
       throw new Error('User not found');
@@ -66,7 +70,7 @@ export class CompleteVerificationHandler implements ICommandHandler<
 
     const [accessTokenResult, refreshTokenResult] = await Promise.all([
       this.tokenPort.generateAccessToken({
-        sub: authAccount.id,
+        sub: authAccount.getId(),
         userId: user.id,
         userType: userType,
         scope: authAccount.scope,
@@ -75,8 +79,8 @@ export class CompleteVerificationHandler implements ICommandHandler<
     ]);
 
     const session = Session.create({
-      id: 0,
-      authAccountId: authAccount.id,
+      id: SessionId.create(),
+      authAccountId: authAccount.getId(),
       refreshTokenHash: refreshTokenResult.hash,
       accessTokenExpiresAt: accessTokenResult.expiresAt,
       refreshTokenExpiresAt: refreshTokenResult.expiresAt,

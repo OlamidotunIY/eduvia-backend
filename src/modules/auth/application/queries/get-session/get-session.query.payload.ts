@@ -2,10 +2,8 @@ import { SessionStatus } from '../../../domain';
 import { UserType } from '@modules/user';
 
 export interface SessionDTO {
-  id: number;
-  authAccountId: number;
-  userId: number;
-  userType: UserType;
+  id: string;
+  authAccountId: string;
   accessTokenExpiresAt: Date;
   refreshTokenExpiresAt: Date;
   ipAddress: string;
@@ -17,5 +15,5 @@ export interface SessionDTO {
 }
 
 export interface GetSessionPayload {
-  sessionId: number;
+  sessionId: string;
 }

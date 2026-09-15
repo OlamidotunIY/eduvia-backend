@@ -50,12 +50,12 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpDto, ipAddress: string, userAgent: string) {
     return this.commandBus.execute(
       new CompleteVerificationCommand({
-        verificationId: dto.authAccountId, // Will be updated to take authAccountId instead
+        authAccountId: dto.authAccountId,
         value: dto.code,
         ipAddress,
         userAgent,
         correlationId: crypto.randomUUID(),
-      } as any),
+      }),
     );
   }
 
@@ -71,9 +71,8 @@ export class AuthService {
   async register(dto: RegisterDto) {
     return this.commandBus.execute(
       new CreateAuthAccountCommand({
-        id: 0, // Prisma will auto-increment
-        credentialHash: dto.password, // Will be hashed in the handler
-        scope: 'user', // Default scope
+        credentialHash: dto.password,
+        scope: 'user',
         profileData: {
           email: dto.email,
           firstName: dto.firstName,
@@ -85,7 +84,7 @@ export class AuthService {
     );
   }
 
-  async getMe(userId: number) {
+  async getMe(userId: string) {
     return this.queryBus.execute(new GetMeQuery({ userId }));
   }
 }

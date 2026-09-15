@@ -12,15 +12,15 @@ export class LoginDto {
 }
 
 export class LogoutDto {
-  sessionId!: number;
+  sessionId!: string;
   jti!: string;
 }
 
 export class VerifyOtpDto {
   code!: string;
-  authAccountId!: number;
+  authAccountId!: string;
 }
 
 export class ResendOtpDto {
-  authAccountId!: number;
+  authAccountId!: string;
 }

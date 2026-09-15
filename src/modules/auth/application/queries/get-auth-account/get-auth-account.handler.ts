@@ -22,7 +22,6 @@ export class GetAuthAccountHandler implements IQueryHandler<GetAuthAccountQuery>
     return {
       id: authAccount.getId(),
       userId: authAccount.userId,
-      userType: authAccount.userType,
       credentialHash: authAccount.credentialHash,
       scope: authAccount.scope,
       totpEnabled: authAccount.totpEnabled,

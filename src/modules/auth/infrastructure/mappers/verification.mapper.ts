@@ -6,12 +6,13 @@ import {
 } from '@generated/prisma/client';
 import { IMapper } from '@modules/shared';
 import { Verification, VerificationStatus, VerificationType } from '../../domain';
+import { VerificationId } from '../../domain/value-objects/verification-id.vo';
 
 @Injectable()
 export class VerificationMapper implements IMapper<Verification, PrismaVerification> {
   toDomain(record: PrismaVerification): Verification {
     return Verification.reconstitute({
-      id: record.id,
+      id: VerificationId.from(record.id),
       authAccountId: record.authAccountId,
       identifier: record.identifier,
       valueHash: record.valueHash,

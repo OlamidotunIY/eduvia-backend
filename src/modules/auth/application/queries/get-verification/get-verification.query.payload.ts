@@ -2,8 +2,8 @@ import { VerificationStatus } from "../../../domain/value-objects/verification-s
 import { VerificationType } from "../../../domain/value-objects/verification-type.v0";
 
 export interface VerificationDTO {
-    id: number;
-    authAccountId: number;
+    id: string;
+    authAccountId: string;
     identifier: string;
     verificationType: VerificationType;
     verificationStatus: VerificationStatus;
@@ -15,5 +15,5 @@ export interface VerificationDTO {
 }
 
 export interface GetVerificationPayload {
-    verificationId: number;
+    verificationId: string;
 }

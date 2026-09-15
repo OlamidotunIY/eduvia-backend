@@ -1,3 +1,3 @@
 export interface RevokeAllSessionsPayload {
-    userId: number;
+    userId: string;
 }
