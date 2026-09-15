@@ -2,11 +2,17 @@
 
 model OutboxMessage {
   id            String @id @db.Uuid
+  eventId       String @unique @db.Uuid
   type          String
   payload       Json
   aggregateType String
-  aggregateId   Int
+  aggregateId   String @db.Uuid
+  correlationId String
+  occurredAt    DateTime
   status        OutboxStatus
+  attempts      Int          @default(0)
+  processedAt   DateTime?
+  lastError     String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }

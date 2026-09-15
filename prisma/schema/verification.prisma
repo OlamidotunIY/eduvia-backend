@@ -2,7 +2,7 @@
 
 model Verification {
   id                String @id @db.Uuid
-  authAccountId      String @id @db.Uuid
+  authAccountId      String @db.Uuid
   identifier         String
   valueHash          String
   verificationType   VerificationType

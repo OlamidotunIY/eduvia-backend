@@ -2,7 +2,7 @@
 
 model AuthAccount {
   id             String @id @db.Uuid
-  userId         String? @id @db.Uuid
+  userId         String? @unique @db.Uuid
   credentialHash String
   scope          String
   totpSecret     String?

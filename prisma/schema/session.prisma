@@ -2,7 +2,7 @@
 
 model Session {
   id                    String @id @db.Uuid
-  authAccountId         String @id @db.Uuid
+  authAccountId         String @db.Uuid
   refreshTokenHash      String
   accessTokenExpiresAt  DateTime
   refreshTokenExpiresAt DateTime

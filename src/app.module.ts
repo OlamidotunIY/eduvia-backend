@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BullMqModule } from '@modules/shared';
+import { BullMqModule, OutboxModule } from '@modules/shared';
 import { UserModule } from '@modules/user';
 import { AuthModule } from '@modules/auth';
 
@@ -18,6 +18,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       serviceId: 'eduvia-backend',
     }),
     BullMqModule,
+    OutboxModule,
     UserModule,
     AuthModule,
   ],
