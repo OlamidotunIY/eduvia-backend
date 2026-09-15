@@ -22,13 +22,22 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
-    "baseUrl": ".",
     "paths": {
-      "@src/*":              ["src/*"],
-      "@module/*":           ["src/modules/*"],
-      "@generated/prisma":   ["src/generated/prisma"],
-      "@generated/prisma/*": ["src/generated/prisma/*"]
+      "@generated/prisma": [
+        "./src/generated/prisma"
+      ],
+      "@generated/prisma/*": [
+        "./src/generated/prisma/*"
+      ],
+      "@modules/auth": [
+        "./src/modules/auth/index.ts"
+      ],
+      "@modules/shared": [
+        "./src/modules/shared/index.ts"
+      ],
+      "@modules/user": [
+        "./src/modules/user/index.ts"
+      ]
     }
   }
 }
-

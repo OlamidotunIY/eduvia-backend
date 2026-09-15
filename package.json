@@ -22,7 +22,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "postinstall": "prisma skills sync || exit 0",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "sync:aliases": "node scripts/sync-module-aliases.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
