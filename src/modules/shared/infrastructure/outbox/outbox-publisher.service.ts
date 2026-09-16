@@ -1,16 +1,15 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OutboxStatus } from '@generated/prisma/enums';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma.service';
 import { OUTBOX_EVENT_ROUTES } from './outbox-event-routes';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-class OutboxPublisherService implements OnModuleInit, OnModuleDestroy {
+class OutboxPublisherService  {
   private readonly logger = new Logger(OutboxPublisherService.name);
-  private readonly intervalMs = Number(process.env.OUTBOX_PUBLISH_INTERVAL_MS ?? 5000);
   private readonly batchSize = Number(process.env.OUTBOX_PUBLISH_BATCH_SIZE ?? 50);
-  private timer: NodeJS.Timeout | undefined;
   private isPublishing = false;
 
   constructor(
@@ -19,16 +18,11 @@ class OutboxPublisherService implements OnModuleInit, OnModuleDestroy {
     @InjectQueue('user-events') private readonly userEventsQueue: Queue,
   ) {}
 
-  onModuleInit(): void {
-    this.timer = setInterval(() => void this.publishPending(), this.intervalMs);
-    void this.publishPending();
-  }
-
-  onModuleDestroy(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
-  }
+   @Cron(CronExpression.EVERY_SECOND)
+    async publishOutboxMessages(): Promise<void> {
+    await this.publishPending();
+  
+   }
 
   private async publishPending(): Promise<void> {
     if (this.isPublishing) {
