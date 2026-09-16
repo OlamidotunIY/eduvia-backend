@@ -5,11 +5,13 @@ import { AppService } from './app.service';
 import { BullMqModule, OutboxModule } from '@modules/shared';
 import { UserModule } from '@modules/user';
 import { AuthModule } from '@modules/auth';
+import { ScheduleModule } from '@nestjs/schedule';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     // Distributed tracing, auto-correlated logs, request/job metrics, error
     // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
     ObserveModule.forRoot({
