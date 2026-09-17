@@ -160,6 +160,39 @@ OrgInvitation
 - `invitation.expire()` — marks expired (called by cron)
 - `invitation.isValid()` — returns false if expired, revoked, or accepted
 
+### 6. OrgMembership (Entity)
+
+Represents a user's role within a specific organization. Managed by the Org domain.
+
+`
+OrgMembership
+  id:         UUID
+  orgId:      UUID (FK -> Organization)
+  userId:     UUID (FK -> User)
+  role:       OrgOwner | OrgAdmin | LeadTeacher | Teacher | TeachingAssistant
+  subjects:   string[] (subjects this teacher is qualified for, empty for admin roles)
+  status:     active | inactive | suspended
+  joinedAt:   DateTime
+  updatedAt:  DateTime
+`
+
+**Role Hierarchy (descending permissions):**
+`
+OrgOwner > OrgAdmin > LeadTeacher > Teacher > TeachingAssistant
+`
+
+**Per-role capabilities:**
+| Capability | OrgOwner | OrgAdmin | LeadTeacher | Teacher | TA |
+|---|---|---|---|---|---|
+| Delete org | Yes | - | - | - | - |
+| Manage admins | Yes | - | - | - | - |
+| Manage teachers | Yes | Yes | - | - | - |
+| Review/approve reports | Yes | Yes | Yes | - | - |
+| Manage curriculum resources | Yes | Yes | Yes | - | - |
+| Run solo lessons | Yes | - | Yes | Yes | - |
+| Assist in lessons | Yes | - | Yes | Yes | Yes |
+| View all org reports | Yes | Yes | Yes | - | - |
+
 ---
 
 ## Domain Events
@@ -458,3 +491,4 @@ enum InvitationStatus {
 | PATCH | /orgs/:orgId/policy | OrgAdmin token | Update org operational policy |
 | PATCH | /orgs/:orgId/members/:userId/role | OrgAdmin token | Change member role |
 | DELETE | /orgs/:orgId/members/:userId | OrgAdmin token | Remove member from org |
+

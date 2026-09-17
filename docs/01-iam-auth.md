@@ -1,7 +1,7 @@
 # 01 — IAM & Auth
 
 > **Module:** `src/modules/auth` + `src/modules/user`
-> **Status:** Partially built — AuthAccount, Session, Verification, User aggregates exist. Missing: ParentProfile, StudentProfile, OrgMembership, teacher invitation/application flows.
+> **Status:** Partially built — AuthAccount, Session, Verification, User aggregates exist. Missing: ParentProfile, StudentProfile.
 
 ---
 
@@ -16,7 +16,6 @@ The IAM & Auth module is the identity backbone of Eduvia. It handles:
 - TOTP two-factor authentication
 - Credential updates and account suspension
 - Parent-child student profile management
-- Org membership and role assignment
 
 ---
 
@@ -182,41 +181,6 @@ StudentProfile
 
 ---
 
-### 7. OrgMembership (Entity) — TO BUILD
-
-Represents a user's role within a specific organization. Not an aggregate root — managed by the Org domain.
-
-```
-OrgMembership
-  id:         UUID
-  orgId:      UUID (FK -> Organization)
-  userId:     UUID (FK -> User)
-  role:       OrgOwner | OrgAdmin | LeadTeacher | Teacher | TeachingAssistant
-  subjects:   string[] (subjects this teacher is qualified for, empty for admin roles)
-  status:     active | inactive | suspended
-  joinedAt:   DateTime
-  updatedAt:  DateTime
-```
-
-**Role Hierarchy (descending permissions):**
-```
-OrgOwner > OrgAdmin > LeadTeacher > Teacher > TeachingAssistant
-```
-
-**Per-role capabilities:**
-| Capability | OrgOwner | OrgAdmin | LeadTeacher | Teacher | TA |
-|---|---|---|---|---|---|
-| Delete org | Yes | — | — | — | — |
-| Manage admins | Yes | — | — | — | — |
-| Manage teachers | Yes | Yes | — | — | — |
-| Review/approve reports | Yes | Yes | Yes | — | — |
-| Manage curriculum resources | Yes | Yes | Yes | — | — |
-| Run solo lessons | Yes | — | Yes | Yes | — |
-| Assist in lessons | Yes | — | Yes | Yes | Yes |
-| View all org reports | Yes | Yes | Yes | — | — |
-
----
-
 ## Domain Events
 
 | Event | Emitted By | Payload | Consumer |
@@ -271,14 +235,6 @@ Business actions = application-layer operations that coordinate domain objects.
 | Action | Notes |
 |---|---|
 | Register student (by parent) | Parent creates StudentProfile for their child; no auth account created |
-| Invite teacher to org | OrgAdmin creates invitation token; teacher accepts via deep link |
-| Teacher applies via marketplace | Teacher submits application to org accepting their subject |
-| Auto-screen teacher application | System checks subject match; rejects non-matching; queues matched for admin review |
-| Admin approves/rejects teacher application | Admin reviews; on approve: creates OrgMembership |
-| Promote teacher to LeadTeacher | OrgAdmin updates OrgMembership role |
-| Parent discovers org | Elasticsearch query on public org profiles |
-| Parent enrolls student in org | Creates StudentEnrollment record; triggers billing subscription flow |
-| Org invites parent | Org sends invitation email with pre-filled org context |
 
 ---
 
@@ -306,7 +262,6 @@ Interfaces defined in `domain/ports/` — implemented in `infrastructure/service
 | User | `IUserRepository` | `PrismaUserRepository` | Global |
 | ParentProfile | `IParentProfileRepository` | To build | Global |
 | StudentProfile | `IStudentProfileRepository` | To build | Global |
-| OrgMembership | `IOrgMembershipRepository` | To build (in Org module) | Org-scoped |
 
 ---
 
@@ -324,7 +279,6 @@ Located in `prisma/schema/`:
 - `parent-profile.prisma` — ParentProfile model
 - `student-profile.prisma` — StudentProfile model
 - Update `user.prisma` to add relations to ParentProfile
-- `org-membership.prisma` — in Org module schema file
 
 ---
 
@@ -355,7 +309,3 @@ IAM does not have real-time WebSocket events. Auth events are REST-only. Session
 |---|---|---|---|
 | POST | /parents/students | Parent access token | Register a student (child) |
 | GET | /parents/students | Parent access token | List parent's students |
-| POST | /org/:orgId/invitations | OrgAdmin token | Invite teacher to org |
-| POST | /org/:orgId/apply | Public | Teacher applies to org via marketplace |
-| POST | /org/:orgId/applications/:id/approve | OrgAdmin token | Approve teacher application |
-| POST | /org/:orgId/applications/:id/reject | OrgAdmin token | Reject teacher application |
