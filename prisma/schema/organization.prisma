@@ -1,0 +1,32 @@
+model Organization {
+  id                 String   @id @db.Uuid
+  ownerId            String   @db.Uuid
+  name               String
+  slug               String   @unique
+  description        String?
+  logoUrl            String?
+  websiteUrl         String?
+  contactEmail       String
+  contactPhone       String?
+  country            String
+  timezone           String
+  status             OrgStatus
+  marketplaceListed  Boolean  @default(false)
+  acceptingTeachers  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  /* subjects           OrgSubject[]
+  memberships        OrgMembership[]
+  policy             OrgPolicy?
+  subscriptionPlans  SubscriptionPlan[]
+  invitations        OrgInvitation[]
+  applications       TeacherApplication[] */
+}
+
+enum OrgStatus {
+  pending_approval
+  active
+  suspended
+  rejected
+}

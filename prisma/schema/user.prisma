@@ -1,0 +1,27 @@
+// use prisma-8
+
+model User {
+  id           String @id @db.Uuid
+  userType     UserType
+  firstName    String
+  lastName     String
+  email        String        @unique
+  status       UserStatus
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  authAccounts AuthAccount[]
+  parentProfile ParentProfile?
+}
+
+enum UserType {
+  student
+  teacher
+  admin
+  parent
+}
+
+enum UserStatus {
+  active
+  suspended
+}
