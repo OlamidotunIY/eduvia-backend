@@ -85,7 +85,7 @@ class Verification extends AggregateRoot<VerificationId> {
   }
 
   public hasExceededMaxAttempts(): boolean {
-    return this._attempts > this._maxAttempts;
+    return this._attempts >= this._maxAttempts;
   }
 
   public static create(params: {

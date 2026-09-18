@@ -2,6 +2,7 @@ import { AccountSuspendedEvent, AuthAccountCreatedEvent } from '../events';
 import { AuthStatus } from '../value-objects/auth-status.v0';
 import {
   AuthAccountAlreadySuspendedError,
+  AuthAccountSuspendedError,
   AuthInvariantError,
 } from '../errors';
 import { AggregateRoot } from '@modules/shared';
@@ -149,22 +150,6 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     this.touch();
   }
 
-  public markPendingEmailVerification(): void {
-    if (this.isPendingEmailVerification()) {
-      return;
-    }
-
-    if (this.isSuspended()) {
-      throw new AuthInvariantError(
-        'A suspended account cannot be marked pending email verification',
-      );
-    }
-
-    this._authStatus = AuthStatus.PENDING_EMAIL_VERIFICATION;
-
-    this.touch();
-  }
-
   public markPendingPasswordReset(): void {
     if (this.isPendingPasswordReset()) {
       return;
@@ -245,7 +230,7 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
 
   public canAuthenticate() : boolean {
     if (this.authStatus === AuthStatus.SUSPENDED) {
-      throw new AuthAccountAlreadySuspendedError();
+      throw new AuthAccountSuspendedError();
     }
 
      if (this.authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION) {
@@ -255,12 +240,12 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
      return this._authStatus === AuthStatus.ACTIVE;
   }
 
-  public isPendingEmailVerification(): boolean {
-    return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION;
-  }
-
   public isPendingPasswordReset(): boolean {
     return this._authStatus === AuthStatus.PENDING_PASSWORD_RESET;
+  }
+
+  public isPendingEmailVerification(): boolean {
+    return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION
   }
 }
 

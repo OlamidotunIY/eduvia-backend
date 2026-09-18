@@ -91,6 +91,22 @@ class Session extends AggregateRoot<SessionId> {
     );
   }
 
+  public static reconstitute(params: {
+    id: SessionId;
+    authAccountId: string;
+    refreshTokenHash: string;
+    accessTokenExpiresAt: Date;
+    refreshTokenExpiresAt: Date;
+    ipAddress: string;
+    userAgent: string;
+    sessionStatus: SessionStatus;
+    revokedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Session {
+    return new Session(params);
+  }
+
   public static create(params: {
     id: SessionId;
     authAccountId: string;
@@ -180,21 +196,7 @@ class Session extends AggregateRoot<SessionId> {
     this._updatedAt = new Date();
   }
 
-  public static reconstitute(params: {
-    id: SessionId;
-    authAccountId: string;
-    refreshTokenHash: string;
-    accessTokenExpiresAt: Date;
-    refreshTokenExpiresAt: Date;
-    ipAddress: string;
-    userAgent: string;
-    sessionStatus: SessionStatus;
-    revokedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): Session {
-    return new Session(params);
-  }
+  
 }
 
 export { Session };
