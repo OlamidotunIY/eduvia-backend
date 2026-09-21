@@ -1,15 +1,15 @@
-import { UserType } from '../../../user/domain/value-objects/user-type.v0';
-import { AuthAccountCreatedEvent } from '../events/auth-account-created';
-import { AccountSuspendedEvent } from '../events/account-suspended';
+import { AccountSuspendedEvent, AuthAccountCreatedEvent } from '../events';
 import { AuthStatus } from '../value-objects/auth-status.v0';
 import {
-  AggregateRoot,
-} from '../../../shared';
-import { AuthAccountAlreadySuspendedError, InvariantError } from '../errors';
+  AuthAccountAlreadySuspendedError,
+  AuthAccountSuspendedError,
+  AuthInvariantError,
+} from '../errors';
+import { AggregateRoot } from '@modules/shared';
+import { AuthAccountId } from '../value-objects/auth-account-id.vo';
 
-class AuthAccount extends AggregateRoot<number> {
-  public readonly userId: number;
-  public readonly userType: UserType;
+class AuthAccount extends AggregateRoot<AuthAccountId> {
+  public userId: string | null;
   private _credentialHash: string;
   private _scope: string;
   private _totpSecret: string | null;
@@ -19,9 +19,8 @@ class AuthAccount extends AggregateRoot<number> {
   private _updatedAt: Date;
 
   private constructor(params: {
-    id: number;
-    userId: number;
-    userType: UserType;
+    id: AuthAccountId;
+    userId: string | null;
     credentialHash: string;
     scope: string;
     totpSecret: string | null;
@@ -33,7 +32,6 @@ class AuthAccount extends AggregateRoot<number> {
     super(params.id);
 
     this.userId = params.userId;
-    this.userType = params.userType;
     this._credentialHash = params.credentialHash;
     this._scope = params.scope;
     this._totpSecret = params.totpSecret;
@@ -43,8 +41,163 @@ class AuthAccount extends AggregateRoot<number> {
     this._updatedAt = params.updatedAt;
   }
 
-  public getId(): number {
-    return this.id;
+  public static reconstitute(params: {
+    id: AuthAccountId;
+    userId: string | null;
+    credentialHash: string;
+    scope: string;
+    totpSecret: string | null;
+    totpEnabled: boolean;
+    authStatus: AuthStatus;
+    createdAt: Date;
+    updatedAt: Date;
+  }): AuthAccount {
+    return new AuthAccount(params);
+  }
+
+  public static create(params: {
+    id: AuthAccountId;
+    credentialHash: string;
+    scope: string;
+    correlationId: string;
+    preAuthToken: string;
+    profileData: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      userType: string;
+    };
+  }): AuthAccount {
+    if (!params.credentialHash.trim()) {
+      throw new AuthInvariantError('Credential hash cannot be empty');
+    }
+
+    if (!params.scope.trim()) {
+      throw new AuthInvariantError('Scope cannot be empty');
+    }
+
+    const now = new Date();
+
+    const authAccount = new AuthAccount({
+      id: params.id,
+      userId: null,
+      credentialHash: params.credentialHash,
+      scope: params.scope.trim(),
+      totpSecret: null,
+      totpEnabled: false,
+      authStatus: AuthStatus.PENDING_EMAIL_VERIFICATION,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    authAccount.addDomainEvent(
+      new AuthAccountCreatedEvent(
+        authAccount.getId(),
+        new AuthAccountCreatedEvent.Payload(
+          authAccount.getId(),
+          params.preAuthToken,
+          params.profileData,
+        ),
+        params.correlationId,
+      ),
+    );
+
+    return authAccount;
+  }
+
+  public linkUser(userId: string): void {
+    if (this.userId !== null) {
+      throw new AuthInvariantError('AuthAccount is already linked to a user');
+    }
+    this.userId = userId;
+    this.touch();
+  }
+
+  public updateCredentials(credentialHash: string): void {
+    if (!credentialHash.trim()) {
+      throw new AuthInvariantError('Credential hash cannot be empty');
+    }
+
+    this._credentialHash = credentialHash;
+    this.touch();
+  }
+
+  public suspend(correlationId: string): void {
+    if (this.isSuspended()) {
+      throw new AuthAccountAlreadySuspendedError();
+    }
+
+    this._authStatus = AuthStatus.SUSPENDED;
+
+    this.touch();
+
+    this.addDomainEvent(
+      new AccountSuspendedEvent(
+        this.getId(),
+        new AccountSuspendedEvent.Payload(this.getId(), this.userId as string),
+        correlationId,
+      ),
+    );
+  }
+
+  public activate(): void {
+    if (this.isActive()) {
+      return;
+    }
+
+    this._authStatus = AuthStatus.ACTIVE;
+
+    this.touch();
+  }
+
+  public markPendingPasswordReset(): void {
+    if (this.isPendingPasswordReset()) {
+      return;
+    }
+
+    if (this.isSuspended()) {
+      throw new AuthInvariantError(
+        'A suspended account cannot be marked pending password reset',
+      );
+    }
+
+    this._authStatus = AuthStatus.PENDING_PASSWORD_RESET;
+
+    this.touch();
+  }
+
+  public enableTotp(secret: string): void {
+    if (!secret.trim()) {
+      throw new AuthInvariantError('TOTP secret cannot be empty');
+    }
+
+    if (this._totpEnabled) {
+      throw new AuthInvariantError('TOTP is already enabled');
+    }
+
+    this._totpSecret = secret;
+    this._totpEnabled = true;
+
+    this.touch();
+  }
+
+  public disableTotp(): void {
+    if (!this._totpEnabled) {
+      return;
+    }
+
+    this._totpEnabled = false;
+    this._totpSecret = null;
+
+    this.touch();
+  }
+
+  public getTotpSecretForPersistence(): string | null {
+    return this._totpSecret;
+  }
+
+  private touch(): void {
+    this._updatedAt = new Date();
   }
 
   public get credentialHash(): string {
@@ -75,181 +228,24 @@ class AuthAccount extends AggregateRoot<number> {
     return this._authStatus === AuthStatus.SUSPENDED;
   }
 
-  public isPendingEmailVerification(): boolean {
-    return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION;
+  public canAuthenticate() : boolean {
+    if (this.authStatus === AuthStatus.SUSPENDED) {
+      throw new AuthAccountSuspendedError();
+    }
+
+     if (this.authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION) {
+      return false;
+     }
+
+     return this._authStatus === AuthStatus.ACTIVE;
   }
 
   public isPendingPasswordReset(): boolean {
     return this._authStatus === AuthStatus.PENDING_PASSWORD_RESET;
   }
 
-  public static create(params: {
-    id: number;
-    userId: number;
-    userType: UserType;
-    credentialHash: string;
-    scope: string;
-    correlationId: string;
-  }): AuthAccount {
-    if (!params.credentialHash.trim()) {
-      throw new InvariantError('Credential hash cannot be empty');
-    }
-
-    if (!params.scope.trim()) {
-      throw new InvariantError('Scope cannot be empty');
-    }
-
-    const now = new Date();
-
-    const authAccount = new AuthAccount({
-      id: params.id,
-      userId: params.userId,
-      userType: params.userType,
-      credentialHash: params.credentialHash,
-      scope: params.scope.trim(),
-      totpSecret: null,
-      totpEnabled: false,
-      authStatus: AuthStatus.PENDING_EMAIL_VERIFICATION,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    authAccount.addDomainEvent(
-      new AuthAccountCreatedEvent(
-        authAccount.id,
-        new AuthAccountCreatedEvent.Payload(authAccount.id, authAccount.userId),
-        params.correlationId,
-      ),
-    );
-
-    return authAccount;
-  }
-
-  public updateCredentials(
-    credentialHash: string
-  ): void {
-    if (!credentialHash.trim()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'Credential hash cannot be empty',
-      );
-    }
-
-    this._credentialHash = credentialHash;
-    this.touch();
-  }
-
-  public suspend(correlationId: string): void {
-    if (this.isSuspended()) {
-      throw new AuthAccountAlreadySuspendedError();
-    }
-
-    this._authStatus = AuthStatus.SUSPENDED;
-
-    this.touch();
-
-    this.addDomainEvent(
-      new AccountSuspendedEvent(
-        this.id,
-        new AccountSuspendedEvent.Payload(this.id, this.userId),
-        correlationId,
-      ),
-    );
-  }
-
-  public activate(): void {
-    if (this.isActive()) {
-      return;
-    }
-
-    this._authStatus = AuthStatus.ACTIVE;
-
-    this.touch();
-  }
-
-  public markPendingEmailVerification(): void {
-    if (this.isPendingEmailVerification()) {
-      return;
-    }
-
-    if (this.isSuspended()) {
-      throw new InvariantError(
-        'A suspended account cannot be marked pending email verification',
-      );
-    }
-
-    this._authStatus = AuthStatus.PENDING_EMAIL_VERIFICATION;
-
-    this.touch();
-  }
-
-  public markPendingPasswordReset(): void {
-    if (this.isPendingPasswordReset()) {
-      return;
-    }
-
-    if (this.isSuspended()) {
-      throw new InvariantError(
-        'A suspended account cannot be marked pending password reset',
-      );
-    }
-
-    this._authStatus = AuthStatus.PENDING_PASSWORD_RESET;
-
-    this.touch();
-  }
-
-  public enableTotp(secret: string): void {
-    if (!secret.trim()) {
-      throw new InvariantError(
-        'TOTP secret cannot be empty',
-      );
-    }
-
-    if (this._totpEnabled) {
-      throw new InvariantError(
-        'TOTP is already enabled',
-      );
-    }
-
-    this._totpSecret = secret;
-    this._totpEnabled = true;
-
-    this.touch();
-  }
-
-  public disableTotp(): void {
-    if (!this._totpEnabled) {
-      return;
-    }
-
-    this._totpEnabled = false;
-    this._totpSecret = null;
-
-    this.touch();
-  }
-
-  public getTotpSecretForPersistence(): string | null {
-    return this._totpSecret;
-  }
-
-  private touch(): void {
-    this._updatedAt = new Date();
-  }
-
-  public static reconstitute(params: {
-    id: number;
-    userId: number;
-    userType: UserType;
-    credentialHash: string;
-    scope: string;
-    totpSecret: string | null;
-    totpEnabled: boolean;
-    authStatus: AuthStatus;
-    createdAt: Date;
-    updatedAt: Date;
-  }): AuthAccount {
-    return new AuthAccount(params);
+  public isPendingEmailVerification(): boolean {
+    return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION
   }
 }
 

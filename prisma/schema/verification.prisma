@@ -1,0 +1,30 @@
+// use prisma-8
+
+model Verification {
+  id                String @id @db.Uuid
+  authAccountId      String @db.Uuid
+  identifier         String
+  valueHash          String
+  verificationType   VerificationType
+  verificationStatus VerificationStatus
+  expiresAt          DateTime
+  attempts           Int                @default(0)
+  maxAttempts        Int
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  authAccount        AuthAccount        @relation(fields: [authAccountId], references: [id])
+}
+
+enum VerificationType {
+  email_verification
+  email_otp
+  totp_setup
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  expired
+  max_attempts_exceeded
+}

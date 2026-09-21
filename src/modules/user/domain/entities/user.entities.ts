@@ -1,16 +1,21 @@
-import { AggregateRoot } from '../../../shared/domain/aggregate-root';
+import { AggregateRoot } from '../../../shared';
 import { BusinessRuleViolationError } from '../../../shared/domain/errors/business-rule-violation.error';
 import { ConflictError } from '../../../shared/domain/errors/conflict.error';
-import { DomainErrorCode } from '../../../shared/domain/errors/domain-error-code';
-import { InvalidDomainArgumentError } from '../../../shared/domain/errors/invalid-domain-error-argument';
+import {
+  EmailRequired,
+  NameRequiredError,
+  UserAlreadySuspendedError,
+  UserInvariantError,
+} from '../errors';
 import { UserCreatedEvent } from '../events/user-created-event';
 import { UserUpdatedEvent } from '../events/user-updated-event';
+import { UserId } from '../value-objects/user-id.vo';
 import { UserStatus } from '../value-objects/user-status.v0';
 import { UserType } from '../value-objects/user-type.v0';
 
-class User extends AggregateRoot<number> {
+class User extends AggregateRoot<UserId> {
   constructor(
-    id: number,
+    id: UserId,
     public readonly userType: UserType,
     private _firstName: string,
     private _lastName: string,
@@ -20,10 +25,6 @@ class User extends AggregateRoot<number> {
     private _updatedAt: Date,
   ) {
     super(id);
-  }
-
-  public getId(): number {
-    return this.id;
   }
 
   public isTeacher(): boolean {
@@ -71,29 +72,24 @@ class User extends AggregateRoot<number> {
   }
 
   public static create(params: {
-    id: number;
+    id: UserId;
     userType: UserType;
     email: string;
     firstName: string;
     lastName: string;
     correlationId: string;
+    authAccountId?: string;
   }): User {
     const email = params.email.trim().toLowerCase();
     const firstName = params.firstName.trim();
     const lastName = params.lastName.trim();
 
     if (!email) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        `Invalid email: ${email}`,
-      );
+      throw new EmailRequired();
     }
 
     if (!firstName || !lastName) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'firstName and lastName are required',
-      );
+      throw new NameRequiredError();
     }
 
     const now = new Date();
@@ -111,8 +107,13 @@ class User extends AggregateRoot<number> {
 
     user.addDomainEvent(
       new UserCreatedEvent(
-        user.id,
-        new UserCreatedEvent.Payload(user.id, user.userType, user.email),
+        user.getId(),
+        new UserCreatedEvent.Payload(
+          user.getId(),
+          user.userType,
+          user.email,
+          params.authAccountId,
+        ),
         params.correlationId,
       ),
     );
@@ -131,22 +132,13 @@ class User extends AggregateRoot<number> {
     const email = params.email?.trim().toLowerCase();
 
     if (firstName !== undefined && !firstName) {
-      throw new InvalidDomainArgumentError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'firstName cannot be empty',
-      );
+      throw new UserInvariantError('firstName cannot be empty');
     }
     if (lastName !== undefined && !lastName) {
-      throw new InvalidDomainArgumentError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'lastName cannot be empty',
-      );
+      throw new UserInvariantError('lastName cannot be empty');
     }
     if (email !== undefined && !email) {
-      throw new InvalidDomainArgumentError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'email cannot be empty',
-      );
+      throw new UserInvariantError('email cannot be empty');
     }
 
     if (firstName !== undefined) {
@@ -162,8 +154,8 @@ class User extends AggregateRoot<number> {
 
     this.addDomainEvent(
       new UserUpdatedEvent(
-        this.id,
-        new UserUpdatedEvent.Payload(this.id, this.userType, this.email),
+        this.getId(),
+        new UserUpdatedEvent.Payload(this.getId(), this.userType, this.email),
         params.correlationId,
       ),
     );
@@ -171,17 +163,7 @@ class User extends AggregateRoot<number> {
 
   public suspend(): void {
     if (this.isSuspended()) {
-      throw new ConflictError(
-        DomainErrorCode.USER_ALREADY_SUSPENDED,
-        'User is already suspended',
-      );
-    }
-
-    if (this.isDeactivated()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'Cannot suspend a deactivated user',
-      );
+      throw new UserAlreadySuspendedError();
     }
 
     this._status = UserStatus.SUSPENDED;
@@ -193,20 +175,12 @@ class User extends AggregateRoot<number> {
       return;
     }
 
-    if (this.isDeactivated()) {
-      throw new BusinessRuleViolationError(
-        DomainErrorCode.INVALID_ARGUMENT,
-        'A deactivated user cannot be activated',
-      );
-    }
-
     this._status = UserStatus.ACTIVE;
     this._updatedAt = new Date();
   }
 
-
   public static reconstitute(params: {
-    id: number;
+    id: UserId;
     userType: UserType;
     firstName: string;
     lastName: string;

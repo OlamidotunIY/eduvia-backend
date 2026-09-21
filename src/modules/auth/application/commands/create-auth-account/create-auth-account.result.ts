@@ -1,14 +1,17 @@
-import { UserType } from "../../../../user/domain/value-objects/user-type.v0";
-
 export interface CreateAuthAccountPayload {
-    id: number;
-    userId: number;
-    userType: UserType;
-    credentialHash: string;
-    scope: string;
-    correlationId: string;
+  credentialHash: string;
+  scope: string;
+  correlationId: string;
+  profileData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    userType: string;
+  };
 }
 
 export interface CreateAuthAccountResult {
-  id: number;
+  id: string;
+  preAuthToken: string;
+  preAuthTokenExpiresAt: Date;
 }

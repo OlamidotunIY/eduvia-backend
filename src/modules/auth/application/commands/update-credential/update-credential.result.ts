@@ -1,5 +1,5 @@
 export interface UpdateCredentialsPayload {
-  authAccountId: number;
+  authAccountId: string;
   credentialHash: string;
   correlationId: string;
 }

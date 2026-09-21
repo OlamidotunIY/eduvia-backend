@@ -1,13 +1,12 @@
-import { AggregateRoot, BusinessRuleViolationError } from '../../../shared';
-import { UserType } from '../../../user/domain/value-objects/user-type.v0';
+import { AggregateRoot } from '../../../shared';
+import { AuthInvariantError } from '../errors';
 import { AuthSessionCreatedEvent } from '../events/auth-session-created';
 import { TokenIssuedEvent } from '../events/token-issued';
+import { SessionId } from '../value-objects/session-id.vo';
 import { SessionStatus } from '../value-objects/session-stutus.v0';
 
-class Session extends AggregateRoot<number> {
-  public readonly authAccountId: number;
-  public readonly userId: number;
-  public readonly userType: UserType;
+class Session extends AggregateRoot<SessionId> {
+  public readonly authAccountId: string;
   public readonly createdAt: Date;
   private _refreshTokenHash: string;
   private _accessTokenExpiresAt: Date;
@@ -19,10 +18,8 @@ class Session extends AggregateRoot<number> {
   private _updatedAt: Date;
 
   private constructor(params: {
-    id: number;
-    authAccountId: number;
-    userId: number;
-    userType: UserType;
+    id: SessionId;
+    authAccountId: string;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -36,8 +33,6 @@ class Session extends AggregateRoot<number> {
     super(params.id);
 
     this.authAccountId = params.authAccountId;
-    this.userId = params.userId;
-    this.userType = params.userType;
     this._refreshTokenHash = params.refreshTokenHash;
     this._accessTokenExpiresAt = params.accessTokenExpiresAt;
     this._refreshTokenExpiresAt = params.refreshTokenExpiresAt;
@@ -47,10 +42,6 @@ class Session extends AggregateRoot<number> {
     this._revokedAt = params.revokedAt;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
-  }
-
-  public getId(): number {
-    return this.id;
   }
 
   public get refreshTokenHash(): string {
@@ -100,11 +91,25 @@ class Session extends AggregateRoot<number> {
     );
   }
 
+  public static reconstitute(params: {
+    id: SessionId;
+    authAccountId: string;
+    refreshTokenHash: string;
+    accessTokenExpiresAt: Date;
+    refreshTokenExpiresAt: Date;
+    ipAddress: string;
+    userAgent: string;
+    sessionStatus: SessionStatus;
+    revokedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Session {
+    return new Session(params);
+  }
+
   public static create(params: {
-    id: number;
-    authAccountId: number;
-    userId: number;
-    userType: UserType;
+    id: SessionId;
+    authAccountId: string;
     refreshTokenHash: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
@@ -113,19 +118,19 @@ class Session extends AggregateRoot<number> {
     correlationId: string;
   }): Session {
     if (!params.refreshTokenHash.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new AuthInvariantError(
         'Refresh token hash cannot be empty',
       );
     }
 
     if (!params.ipAddress.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new AuthInvariantError(
         'IP address cannot be empty',
       );
     }
 
     if (!params.userAgent.trim()) {
-      throw new BusinessRuleViolationError(
+      throw new AuthInvariantError(
         'User agent cannot be empty',
       );
     }
@@ -135,8 +140,6 @@ class Session extends AggregateRoot<number> {
     const session = new Session({
       id: params.id,
       authAccountId: params.authAccountId,
-      userId: params.userId,
-      userType: params.userType,
       refreshTokenHash: params.refreshTokenHash,
       accessTokenExpiresAt: params.accessTokenExpiresAt,
       refreshTokenExpiresAt: params.refreshTokenExpiresAt,
@@ -150,10 +153,9 @@ class Session extends AggregateRoot<number> {
 
     session.addDomainEvent(
       new AuthSessionCreatedEvent(
-        session.id,
+        session.getId(),
         new AuthSessionCreatedEvent.Payload(
-          session.authAccountId,
-          session.userId,
+          session.authAccountId
         ),
         params.correlationId,
       ),
@@ -161,8 +163,8 @@ class Session extends AggregateRoot<number> {
 
     session.addDomainEvent(
       new TokenIssuedEvent(
-        session.id,
-        new TokenIssuedEvent.Payload(session.authAccountId, session.userId),
+        session.getId(),
+        new TokenIssuedEvent.Payload(session.authAccountId),
         params.correlationId,
       ),
     );
@@ -194,23 +196,7 @@ class Session extends AggregateRoot<number> {
     this._updatedAt = new Date();
   }
 
-  public static reconstitute(params: {
-    id: number;
-    authAccountId: number;
-    userId: number;
-    userType: UserType;
-    refreshTokenHash: string;
-    accessTokenExpiresAt: Date;
-    refreshTokenExpiresAt: Date;
-    ipAddress: string;
-    userAgent: string;
-    sessionStatus: SessionStatus;
-    revokedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): Session {
-    return new Session(params);
-  }
+  
 }
 
 export { Session };

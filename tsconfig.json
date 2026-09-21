@@ -1,22 +1,43 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
-    "types": ["node", "jest"],
+    "types": [
+      "node",
+      "jest"
+    ],
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
+    "paths": {
+      "@generated/prisma": [
+        "./src/generated/prisma"
+      ],
+      "@generated/prisma/*": [
+        "./src/generated/prisma/*"
+      ],
+      "@modules/auth": [
+        "./src/modules/auth/index.ts"
+      ],
+      "@modules/shared": [
+        "./src/modules/shared/index.ts"
+      ],
+      "@modules/user": [
+        "./src/modules/user/index.ts"
+      ]
+    }
   }
 }

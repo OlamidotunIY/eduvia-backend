@@ -2,11 +2,11 @@ import { UserStatus } from "../../../domain/value-objects/user-status.v0";
 import { UserType } from "../../../domain/value-objects/user-type.v0";
 
 export interface GetUserByIdPayload {
-    userId: number
+    userId: string
 }
 
 export interface UserDTO {
-    id: number;
+    id: string;
     userType: UserType;
     firstName: string;
     lastName: string;

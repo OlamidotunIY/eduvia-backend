@@ -1,10 +1,9 @@
-import { UserType } from '../../../../user/domain/value-objects/user-type.v0';
-import { AuthStatus } from '../../../domain/value-objects/auth-status.vo';
+import { AuthStatus } from "../../../domain";
+
 
 export interface AuthAccountDTO {
-  id: number;
-  userId: number;
-  userType: UserType;
+  id: string;
+  userId: string | null;
   credentialHash: string;
   scope: string;
   totpEnabled: boolean;
@@ -14,5 +13,5 @@ export interface AuthAccountDTO {
 }
 
 export interface GetAuthAccountPayload {
-  authAccountId: number;
+  authAccountId: string;
 }

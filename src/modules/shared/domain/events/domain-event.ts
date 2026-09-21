@@ -1,26 +1,26 @@
 type DomainEventPayload = object;
 
-interface DomainEvent<TId extends number = number, TPayload extends DomainEventPayload = DomainEventPayload> 
+interface DomainEvent<TPayload extends DomainEventPayload = DomainEventPayload>
 {
     readonly eventId: string;
     readonly occurredAt: Date;
-    readonly aggregateId: TId;
+    readonly aggregateId: string;
     readonly eventName: string;
     readonly correlationId: string;
     readonly payload: TPayload;
 }
 
-abstract class BaseDomainEvent<TId extends number, TPayload extends DomainEventPayload> 
-implements DomainEvent<TId, TPayload>{
+abstract class BaseDomainEvent<TPayload extends DomainEventPayload>
+implements DomainEvent<TPayload> {
     readonly eventId: string;
     readonly occurredAt: Date;
-    readonly aggregateId: TId;
+    readonly aggregateId: string;
     readonly eventName: string;
     readonly correlationId: string;
     readonly payload: TPayload;
 
     protected constructor(params: {
-        aggregateId: TId;
+        aggregateId: string;
         eventName: string;
         payload: TPayload;
         correlationId: string;
@@ -35,4 +35,4 @@ implements DomainEvent<TId, TPayload>{
 }
 
 export type { DomainEvent, DomainEventPayload };
-export { BaseDomainEvent}
+export { BaseDomainEvent };

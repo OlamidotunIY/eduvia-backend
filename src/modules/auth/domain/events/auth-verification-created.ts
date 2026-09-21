@@ -1,11 +1,11 @@
+import { VerificationType } from '../value-objects/verification-type.v0';
 import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 
 class AuthVerificationCreatedEvent extends BaseDomainEvent<
-  number,
   AuthVerificationCreatedEvent.Payload
 > {
   constructor(
-    aggregateId: number,
+    aggregateId: string,
     payload: AuthVerificationCreatedEvent.Payload,
     correlationId: string,
   ) {
@@ -21,8 +21,10 @@ class AuthVerificationCreatedEvent extends BaseDomainEvent<
 namespace AuthVerificationCreatedEvent {
   export class Payload {
     constructor(
-      public readonly authAccountId: number,
-      public readonly userId: number,
+      public readonly verificationId: string,
+      public readonly authAccountId: string,
+      public readonly identifier: string,
+      public readonly verificationType: VerificationType,
     ) {}
   }
 }

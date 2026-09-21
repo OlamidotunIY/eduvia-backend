@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { SuspendUserCommand } from "./suspend-user.command";
 import { IUserRepository } from "../../../domain/repository/user.repository";
 
@@ -7,8 +7,7 @@ export class SuspendUserHandler
     implements ICommandHandler<SuspendUserCommand>
 {
     constructor(
-        private readonly userRepository: IUserRepository,
-        private readonly eventBus: EventBus,
+        private readonly userRepository: IUserRepository
     ) {}
 
     async execute(command: SuspendUserCommand): Promise<void> {
@@ -23,10 +22,5 @@ export class SuspendUserHandler
         user.suspend();
 
         await this.userRepository.save(user);
-
-        const events = user.pullDomainEvents();
-            for (const event of events) {
-              this.eventBus.publish(event);
-            }
     }
 }

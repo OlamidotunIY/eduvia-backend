@@ -1,8 +1,8 @@
 import { ConflictError } from "../../../shared";
 
-export class AuthAccountAlreadySuspendedError extends ConflictError {
+export class AuthAccountSuspendedError extends ConflictError {
     constructor(details?: unknown) {
-        super('AuthAccount is already suspended', details);
+        super('AuthAccount is  suspended', details);
         this.code = this.constructor.name;
     }
 }

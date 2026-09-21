@@ -1,11 +1,10 @@
 import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 
 class AuthAccountCreatedEvent extends BaseDomainEvent<
-  number,
   AuthAccountCreatedEvent.Payload
 > {
   constructor(
-    aggregateId: number,
+    aggregateId: string,
     payload: AuthAccountCreatedEvent.Payload,
     correlationId: string,
   ) {
@@ -21,8 +20,14 @@ class AuthAccountCreatedEvent extends BaseDomainEvent<
 namespace AuthAccountCreatedEvent {
   export class Payload {
     constructor(
-      public readonly authAccountId: number,
-      public readonly userId: number,
+      public readonly authAccountId: string,
+      public readonly preAuthToken: string,
+      public readonly profileData: {
+        email: string;
+        firstName: string;
+        lastName: string;
+        userType: string;
+      },
     ) {}
   }
 }
