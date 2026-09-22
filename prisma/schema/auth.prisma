@@ -1,0 +1,67 @@
+model Account {
+  id                    String    @id @default(uuid()) @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("accounts")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @map("_id")
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  @@unique([token])
+  @@map("sessions")
+}
+
+model TwoFactor {
+  id          String @id @default(uuid()) @map("_id")
+  secret      String
+  backupCodes String
+  userId      String
+
+  @@map("two_factors")
+}
+
+model Verification {
+  id                String @id @default(uuid()) @map("_id")
+  identifier         String
+  valueHash          String
+  verificationType   VerificationType
+  verificationStatus VerificationStatus
+  expiresAt          DateTime
+  attempts           Int                @default(0)
+  maxAttempts        Int
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+enum VerificationType {
+  email_verification
+  email_otp
+  password_reset
+  totp_setup
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  expired
+  max_attempts_exceeded
+}
