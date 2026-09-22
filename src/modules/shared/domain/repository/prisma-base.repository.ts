@@ -1,9 +1,9 @@
 import { OutboxStatus } from '@generated/prisma/enums';
-import { AggregateRoot, DomainEvent } from '../domain';
-import { PrismaService } from '../infrastructure';
+import { AggregateRoot, DomainEvent } from '..';
+import { PrismaService } from '../../infrastructure';
 import { BaseRepository } from './base.repository';
 import { PrismaPromise } from '@generated/prisma/internal/prismaNamespace';
-import { BaseEntityId, OutboxMessageId } from '../domain/value-object';
+import { BaseEntityId, OutboxMessageId } from '../value-object';
 
 export interface IMapper<TDomain, TRecord> {
   toDomain(record: TRecord): TDomain;
@@ -36,7 +36,9 @@ export abstract class PrismaBaseRepository<
   protected abstract get delegate(): PrismaDelegate<TRecord>;
 
   async findById(id: TId | string): Promise<TDomain | null> {
-    const record = await this.delegate.findUnique({ where: { id: String(id) } });
+    const record = await this.delegate.findUnique({
+      where: { id: String(id) },
+    });
     return record ? this.mapper.toDomain(record) : null;
   }
 
