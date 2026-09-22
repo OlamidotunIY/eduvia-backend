@@ -1,6 +1,6 @@
 import { Command } from '@nestjs/cqrs';
 
-export class ResendOtpCommand extends Command<void> {
+export class RequestPasswordResetCommand extends Command<void> {
   constructor(
     public readonly payload: {
       email: string;

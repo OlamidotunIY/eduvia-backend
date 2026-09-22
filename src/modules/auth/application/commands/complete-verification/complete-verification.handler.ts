@@ -1,21 +1,22 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CompleteVerificationCommand } from './complete-verification.command';
-import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.result';
 import {
   IAuthAccountRepository,
-  IPasswordHashPort,
   ISessionRepository,
   ITokenPort,
   IVerificationRepository,
   Session,
   SessionId,
+  VerificationType,
 } from '../../../domain';
-import { UserFacade } from '@modules/user';
+import { IPasswordHashPort, IUserQueryPort } from '@modules/shared';
+import { CompleteVerificationPayload } from './complete-verification.result';
+import crypto from 'node:crypto';
 
 @CommandHandler(CompleteVerificationCommand)
 export class CompleteVerificationHandler implements ICommandHandler<
   CompleteVerificationCommand,
-  IssueAuthTokensResult
+  CompleteVerificationPayload
 > {
   constructor(
     private readonly verificationRepository: IVerificationRepository,
@@ -23,73 +24,65 @@ export class CompleteVerificationHandler implements ICommandHandler<
     private readonly passwordHashPort: IPasswordHashPort,
     private readonly sessionRepository: ISessionRepository,
     private readonly tokenPort: ITokenPort,
-    private readonly userFacade: UserFacade,
+    private readonly userQueryPort: IUserQueryPort,
   ) {}
 
   async execute(
     command: CompleteVerificationCommand,
-  ): Promise<IssueAuthTokensResult> {
+  ): Promise<CompleteVerificationPayload> {
     const { payload } = command;
 
     const verification =
       await this.verificationRepository.findPendingVerification(
-        payload.authAccountId,
+        payload.email,
+        VerificationType.EMAIL_VERIFICATION,
       );
 
     if (!verification) {
       throw new Error('Verification not found');
     }
 
-    await verification.verify(payload.value, (value, hash) =>
+    await verification.verify(payload.code, (value, hash) =>
       this.passwordHashPort.compare(value, hash),
     );
 
     await this.verificationRepository.save(verification);
 
-    const authAccount = await this.authAccountRepository.findById(
-      verification.authAccountId,
-    );
-
-    if (!authAccount) {
-      throw new Error('Auth account not found');
-    }
-
-    authAccount.activate();
-    await this.authAccountRepository.save(authAccount);
-
-    if (!authAccount.userId) {
-      throw new Error('Auth account is not linked to a user');
-    }
-
-    const user = await this.userFacade.getUserById(authAccount.userId);
+    const user = await this.userQueryPort.getUserByEmail(payload.email);
     if (!user) {
       throw new Error('User not found');
     }
 
-    const userType = user.userType as any;
+    const authAccount =
+      await this.authAccountRepository.findCredentialsByUserId(user.id);
+    if (!authAccount) {
+      throw new Error('Auth account not found');
+    }
 
-    const [accessTokenResult, refreshTokenResult] = await Promise.all([
-      this.tokenPort.generateAccessToken({
-        sub: authAccount.getId(),
-        userId: user.id,
-        userType: userType,
-        scope: authAccount.scope,
-      }),
-      this.tokenPort.generateRefreshToken(),
-    ]);
+    authAccount.recordEmailVerified(payload.correlationId);
+    await this.authAccountRepository.save(authAccount);
 
+    const refreshTokenResult = await this.tokenPort.generateRefreshToken();
+    const sessionId = SessionId.create();
+    const sessionToken = crypto.randomBytes(32).toString('hex');
     const session = Session.create({
-      id: SessionId.create(),
-      authAccountId: authAccount.getId(),
-      refreshTokenHash: refreshTokenResult.hash,
-      accessTokenExpiresAt: accessTokenResult.expiresAt,
-      refreshTokenExpiresAt: refreshTokenResult.expiresAt,
+      id: sessionId,
+      expiresAt: refreshTokenResult.expiresAt,
+      token: sessionToken,
+      userId: user.id,
       ipAddress: payload.ipAddress,
       userAgent: payload.userAgent,
-      correlationId: payload.correlationId,
     });
 
     await this.sessionRepository.save(session);
+
+    const accessTokenResult = await this.tokenPort.generateAccessToken({
+      sub: authAccount.getId(),
+      userId: user.id,
+      userType: user.userType,
+      scope: authAccount.scope || 'user',
+      sessionId: session.getId(),
+    });
 
     return {
       sessionId: session.getId(),

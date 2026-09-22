@@ -1,11 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { RedisService } from '@modules/shared';
 import {
   AuthAccount,
   AuthAccountId,
   IAuthAccountRepository,
   IOtpPort,
-  ITokenPort,
-  IPasswordHashPort,
   IVerificationRepository,
   Verification,
   VerificationId,
@@ -22,9 +21,8 @@ export class CreateAuthAccountHandler implements ICommandHandler<
   constructor(
     private readonly authAccountRepository: IAuthAccountRepository,
     private readonly verificationRepository: IVerificationRepository,
-    private readonly tokenPort: ITokenPort,
-    private readonly passwordHashPort: IPasswordHashPort,
     private readonly otpPort: IOtpPort,
+    private readonly redis: RedisService,
   ) {}
 
   async execute(
@@ -34,34 +32,36 @@ export class CreateAuthAccountHandler implements ICommandHandler<
 
     const authAccountId = AuthAccountId.create();
 
-    const preAuthResult = await this.tokenPort.generatePreAuthToken({
-      authAccountId: authAccountId.value,
-    });
-
-    const hashedPassword = await this.passwordHashPort.hash(
-      payload.credentialHash,
+    const existing = await this.authAccountRepository.findCredentialsByUserId(
+      payload.userId,
     );
+    if (existing) {
+      return { id: existing.getId() };
+    }
 
-    const authAccount = AuthAccount.create({
+    const authAccount = AuthAccount.createCredentialsAccount({
       id: authAccountId,
-      credentialHash: hashedPassword,
+      userId: payload.userId,
+      email: payload.email,
+      passwordHash: payload.passwordHash,
       scope: payload.scope,
-      preAuthToken: preAuthResult.token,
-      profileData: payload.profileData,
-      correlationId: payload.correlationId,
     });
 
     await this.authAccountRepository.save(authAccount);
 
     const otp = await this.otpPort.generate();
+    const rawValueRedisKey = `auth:verification:${payload.correlationId}:otp`;
+    const ttlSeconds = 10 * 60;
+    await this.redis.getClient().set(rawValueRedisKey, otp.code, 'EX', ttlSeconds);
+
     const verification = Verification.create({
       id: VerificationId.create(),
-      authAccountId: authAccount.getId(),
-      identifier: payload.profileData.email.trim().toLowerCase(),
+      identifier: payload.email.trim().toLowerCase(),
       valueHash: otp.hash,
       verificationType: VerificationType.EMAIL_VERIFICATION,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      expiresAt: new Date(Date.now() + ttlSeconds * 1000),
       maxAttempts: 5,
+      rawValueRedisKey,
       correlationId: payload.correlationId,
     });
 
@@ -69,8 +69,6 @@ export class CreateAuthAccountHandler implements ICommandHandler<
 
     return {
       id: authAccount.getId(),
-      preAuthToken: preAuthResult.token,
-      preAuthTokenExpiresAt: preAuthResult.expiresAt,
     };
   }
 }

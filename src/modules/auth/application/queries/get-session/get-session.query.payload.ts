@@ -1,15 +1,9 @@
-import { SessionStatus } from '../../../domain';
-import { UserType } from '@modules/user';
-
 export interface SessionDTO {
   id: string;
-  authAccountId: string;
-  accessTokenExpiresAt: Date;
-  refreshTokenExpiresAt: Date;
-  ipAddress: string;
-  userAgent: string;
-  sessionStatus: SessionStatus;
-  revokedAt: Date | null;
+  userId: string;
+  expiresAt: Date;
+  ipAddress: string | null;
+  userAgent: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

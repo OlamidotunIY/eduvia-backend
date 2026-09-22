@@ -1,12 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { LoginCommand } from './login.command';
-import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.result';
 import {
   AccountPendingVerificationError,
   IAuthAccountRepository,
   InvalidCredentialsError,
   IOtpPort,
-  IPasswordHashPort,
   ISessionRepository,
   ITokenPort,
   IVerificationRepository,
@@ -16,56 +14,69 @@ import {
   VerificationId,
   VerificationType,
 } from '../../../domain';
-import { UserFacade } from '@modules/user';
+import { IPasswordHashPort, IUserQueryPort, RedisService } from '@modules/shared';
+import crypto from 'node:crypto';
+import { AuthTokensResult } from './login.result';
 
 @CommandHandler(LoginCommand)
 export class LoginHandler implements ICommandHandler<
   LoginCommand,
-  IssueAuthTokensResult
+  AuthTokensResult
 > {
   constructor(
-    private readonly userFacade: UserFacade,
+    private readonly userQueryPort: IUserQueryPort,
     private readonly authAccountRepository: IAuthAccountRepository,
     private readonly passwordHashPort: IPasswordHashPort,
     private readonly otpPort: IOtpPort,
     private readonly verificationRepository: IVerificationRepository,
     private readonly sessionRepository: ISessionRepository,
     private readonly tokenPort: ITokenPort,
+    private readonly redis: RedisService,
   ) {}
 
-  async execute(command: LoginCommand): Promise<IssueAuthTokensResult> {
+  async execute(command: LoginCommand): Promise<AuthTokensResult> {
     const { payload } = command;
 
-    const user = await this.userFacade.getUserIdByEmail(payload.email);
+    const user = await this.userQueryPort.getUserByEmail(payload.email);
     if (!user) {
       throw new InvalidCredentialsError();
     }
 
-    const authAccount = await this.authAccountRepository.findByUserId(user.id);
+    const authAccount =
+      await this.authAccountRepository.findCredentialsByUserId(user.id);
     if (!authAccount) {
+      throw new InvalidCredentialsError();
+    }
+
+    if (!authAccount.password) {
       throw new InvalidCredentialsError();
     }
 
     const isPasswordValid = await this.passwordHashPort.compare(
       payload.passwordRaw,
-      authAccount.credentialHash,
+      authAccount.password,
     );
     if (!isPasswordValid) {
       throw new InvalidCredentialsError();
     }
 
-    if (!authAccount.canAuthenticate()) {
-      const { hash } = await this.otpPort.generate();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    if (!user.emailVerified) {
+      const { code, hash } = await this.otpPort.generate();
+      const ttlSeconds = 10 * 60;
+      const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+      const rawValueRedisKey = `auth:verification:${payload.correlationId}:otp`;
+      await this.redis
+        .getClient()
+        .set(rawValueRedisKey, code, 'EX', ttlSeconds);
 
       const verification = Verification.create({
         id: VerificationId.create(),
-        authAccountId: authAccount.getId(),
         identifier: user.email,
         valueHash: hash,
         verificationType: VerificationType.EMAIL_VERIFICATION,
         expiresAt,
         maxAttempts: 5,
+        rawValueRedisKey,
         correlationId: payload.correlationId,
       });
 
@@ -74,33 +85,27 @@ export class LoginHandler implements ICommandHandler<
       throw new AccountPendingVerificationError();
     }
 
-    // 6. Generate Tokens
-    // Need userType from user lookup
-    const userType = user.userType as any; // Cast safely or parse
-
-    const [accessTokenResult, refreshTokenResult] = await Promise.all([
-      this.tokenPort.generateAccessToken({
-        sub: authAccount.getId(),
-        userId: user.id,
-        userType: userType,
-        scope: authAccount.scope,
-      }),
-      this.tokenPort.generateRefreshToken(),
-    ]);
-
-    // 7. Create Session
+    const sessionId = SessionId.create();
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const refreshTokenResult = await this.tokenPort.generateRefreshToken();
     const session = Session.create({
-      id: SessionId.create(),
-      authAccountId: authAccount.getId(),
-      refreshTokenHash: refreshTokenResult.hash,
-      accessTokenExpiresAt: accessTokenResult.expiresAt,
-      refreshTokenExpiresAt: refreshTokenResult.expiresAt,
+      id: sessionId,
+      expiresAt: refreshTokenResult.expiresAt,
+      token: sessionToken,
+      userId: user.id,
       ipAddress: payload.ipAddress,
       userAgent: payload.userAgent,
-      correlationId: payload.correlationId,
     });
 
     await this.sessionRepository.save(session);
+
+    const accessTokenResult = await this.tokenPort.generateAccessToken({
+      sub: authAccount.getId(),
+      userId: user.id,
+      userType: user.userType,
+      scope: authAccount.scope || 'user',
+      sessionId: session.getId(),
+    });
 
     return {
       sessionId: session.getId(),
