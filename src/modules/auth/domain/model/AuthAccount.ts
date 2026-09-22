@@ -1,251 +1,211 @@
-import { AccountSuspendedEvent, AuthAccountCreatedEvent } from '../events';
-import { AuthStatus } from '../value-objects/auth-status.v0';
-import {
-  AuthAccountAlreadySuspendedError,
-  AuthAccountSuspendedError,
-  AuthInvariantError,
-} from '../errors';
+import { AuthInvariantError } from '../errors';
 import { AggregateRoot } from '@modules/shared';
 import { AuthAccountId } from '../value-objects/auth-account-id.vo';
+import { AuthEmailVerifiedEvent } from '../events';
 
 class AuthAccount extends AggregateRoot<AuthAccountId> {
-  public userId: string | null;
-  private _credentialHash: string;
-  private _scope: string;
-  private _totpSecret: string | null;
-  private _totpEnabled: boolean;
-  private _authStatus: AuthStatus;
+  private _accountId: string;
+  private _providerId: string;
+  private _userId: string;
+  private _accessToken: string | null;
+  private _refreshToken: string | null;
+  private _idToken: string | null;
+  private _accessTokenExpiresAt: Date | null;
+  private _refreshTokenExpiresAt: Date | null;
+  private _scope: string | null;
+  private _password: string | null;
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
   private constructor(params: {
     id: AuthAccountId;
-    userId: string | null;
-    credentialHash: string;
-    scope: string;
-    totpSecret: string | null;
-    totpEnabled: boolean;
-    authStatus: AuthStatus;
+    accountId: string;
+    providerId: string;
+    userId: string;
+    accessToken: string | null;
+    refreshToken: string | null;
+    idToken: string | null;
+    accessTokenExpiresAt: Date | null;
+    refreshTokenExpiresAt: Date | null;
+    scope: string | null;
+    password: string | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
     super(params.id);
-
-    this.userId = params.userId;
-    this._credentialHash = params.credentialHash;
+    this._accountId = params.accountId;
+    this._providerId = params.providerId;
+    this._userId = params.userId;
+    this._accessToken = params.accessToken;
+    this._refreshToken = params.refreshToken;
+    this._idToken = params.idToken;
+    this._accessTokenExpiresAt = params.accessTokenExpiresAt;
+    this._refreshTokenExpiresAt = params.refreshTokenExpiresAt;
     this._scope = params.scope;
-    this._totpSecret = params.totpSecret;
-    this._totpEnabled = params.totpEnabled;
-    this._authStatus = params.authStatus;
+    this._password = params.password;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
   }
 
+  public static createOAuthAccount(params: {
+    id: AuthAccountId;
+    accountId: string; // The ID from the provider (e.g., Google Sub ID)
+    providerId: string; // e.g., 'google', 'github'
+    userId: string; // Your internal User ID
+    accessToken?: string;
+    refreshToken?: string;
+    idToken?: string;
+    accessTokenExpiresAt?: Date;
+    refreshTokenExpiresAt?: Date;
+    scope?: string;
+  }): AuthAccount {
+    const now = new Date();
+
+    return new AuthAccount({
+      id: params.id,
+      accountId: params.accountId,
+      providerId: params.providerId,
+      userId: params.userId,
+      accessToken: params.accessToken || null,
+      refreshToken: params.refreshToken || null,
+      idToken: params.idToken || null,
+      accessTokenExpiresAt: params.accessTokenExpiresAt || null,
+      refreshTokenExpiresAt: params.refreshTokenExpiresAt || null,
+      scope: params.scope || null,
+      password: null, // OAuth accounts usually don't have passwords
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  public static createCredentialsAccount(params: {
+    id: AuthAccountId;
+    userId: string;
+    email: string;
+    passwordHash: string;
+    scope?: string;
+  }): AuthAccount {
+    const now = new Date();
+
+    return new AuthAccount({
+      id: params.id,
+      accountId: params.email.trim().toLowerCase(),
+      providerId: 'credentials',
+      userId: params.userId,
+      accessToken: null,
+      refreshToken: null,
+      idToken: null,
+      accessTokenExpiresAt: null,
+      refreshTokenExpiresAt: null,
+      scope: params.scope || 'user',
+      password: params.passwordHash,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  // Reconstitute from the Database (Prisma)
   public static reconstitute(params: {
     id: AuthAccountId;
-    userId: string | null;
-    credentialHash: string;
-    scope: string;
-    totpSecret: string | null;
-    totpEnabled: boolean;
-    authStatus: AuthStatus;
+    accountId: string;
+    providerId: string;
+    userId: string;
+    accessToken: string | null;
+    refreshToken: string | null;
+    idToken: string | null;
+    accessTokenExpiresAt: Date | null;
+    refreshTokenExpiresAt: Date | null;
+    scope: string | null;
+    password: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): AuthAccount {
     return new AuthAccount(params);
   }
+  // --- Domain Logic / Behaviors ---
+  /**
+   * Update the OAuth tokens (e.g., after a refresh)
+   */
+  public updateTokens(params: {
+    accessToken: string;
+    refreshToken?: string;
+    idToken?: string;
+    accessTokenExpiresAt?: Date;
+    refreshTokenExpiresAt?: Date;
+  }): void {
+    this._accessToken = params.accessToken;
 
-  public static create(params: {
-    id: AuthAccountId;
-    credentialHash: string;
-    scope: string;
-    correlationId: string;
-    preAuthToken: string;
-    profileData: {
-      email: string;
-      firstName: string;
-      lastName: string;
-      userType: string;
-    };
-  }): AuthAccount {
-    if (!params.credentialHash.trim()) {
-      throw new AuthInvariantError('Credential hash cannot be empty');
-    }
+    if (params.refreshToken) this._refreshToken = params.refreshToken;
+    if (params.idToken) this._idToken = params.idToken;
+    if (params.accessTokenExpiresAt)
+      this._accessTokenExpiresAt = params.accessTokenExpiresAt;
+    if (params.refreshTokenExpiresAt)
+      this._refreshTokenExpiresAt = params.refreshTokenExpiresAt;
 
-    if (!params.scope.trim()) {
-      throw new AuthInvariantError('Scope cannot be empty');
-    }
-
-    const now = new Date();
-
-    const authAccount = new AuthAccount({
-      id: params.id,
-      userId: null,
-      credentialHash: params.credentialHash,
-      scope: params.scope.trim(),
-      totpSecret: null,
-      totpEnabled: false,
-      authStatus: AuthStatus.PENDING_EMAIL_VERIFICATION,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    authAccount.addDomainEvent(
-      new AuthAccountCreatedEvent(
-        authAccount.getId(),
-        new AuthAccountCreatedEvent.Payload(
-          authAccount.getId(),
-          params.preAuthToken,
-          params.profileData,
-        ),
-        params.correlationId,
-      ),
-    );
-
-    return authAccount;
+    this.touch();
   }
-
-  public linkUser(userId: string): void {
-    if (this.userId !== null) {
-      throw new AuthInvariantError('AuthAccount is already linked to a user');
+  /**
+   * For accounts where provider is 'credentials'
+   */
+  public updatePassword(passwordHash: string): void {
+    if (this._providerId !== 'credentials') {
+      throw new AuthInvariantError(
+        'Cannot set password for an OAuth provider account',
+      );
     }
-    this.userId = userId;
+    this._password = passwordHash;
     this.touch();
   }
 
-  public updateCredentials(credentialHash: string): void {
-    if (!credentialHash.trim()) {
-      throw new AuthInvariantError('Credential hash cannot be empty');
-    }
-
-    this._credentialHash = credentialHash;
-    this.touch();
-  }
-
-  public suspend(correlationId: string): void {
-    if (this.isSuspended()) {
-      throw new AuthAccountAlreadySuspendedError();
-    }
-
-    this._authStatus = AuthStatus.SUSPENDED;
-
-    this.touch();
-
+  public recordEmailVerified(correlationId: string): void {
     this.addDomainEvent(
-      new AccountSuspendedEvent(
+      new AuthEmailVerifiedEvent(
         this.getId(),
-        new AccountSuspendedEvent.Payload(this.getId(), this.userId as string),
+        new AuthEmailVerifiedEvent.Payload(
+          this.getId(),
+          this._userId,
+          this._accountId,
+        ),
         correlationId,
       ),
     );
   }
 
-  public activate(): void {
-    if (this.isActive()) {
-      return;
-    }
-
-    this._authStatus = AuthStatus.ACTIVE;
-
-    this.touch();
-  }
-
-  public markPendingPasswordReset(): void {
-    if (this.isPendingPasswordReset()) {
-      return;
-    }
-
-    if (this.isSuspended()) {
-      throw new AuthInvariantError(
-        'A suspended account cannot be marked pending password reset',
-      );
-    }
-
-    this._authStatus = AuthStatus.PENDING_PASSWORD_RESET;
-
-    this.touch();
-  }
-
-  public enableTotp(secret: string): void {
-    if (!secret.trim()) {
-      throw new AuthInvariantError('TOTP secret cannot be empty');
-    }
-
-    if (this._totpEnabled) {
-      throw new AuthInvariantError('TOTP is already enabled');
-    }
-
-    this._totpSecret = secret;
-    this._totpEnabled = true;
-
-    this.touch();
-  }
-
-  public disableTotp(): void {
-    if (!this._totpEnabled) {
-      return;
-    }
-
-    this._totpEnabled = false;
-    this._totpSecret = null;
-
-    this.touch();
-  }
-
-  public getTotpSecretForPersistence(): string | null {
-    return this._totpSecret;
-  }
-
   private touch(): void {
     this._updatedAt = new Date();
   }
-
-  public get credentialHash(): string {
-    return this._credentialHash;
+  // --- Getters ---
+  public get accountId(): string {
+    return this._accountId;
   }
-
-  public get scope(): string {
+  public get providerId(): string {
+    return this._providerId;
+  }
+  public get userId(): string {
+    return this._userId;
+  }
+  public get accessToken(): string | null {
+    return this._accessToken;
+  }
+  public get refreshToken(): string | null {
+    return this._refreshToken;
+  }
+  public get idToken(): string | null {
+    return this._idToken;
+  }
+  public get accessTokenExpiresAt(): Date | null {
+    return this._accessTokenExpiresAt;
+  }
+  public get refreshTokenExpiresAt(): Date | null {
+    return this._refreshTokenExpiresAt;
+  }
+  public get scope(): string | null {
     return this._scope;
   }
-
-  public get totpEnabled(): boolean {
-    return this._totpEnabled;
+  public get password(): string | null {
+    return this._password;
   }
-
-  public get authStatus(): AuthStatus {
-    return this._authStatus;
-  }
-
   public get updatedAt(): Date {
     return this._updatedAt;
-  }
-
-  public isActive(): boolean {
-    return this._authStatus === AuthStatus.ACTIVE;
-  }
-
-  public isSuspended(): boolean {
-    return this._authStatus === AuthStatus.SUSPENDED;
-  }
-
-  public canAuthenticate() : boolean {
-    if (this.authStatus === AuthStatus.SUSPENDED) {
-      throw new AuthAccountSuspendedError();
-    }
-
-     if (this.authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION) {
-      return false;
-     }
-
-     return this._authStatus === AuthStatus.ACTIVE;
-  }
-
-  public isPendingPasswordReset(): boolean {
-    return this._authStatus === AuthStatus.PENDING_PASSWORD_RESET;
-  }
-
-  public isPendingEmailVerification(): boolean {
-    return this._authStatus === AuthStatus.PENDING_EMAIL_VERIFICATION
   }
 }
 

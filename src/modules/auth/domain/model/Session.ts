@@ -1,202 +1,100 @@
 import { AggregateRoot } from '../../../shared';
 import { AuthInvariantError } from '../errors';
-import { AuthSessionCreatedEvent } from '../events/auth-session-created';
-import { TokenIssuedEvent } from '../events/token-issued';
 import { SessionId } from '../value-objects/session-id.vo';
-import { SessionStatus } from '../value-objects/session-stutus.v0';
 
-class Session extends AggregateRoot<SessionId> {
-  public readonly authAccountId: string;
+export class Session extends AggregateRoot<SessionId> {
+  private _expiresAt: Date;
+  private _token: string;
   public readonly createdAt: Date;
-  private _refreshTokenHash: string;
-  private _accessTokenExpiresAt: Date;
-  private _refreshTokenExpiresAt: Date;
-  private _ipAddress: string;
-  private _userAgent: string;
-  private _sessionStatus: SessionStatus;
-  private _revokedAt: Date | null;
   private _updatedAt: Date;
-
+  private _ipAddress: string | null;
+  private _userAgent: string | null;
+  private _userId: string;
   private constructor(params: {
     id: SessionId;
-    authAccountId: string;
-    refreshTokenHash: string;
-    accessTokenExpiresAt: Date;
-    refreshTokenExpiresAt: Date;
-    ipAddress: string;
-    userAgent: string;
-    sessionStatus: SessionStatus;
-    revokedAt: Date | null;
+    expiresAt: Date;
+    token: string;
     createdAt: Date;
     updatedAt: Date;
+    ipAddress: string | null;
+    userAgent: string | null;
+    userId: string;
   }) {
     super(params.id);
-
-    this.authAccountId = params.authAccountId;
-    this._refreshTokenHash = params.refreshTokenHash;
-    this._accessTokenExpiresAt = params.accessTokenExpiresAt;
-    this._refreshTokenExpiresAt = params.refreshTokenExpiresAt;
-    this._ipAddress = params.ipAddress;
-    this._userAgent = params.userAgent;
-    this._sessionStatus = params.sessionStatus;
-    this._revokedAt = params.revokedAt;
+    this._expiresAt = params.expiresAt;
+    this._token = params.token;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
+    this._ipAddress = params.ipAddress;
+    this._userAgent = params.userAgent;
+    this._userId = params.userId;
   }
-
-  public get refreshTokenHash(): string {
-    return this._refreshTokenHash;
-  }
-
-  public get accessTokenExpiresAt(): Date {
-    return this._accessTokenExpiresAt;
-  }
-
-  public get refreshTokenExpiresAt(): Date {
-    return this._refreshTokenExpiresAt;
-  }
-
-  public get ipAddress(): string {
-    return this._ipAddress;
-  }
-
-  public get userAgent(): string {
-    return this._userAgent;
-  }
-
-  public get sessionStatus(): SessionStatus {
-    return this._sessionStatus;
-  }
-
-  public get revokedAt(): Date | null {
-    return this._revokedAt;
-  }
-
-  public get updatedAt(): Date {
-    return this._updatedAt;
-  }
-
-  public isActive(): boolean {
-    return this._sessionStatus === SessionStatus.ACTIVE;
-  }
-
-  public isRevoked(): boolean {
-    return this._sessionStatus === SessionStatus.REVOKED;
-  }
-
-  public isExpired(): boolean {
-    return (
-      this._sessionStatus === SessionStatus.EXPIRED ||
-      new Date() > this._refreshTokenExpiresAt
-    );
+  public static create(params: {
+    id: SessionId;
+    expiresAt: Date;
+    token: string;
+    userId: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Session {
+    if (!params.token.trim()) {
+      throw new AuthInvariantError('Session token cannot be empty');
+    }
+    const now = new Date();
+    return new Session({
+      id: params.id,
+      expiresAt: params.expiresAt,
+      token: params.token,
+      userId: params.userId,
+      ipAddress: params.ipAddress || null,
+      userAgent: params.userAgent || null,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public static reconstitute(params: {
     id: SessionId;
-    authAccountId: string;
-    refreshTokenHash: string;
-    accessTokenExpiresAt: Date;
-    refreshTokenExpiresAt: Date;
-    ipAddress: string;
-    userAgent: string;
-    sessionStatus: SessionStatus;
-    revokedAt: Date | null;
+    expiresAt: Date;
+    token: string;
     createdAt: Date;
     updatedAt: Date;
+    ipAddress: string | null;
+    userAgent: string | null;
+    userId: string;
   }): Session {
     return new Session(params);
   }
-
-  public static create(params: {
-    id: SessionId;
-    authAccountId: string;
-    refreshTokenHash: string;
-    accessTokenExpiresAt: Date;
-    refreshTokenExpiresAt: Date;
-    ipAddress: string;
-    userAgent: string;
-    correlationId: string;
-  }): Session {
-    if (!params.refreshTokenHash.trim()) {
-      throw new AuthInvariantError(
-        'Refresh token hash cannot be empty',
-      );
+  public extend(newExpiresAt: Date): void {
+    if (newExpiresAt <= this._expiresAt) {
+      throw new AuthInvariantError('New expiration date must be in the future');
     }
-
-    if (!params.ipAddress.trim()) {
-      throw new AuthInvariantError(
-        'IP address cannot be empty',
-      );
-    }
-
-    if (!params.userAgent.trim()) {
-      throw new AuthInvariantError(
-        'User agent cannot be empty',
-      );
-    }
-
-    const now = new Date();
-
-    const session = new Session({
-      id: params.id,
-      authAccountId: params.authAccountId,
-      refreshTokenHash: params.refreshTokenHash,
-      accessTokenExpiresAt: params.accessTokenExpiresAt,
-      refreshTokenExpiresAt: params.refreshTokenExpiresAt,
-      ipAddress: params.ipAddress.trim(),
-      userAgent: params.userAgent.trim(),
-      sessionStatus: SessionStatus.ACTIVE,
-      revokedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    session.addDomainEvent(
-      new AuthSessionCreatedEvent(
-        session.getId(),
-        new AuthSessionCreatedEvent.Payload(
-          session.authAccountId
-        ),
-        params.correlationId,
-      ),
-    );
-
-    session.addDomainEvent(
-      new TokenIssuedEvent(
-        session.getId(),
-        new TokenIssuedEvent.Payload(session.authAccountId),
-        params.correlationId,
-      ),
-    );
-
-    return session;
-  }
-
-  public revoke(): void {
-    if (this.isRevoked()) {
-      return;
-    }
-
-    this._sessionStatus = SessionStatus.REVOKED;
-    this._revokedAt = new Date();
-
+    this._expiresAt = newExpiresAt;
     this.touch();
   }
-
-  public expire(): void {
-    if (this._sessionStatus === SessionStatus.EXPIRED) {
-      return;
-    }
-
-    this._sessionStatus = SessionStatus.EXPIRED;
-    this.touch();
+  public isExpired(): boolean {
+    return new Date() > this._expiresAt;
   }
-
   private touch(): void {
     this._updatedAt = new Date();
   }
-
-  
+  // Getters
+  public get expiresAt(): Date {
+    return this._expiresAt;
+  }
+  public get token(): string {
+    return this._token;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
+  public get ipAddress(): string | null {
+    return this._ipAddress;
+  }
+  public get userAgent(): string | null {
+    return this._userAgent;
+  }
+  public get userId(): string {
+    return this._userId;
+  }
 }
-
-export { Session };

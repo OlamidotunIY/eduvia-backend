@@ -1,4 +1,4 @@
-import { BaseRepository } from '../../../shared/repository/base.repository';
+import { BaseRepository } from '../../../shared/domain/repository/base.repository';
 import { AuthAccount } from '../model/AuthAccount';
 import { AuthAccountId } from '../value-objects/auth-account-id.vo';
 
@@ -7,6 +7,7 @@ abstract class IAuthAccountRepository extends BaseRepository<
   AuthAccountId
 > {
   abstract findByUserId(userId: string): Promise<AuthAccount | null>;
+  abstract findCredentialsByUserId(userId: string): Promise<AuthAccount | null>;
 }
 
 export { IAuthAccountRepository };
