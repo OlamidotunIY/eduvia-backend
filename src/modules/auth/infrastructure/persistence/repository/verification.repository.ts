@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Verification as PrismaVerification } from '@generated/prisma/client';
 import { VerificationMapper } from '../mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
-import { IVerificationRepository, Verification } from '../../domain';
-import { VerificationId } from '../../domain/value-objects/verification-id.vo';
+import { IVerificationRepository, Verification, VerificationType } from '../../../domain';
+import { VerificationId } from '../../../domain/value-objects/verification-id.vo';
 
 @Injectable()
 export class PrismaVerificationRepository
@@ -19,12 +19,14 @@ export class PrismaVerificationRepository
   }
 
   async findPendingVerification(
-    authAccountId: string,
+    identifier: string,
+    verificationType?: VerificationType,
   ): Promise<Verification | null> {
     const record = await this.delegate.findFirst({
       where: {
-        authAccountId,
-        verificationStatus: 'pending', // adjust enum value if needed based on Prisma schema
+        identifier: identifier.trim().toLowerCase(),
+        verificationType,
+        verificationStatus: 'pending',
       },
       orderBy: { createdAt: 'desc' },
     });

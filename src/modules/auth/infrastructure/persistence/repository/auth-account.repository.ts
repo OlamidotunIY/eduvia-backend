@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { AuthAccount as PrismaAuthAccount } from '@generated/prisma/client';
+import { Account as PrismaAuthAccount } from '@generated/prisma/client';
 import { AuthAccountMapper } from '../mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
-import { AuthAccount, IAuthAccountRepository } from '../../domain';
-import { AuthAccountId } from '../../domain/value-objects/auth-account-id.vo';
+import {
+  AuthAccount,
+  AuthAccountId,
+  IAuthAccountRepository,
+} from '../../../domain';
 
 @Injectable()
 export class PrismaAuthAccountRepository
@@ -15,12 +18,20 @@ export class PrismaAuthAccountRepository
   }
 
   protected get delegate() {
-    return this.prisma.authAccount;
+    return this.prisma.account;
   }
 
   async findByUserId(userId: string): Promise<AuthAccount | null> {
     const record = await this.delegate.findFirst({
       where: { userId },
+    });
+    if (!record) return null;
+    return this.mapper.toDomain(record);
+  }
+
+  async findCredentialsByUserId(userId: string): Promise<AuthAccount | null> {
+    const record = await this.delegate.findFirst({
+      where: { userId, providerId: 'credentials' },
     });
     if (!record) return null;
     return this.mapper.toDomain(record);

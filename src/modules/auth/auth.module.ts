@@ -2,25 +2,19 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserModule } from '@modules/user';
 import {
-  AuthEventProcessor,
+  ChangePasswordHandler,
   CompleteVerificationHandler,
   CreateAuthAccountHandler,
-  GetAuthAccountByUserIdHandler,
-  GetAuthAccountHandler,
-  GetPendingVerificationHandler,
   GetSessionHandler,
-  GetVerificationHandler,
-  IssueAuthTokensHandler,
   LoginHandler,
   LogoutHandler,
+  RequestPasswordResetHandler,
   ResendOtpHandler,
   RevokeAllSessionsHandler,
-  SuspendAuthAccountHandler,
-  UpdateCredentialsHandler,
 } from './application';
 import {
+  AuthEventProcessor,
   AuthAccountMapper,
-  BcryptPasswordHashAdapter,
   CryptoOtpAdapter,
   JwtTokenAdapter,
   PrismaAuthAccountRepository,
@@ -34,37 +28,35 @@ import {
 import {
   IAuthAccountRepository,
   IOtpPort,
-  IPasswordHashPort,
   ISessionRepository,
   ITokenPort,
   ITokenRevocationPort,
   ITotpPort,
   IVerificationRepository,
 } from './domain';
-import { PrismaService, RedisService } from '@modules/shared';
+import {
+  AuthGuard,
+  BcryptPasswordHashAdapter,
+  IPasswordHashPort,
+  PrismaService,
+  RedisService,
+} from '@modules/shared';
 import { AuthService } from './presentation';
 
 const CommandHandlers = [
   CreateAuthAccountHandler,
   CompleteVerificationHandler,
-  SuspendAuthAccountHandler,
-  UpdateCredentialsHandler,
+  ChangePasswordHandler,
   RevokeAllSessionsHandler,
-  IssueAuthTokensHandler,
   LogoutHandler,
   ResendOtpHandler,
+  RequestPasswordResetHandler,
   LoginHandler,
 ];
 
 const EventProcessors = [AuthEventProcessor];
 
-const QueryHandlers = [
-  GetAuthAccountHandler,
-  GetAuthAccountByUserIdHandler,
-  GetSessionHandler,
-  GetVerificationHandler,
-  GetPendingVerificationHandler,
-];
+const QueryHandlers = [GetSessionHandler];
 
 const Mappers = [AuthAccountMapper, SessionMapper, VerificationMapper];
 
@@ -90,6 +82,7 @@ import { BullModule } from '@nestjs/bullmq';
   providers: [
     PrismaService,
     RedisService,
+    AuthGuard,
     AuthService,
     ...Mappers,
     ...PortBindings,

@@ -1,90 +1,98 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import {
+  ChangePasswordDto,
   LoginDto,
   LogoutDto,
+  RequestPasswordResetDto,
   ResendOtpDto,
   VerifyOtpDto,
-  RegisterDto,
 } from '../dto/auth.dto';
 import {
+  ChangePasswordCommand,
   LoginCommand,
   LogoutCommand,
+  RequestPasswordResetCommand,
   ResendOtpCommand,
   CompleteVerificationCommand,
-  CreateAuthAccountCommand,
 } from '../../application';
-import crypto from 'crypto';
-
-import { GetMeQuery } from '@modules/user';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
-  ) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
-  async login(dto: LoginDto, ipAddress: string, userAgent: string) {
+  async login(
+    dto: LoginDto,
+    ipAddress: string,
+    userAgent: string,
+    correlationId: string,
+  ) {
     return this.commandBus.execute(
       new LoginCommand({
         email: dto.email,
         passwordRaw: dto.password,
         ipAddress,
         userAgent,
-        correlationId: crypto.randomUUID(),
+        correlationId,
       }),
     );
   }
 
-  async logout(dto: LogoutDto) {
+  async logout(dto: LogoutDto, correlationId: string) {
     await this.commandBus.execute(
       new LogoutCommand({
         sessionId: dto.sessionId,
         jti: dto.jti,
-        correlationId: crypto.randomUUID(),
+        correlationId,
       }),
     );
   }
 
-  async verifyOtp(dto: VerifyOtpDto, ipAddress: string, userAgent: string) {
+  async verifyOtp(
+    dto: VerifyOtpDto,
+    ipAddress: string,
+    userAgent: string,
+    correlationId: string,
+  ) {
     return this.commandBus.execute(
       new CompleteVerificationCommand({
-        authAccountId: dto.authAccountId,
-        value: dto.code,
+        email: dto.email,
+        code: dto.code,
         ipAddress,
         userAgent,
-        correlationId: crypto.randomUUID(),
+        correlationId,
       }),
     );
   }
 
-  async resendOtp(dto: ResendOtpDto) {
+  async resendOtp(dto: ResendOtpDto, correlationId: string) {
     await this.commandBus.execute(
       new ResendOtpCommand({
-        authAccountId: dto.authAccountId,
-        correlationId: crypto.randomUUID(),
+        email: dto.email,
+        correlationId,
       }),
     );
   }
 
-  async register(dto: RegisterDto) {
-    return this.commandBus.execute(
-      new CreateAuthAccountCommand({
-        credentialHash: dto.password,
-        scope: 'user',
-        profileData: {
-          email: dto.email,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          userType: dto.userType,
-        },
-        correlationId: crypto.randomUUID(),
+  async requestPasswordReset(
+    dto: RequestPasswordResetDto,
+    correlationId: string,
+  ) {
+    await this.commandBus.execute(
+      new RequestPasswordResetCommand({
+        email: dto.email,
+        correlationId,
       }),
     );
   }
 
-  async getMe(userId: string) {
-    return this.queryBus.execute(new GetMeQuery({ userId }));
+  async changePassword(dto: ChangePasswordDto) {
+    await this.commandBus.execute(
+      new ChangePasswordCommand({
+        email: dto.email,
+        code: dto.code,
+        newPassword: dto.newPassword,
+      }),
+    );
   }
 }
