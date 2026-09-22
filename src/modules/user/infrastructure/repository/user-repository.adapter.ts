@@ -37,4 +37,11 @@ export class PrismaUserRepository
       data: { email: email.toLowerCase() },
     });
   }
+
+  public async markEmailVerified(userId: UserId | string): Promise<void> {
+    await this.delegate.update({
+      where: { id: String(userId) },
+      data: { emailVerified: true },
+    });
+  }
 }

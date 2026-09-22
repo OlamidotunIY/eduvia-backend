@@ -20,7 +20,12 @@ class User extends AggregateRoot<UserId> {
     private _firstName: string,
     private _lastName: string,
     private _email: string,
+    private _username: string | null,
+    private _image: string | null,
+    private _emailVerified: boolean,
+    private _twoFactorEnabled: boolean | null,
     private _status: UserStatus,
+    private _timezone: string,
     public readonly createdAt: Date,
     private _updatedAt: Date,
   ) {
@@ -67,6 +72,26 @@ class User extends AggregateRoot<UserId> {
     return this._status;
   }
 
+  public get username(): string | null {
+    return this._username;
+  }
+
+  public get image(): string | null {
+    return this._image;
+  }
+
+  public get emailVerified(): boolean {
+    return this._emailVerified;
+  }
+
+  public get twoFactorEnabled(): boolean | null {
+    return this._twoFactorEnabled;
+  }
+
+  public get timezone(): string {
+    return this._timezone;
+  }
+
   public get updatedAt(): Date {
     return this._updatedAt;
   }
@@ -77,8 +102,9 @@ class User extends AggregateRoot<UserId> {
     email: string;
     firstName: string;
     lastName: string;
+    passwordHash: string;
+    timezone?: string;
     correlationId: string;
-    authAccountId?: string;
   }): User {
     const email = params.email.trim().toLowerCase();
     const firstName = params.firstName.trim();
@@ -100,7 +126,12 @@ class User extends AggregateRoot<UserId> {
       firstName,
       lastName,
       email,
+      null,
+      null,
+      false,
+      false,
       UserStatus.ACTIVE,
+      params.timezone?.trim() || 'UTC',
       now,
       now,
     );
@@ -112,7 +143,7 @@ class User extends AggregateRoot<UserId> {
           user.getId(),
           user.userType,
           user.email,
-          params.authAccountId,
+          params.passwordHash,
         ),
         params.correlationId,
       ),
@@ -179,13 +210,27 @@ class User extends AggregateRoot<UserId> {
     this._updatedAt = new Date();
   }
 
+  public markEmailVerified(): void {
+    if (this._emailVerified) {
+      return;
+    }
+
+    this._emailVerified = true;
+    this._updatedAt = new Date();
+  }
+
   public static reconstitute(params: {
     id: UserId;
     userType: UserType;
     firstName: string;
     lastName: string;
     email: string;
+    username: string | null;
+    image: string | null;
+    emailVerified: boolean;
+    twoFactorEnabled: boolean | null;
     status: UserStatus;
+    timezone: string;
     updatedAt: Date;
     createdAt: Date;
   }): User {
@@ -195,7 +240,12 @@ class User extends AggregateRoot<UserId> {
       params.firstName,
       params.lastName,
       params.email,
+      params.username,
+      params.image,
+      params.emailVerified,
+      params.twoFactorEnabled,
       params.status,
+      params.timezone,
       params.createdAt,
       params.updatedAt,
     );

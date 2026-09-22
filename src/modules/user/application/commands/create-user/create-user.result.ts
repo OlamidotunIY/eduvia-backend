@@ -5,7 +5,8 @@ export interface CreateUserPayload {
   email: string;
   firstName: string;
   lastName: string;
-  authAccountId?: string;
+  passwordRaw: string;
+  timezone?: string;
   correlationId: string;
 }
 

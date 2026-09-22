@@ -24,7 +24,7 @@ namespace UserCreatedEvent {
       public readonly userId: string,
       public readonly userType: UserType,
       public readonly email: string,
-      public readonly authAccountId?: string,
+      public readonly passwordHash: string,
     ) {}
   }
 }
