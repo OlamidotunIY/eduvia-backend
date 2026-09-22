@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard, CorrelationId, CurrentUser } from '@modules/shared';
-import { RegisterUserDto } from '../dto';
+import {
+  AuthGuard,
+  CorrelationId,
+  CurrentUser,
+  CurrentUserPayload,
+} from '@modules/shared';
+import { RegisterStudentDto, RegisterUserDto } from '../dto';
 import { UserService } from '../services';
 
 @Controller('users')
@@ -17,7 +22,16 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Get('me')
-  async getMe(@CurrentUser() payload: { userId: string }) {
-    return this.userService.getMe(payload.userId);
+  async getMe(@CurrentUser() currentUser: CurrentUserPayload) {
+    return this.userService.getMe(currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('parents/students')
+  async registerStudent(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Body() dto: RegisterStudentDto,
+  ) {
+    return this.userService.registerStudent(currentUser.userId, dto);
   }
 }

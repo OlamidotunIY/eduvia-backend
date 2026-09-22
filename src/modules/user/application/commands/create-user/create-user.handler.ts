@@ -1,9 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserCommand } from './create-user.command';
-import { IUserRepository } from '../../../domain/repository/user.repository';
-import { User } from '../../../domain/entities/user.entities';
 import { CreateUserResult } from './create-user.result';
-import { UserId } from '../../../domain/value-objects/user-id.vo';
+import { ParentProfile, IParentProfileRepository, UserType, IUserRepository, User, UserId, ParentProfileId } from '../../../domain';
 import { IPasswordHashPort } from '@modules/shared';
 
 @CommandHandler(CreateUserCommand)
@@ -13,11 +11,17 @@ export class CreateUserHandler implements ICommandHandler<
 > {
   constructor(
     private readonly userRepository: IUserRepository,
+    private readonly parentProfileRepository: IParentProfileRepository,
     private readonly passwordHashPort: IPasswordHashPort,
   ) {}
 
   async execute(command: CreateUserCommand): Promise<CreateUserResult> {
     const { payload } = command;
+
+    if (![UserType.PARENT, UserType.TEACHER].includes(payload.userType)) {
+      throw new Error('Only parents and teachers can register');
+    }
+
     const passwordHash = await this.passwordHashPort.hash(payload.passwordRaw);
 
     const user = User.create({
@@ -32,6 +36,15 @@ export class CreateUserHandler implements ICommandHandler<
     });
 
     await this.userRepository.save(user);
+
+    if (user.isParent()) {
+      await this.parentProfileRepository.save(
+        ParentProfile.create({
+          id: ParentProfileId.create(),
+          userId: user.id,
+        }),
+      );
+    }
 
     return {
       id: user.getId(),

@@ -1,3 +1,5 @@
+export * from './repository/parent-profile-repository.adapter';
+export * from './repository/student-profile-repository.adapter';
 export * from './repository/user-repository.adapter';
 export * from './repository/user-query.adapter';
 export * from './mappers';

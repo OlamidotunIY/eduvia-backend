@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateUserCommand, GetUserByIdQuery } from '../../application';
-import { RegisterUserDto } from '../dto';
+import { CreateUserCommand, GetUserByIdQuery, RegisterStudentCommand } from '../../application';
+import { RegisterStudentDto, RegisterUserDto } from '../dto';
+import { UserId } from '../../domain';
 
 @Injectable()
 export class UserService {
@@ -26,5 +27,17 @@ export class UserService {
 
   async getMe(userId: string) {
     return this.queryBus.execute(new GetUserByIdQuery({ userId }));
+  }
+
+  async registerStudent(parentUserId: string, dto: RegisterStudentDto) {
+    return this.commandBus.execute(
+      new RegisterStudentCommand({
+        userId: UserId.from(parentUserId),
+        dateOfBirth: new Date(dto.dateOfBirth),
+        countryCode: dto.countryCode,
+        timezone: dto.timezone,
+        gradeLevel: dto.gradeLevel,
+      }),
+    );
   }
 }

@@ -12,16 +12,30 @@ import { UserEventProcessor } from './infrastructure/messaging';
 import { CreateUserHandler } from './application/commands/create-user/create-user.handler';
 import { PrismaUserRepository } from './infrastructure/repository/user-repository.adapter';
 import { UserMapper } from './infrastructure/mappers';
-import { IUserRepository } from './domain/repository/user.repository';
+import {
+  IParentProfileRepository,
+  IStudentProfileRepository,
+  IUserRepository,
+} from './domain/repository';
 import {
   GetUserByEmailHandler,
   GetUserByIdHandler,
 } from './application/query';
-import { MarkEmailVerifiedHandler } from './application/commands';
-import { UserQueryAdapter } from './infrastructure';
+import { MarkEmailVerifiedHandler, RegisterStudentHandler } from './application/commands';
+import {
+  ParentProfileMapper,
+  PrismaParentProfileRepository,
+  PrismaStudentProfileRepository,
+  StudentProfileMapper,
+  UserQueryAdapter,
+} from './infrastructure';
 import { UserController, UserService } from './presentation';
 
-const CommandHandlers = [CreateUserHandler, MarkEmailVerifiedHandler];
+const CommandHandlers = [
+  CreateUserHandler,
+  MarkEmailVerifiedHandler,
+  RegisterStudentHandler,
+];
 const EventProcessors = [UserEventProcessor];
 const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
 
@@ -36,8 +50,12 @@ import { BullModule } from '@nestjs/bullmq';
     AuthGuard,
     UserService,
     UserMapper,
+    ParentProfileMapper,
+    StudentProfileMapper,
     { provide: IPasswordHashPort, useClass: BcryptPasswordHashAdapter },
     { provide: IUserRepository, useClass: PrismaUserRepository },
+    { provide: IParentProfileRepository, useClass: PrismaParentProfileRepository },
+    { provide: IStudentProfileRepository, useClass: PrismaStudentProfileRepository },
     { provide: IUserQueryPort, useClass: UserQueryAdapter },
     ...CommandHandlers,
     ...EventProcessors,
