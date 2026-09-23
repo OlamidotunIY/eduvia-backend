@@ -522,27 +522,88 @@ export class OrgEventWorker extends WorkerHost {
 
 ---
 
-### Pattern C — Shared Read Models (for lightweight cross-cutting reads)
+### Pattern C — Shared Query Ports (for cross-module reads)
 
-Some data is read frequently across many modules (e.g., "is this user active?", "what is the user's name?"). Rather than every module querying the `UserRepository`, the `UserModule` exports a `UserFacade` that returns a minimal read-only DTO. **This is already how the codebase works.**
+When a module needs to **read** data owned by another module, it uses a **Query Port** defined in `shared/application/port/`. This is the canonical pattern used in this codebase.
+
+**How it works:**
+1. Define an **abstract port class** + **response DTO** in `shared/application/port/`
+2. The providing module implements the port as an adapter in its `infrastructure/` layer
+3. The providing module registers and **exports** the adapter bound to the port token
+4. The consuming module injects the **port interface** (abstract class)
 
 ```typescript
-// ✅ EXISTING pattern in your codebase — UserFacade
-// src/modules/user/application/facade/user.facade.ts
+// Step 1: Port lives in shared — both modules can see it
+// src/modules/shared/application/port/user-query.port.ts
 
-// The UserFacade is exported from UserModule and imported by AuthModule.
-// AuthModule's LoginHandler uses it directly (no port abstraction needed
-// here because auth is intentionally coupled to user in your architecture —
-// they are in the same bounded context).
+export interface UserDTO {
+  id: string;
+  userType: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  status: string;
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
+}
+
+export abstract class IUserQueryPort {
+  abstract getUserByEmail(email: string): Promise<UserDTO | null>;
+  abstract getUserById(id: string): Promise<UserDTO | null>;
+}
+```
+
+```typescript
+// Step 2: UserModule provides the implementation
+// src/modules/user/infrastructure/repository/user-query.adapter.ts
+
+@Injectable()
+export class UserQueryAdapter implements IUserQueryPort {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getUserByEmail(email: string): Promise<UserDTO | null> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    return user ? { id: user.id, email: user.email, ... } : null;
+  }
+
+  async getUserById(id: string): Promise<UserDTO | null> { ... }
+}
+```
+
+```typescript
+// Step 3: UserModule exports the adapter bound to the port token
+@Module({
+  providers: [
+    { provide: IUserQueryPort, useClass: UserQueryAdapter },
+  ],
+  exports: [IUserQueryPort],  // ← export the PORT TOKEN, not the adapter class
+})
+export class UserModule {}
+```
+
+```typescript
+// Step 4: AuthModule imports UserModule and injects the port
+@CommandHandler(LoginCommand)
+export class LoginHandler {
+  constructor(
+    private readonly userQuery: IUserQueryPort,  // ← port, not adapter
+    private readonly sessionRepo: ISessionRepository,
+  ) {}
+
+  async execute(command: LoginCommand) {
+    const user = await this.userQuery.getUserByEmail(command.email);
+    // ...
+  }
+}
 ```
 
 **When to use which pattern:**
 
 | Scenario | Pattern |
 |---|---|
-| Module A needs data from Module B synchronously; they are in DIFFERENT bounded contexts | Pattern A (Port + Facade + Adapter) |
-| Module A needs data from Module B synchronously; they are in the SAME bounded context | Pattern C (Facade directly, no port) |
-| Module A needs to trigger work in Module B after an event | Pattern B (Domain Event via Outbox + BullMQ) |
+| Module A needs to **read** data owned by Module B | Pattern C (Query Port in `shared/application/port/`) |
+| Module A needs to trigger a **write** in Module B | Pattern B (Domain Event via Outbox + BullMQ) — NEVER write cross-module directly |
+| Module A needs to check org membership, teacher eligibility etc. | Pattern A (Port + Adapter) defined per-consumer in `domain/ports/` |
 | Module A needs to trigger work in Module B immediately and synchronously | Reconsider your domain boundaries — this usually signals a design issue |
 
 ---
