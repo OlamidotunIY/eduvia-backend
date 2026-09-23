@@ -18,7 +18,6 @@ class AuthEmailVerifiedEvent extends BaseDomainEvent<AuthEmailVerifiedEvent.Payl
 namespace AuthEmailVerifiedEvent {
   export class Payload {
     constructor(
-      public readonly authAccountId: string,
       public readonly userId: string,
       public readonly email: string,
     ) {}

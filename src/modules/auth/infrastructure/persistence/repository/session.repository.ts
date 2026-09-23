@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Session as PrismaSession } from '@generated/prisma/client';
 import { SessionMapper } from '../mappers';
 import { PrismaBaseRepository, PrismaService, RedisService } from '@modules/shared';
-import { ISessionRepository, Session } from '../../../domain';
-import { SessionId } from '../../../domain/value-objects/session-id.vo';
+import { ISessionRepository, Session, SessionId } from '../../../domain';
 
 @Injectable()
 export class PrismaSessionRepository

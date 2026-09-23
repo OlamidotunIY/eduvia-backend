@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Verification as PrismaVerification } from '@generated/prisma/client';
 import { VerificationMapper } from '../mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
-import { IVerificationRepository, Verification, VerificationType } from '../../../domain';
-import { VerificationId } from '../../../domain/value-objects/verification-id.vo';
+import { IVerificationRepository, Verification, VerificationId, VerificationType } from '../../../domain';
 
 @Injectable()
 export class PrismaVerificationRepository

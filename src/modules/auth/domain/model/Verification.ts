@@ -46,9 +46,10 @@ export class Verification extends AggregateRoot<VerificationId> {
     expiresAt: Date;
     maxAttempts: number;
     rawValueRedisKey?: string;
-    correlationId?: string;
+    correlationId: string;
   }): Verification {
     const now = new Date();
+
     const verification = new Verification({
       id: params.id,
       identifier: params.identifier,
@@ -62,20 +63,18 @@ export class Verification extends AggregateRoot<VerificationId> {
       updatedAt: now,
     });
 
-    if (params.correlationId) {
-      verification.addDomainEvent(
-        new AuthVerificationCreatedEvent(
+    verification.addDomainEvent(
+      new AuthVerificationCreatedEvent(
+        verification.getId(),
+        new AuthVerificationCreatedEvent.Payload(
           verification.getId(),
-          new AuthVerificationCreatedEvent.Payload(
-            verification.getId(),
-            verification.identifier,
-            verification.verificationType,
-            params.rawValueRedisKey,
-          ),
-          params.correlationId,
+          verification.identifier,
+          verification.verificationType,
+          params.rawValueRedisKey,
         ),
-      );
-    }
+        params.correlationId,
+      ),
+    );
 
     return verification;
   }

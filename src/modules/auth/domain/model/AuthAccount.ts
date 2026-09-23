@@ -90,7 +90,7 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     return new AuthAccount({
       id: params.id,
       accountId: params.email.trim().toLowerCase(),
-      providerId: 'credentials',
+      providerId: 'CREDENTIALS',
       userId: params.userId,
       accessToken: null,
       refreshToken: null,
@@ -121,10 +121,7 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
   }): AuthAccount {
     return new AuthAccount(params);
   }
-  // --- Domain Logic / Behaviors ---
-  /**
-   * Update the OAuth tokens (e.g., after a refresh)
-   */
+
   public updateTokens(params: {
     accessToken: string;
     refreshToken?: string;
@@ -156,14 +153,13 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     this.touch();
   }
 
-  public recordEmailVerified(correlationId: string): void {
+  public recordEmailVerified(correlationId: string, email: string): void {
     this.addDomainEvent(
       new AuthEmailVerifiedEvent(
         this.getId(),
         new AuthEmailVerifiedEvent.Payload(
-          this.getId(),
           this._userId,
-          this._accountId,
+          email,
         ),
         correlationId,
       ),

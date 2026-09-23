@@ -1,4 +1,5 @@
-import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
+import { BaseDomainEvent } from "@modules/shared";
+
 
 class AccountSuspendedEvent extends BaseDomainEvent<
   AccountSuspendedEvent.Payload

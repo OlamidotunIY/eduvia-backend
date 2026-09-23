@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { GetSessionQuery } from "./get-session.query";
 import { SessionDTO } from "./get-session.query.payload";
-import { ISessionRepository } from "../../../domain/repository/session.repository";
+import { ISessionRepository } from "../../../domain";
 
 @QueryHandler(GetSessionQuery)
 export class GetSessionHandler implements IQueryHandler<GetSessionQuery> {

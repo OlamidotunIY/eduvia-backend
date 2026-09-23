@@ -1,6 +1,6 @@
 import { AggregateRoot } from '../../../shared';
 import { AuthInvariantError } from '../errors';
-import { SessionId } from '../value-objects/session-id.vo';
+import { SessionId } from '../value-objects';
 
 export class Session extends AggregateRoot<SessionId> {
   private _expiresAt: Date;
@@ -10,6 +10,7 @@ export class Session extends AggregateRoot<SessionId> {
   private _ipAddress: string | null;
   private _userAgent: string | null;
   private _userId: string;
+
   private constructor(params: {
     id: SessionId;
     expiresAt: Date;
@@ -29,6 +30,7 @@ export class Session extends AggregateRoot<SessionId> {
     this._userAgent = params.userAgent;
     this._userId = params.userId;
   }
+
   public static create(params: {
     id: SessionId;
     expiresAt: Date;
@@ -65,6 +67,7 @@ export class Session extends AggregateRoot<SessionId> {
   }): Session {
     return new Session(params);
   }
+
   public extend(newExpiresAt: Date): void {
     if (newExpiresAt <= this._expiresAt) {
       throw new AuthInvariantError('New expiration date must be in the future');
@@ -72,12 +75,15 @@ export class Session extends AggregateRoot<SessionId> {
     this._expiresAt = newExpiresAt;
     this.touch();
   }
+
   public isExpired(): boolean {
     return new Date() > this._expiresAt;
   }
+
   private touch(): void {
     this._updatedAt = new Date();
   }
+  
   // Getters
   public get expiresAt(): Date {
     return this._expiresAt;
