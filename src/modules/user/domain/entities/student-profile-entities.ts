@@ -1,9 +1,9 @@
+import { AggregateRoot } from '@modules/shared';
 import { StudentProfileInvariantError } from '../errors/student-profile-invariant-error.error';
 import { ParentProfileId } from '../value-objects/parent-profile-id.vo';
 import { StudentProfileId } from '../value-objects/student-profile-id.v0';
 
-class StudentProfile {
-  public readonly id: StudentProfileId;
+class StudentProfile extends AggregateRoot<StudentProfileId> {
   public readonly parentId: ParentProfileId;
   private _dateOfBirth: Date;
   private _countryCode: string;
@@ -22,7 +22,7 @@ class StudentProfile {
     createdAt: Date;
     updatedAt: Date;
   }) {
-    this.id = params.id;
+    super(params.id);
     this.parentId = params.parentId;
 
     this._dateOfBirth = params.dateOfBirth;

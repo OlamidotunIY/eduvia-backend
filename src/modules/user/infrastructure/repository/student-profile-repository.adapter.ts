@@ -1,38 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@modules/shared';
 import { IStudentProfileRepository, StudentProfile } from '../../domain';
 import { StudentProfileId } from '../../domain/value-objects';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { StudentProfileMapper } from '../mappers';
+import { StudentProfile as PrismaStudentProfile } from '@generated/prisma/client';
+import { ParentProfileId } from '../../domain/value-objects';
 
 @Injectable()
-export class PrismaStudentProfileRepository implements IStudentProfileRepository {
+export class PrismaStudentProfileRepository
+  extends PrismaBaseRepository<StudentProfileId, StudentProfile, PrismaStudentProfile>
+  implements IStudentProfileRepository
+{
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly mapper: StudentProfileMapper,
-  ) {}
+    protected readonly prisma: PrismaService,
+    protected readonly studentProfileMapper: StudentProfileMapper,
+  ) {
+    super(prisma, studentProfileMapper);
+  }
 
-  async findById(id: StudentProfileId | string): Promise<StudentProfile | null> {
-    const record = await this.prisma.studentProfile.findUnique({
-      where: { id: String(id) },
+  protected get delegate() {
+    return this.prisma.studentProfile;
+  }
+
+  public async findByParentId(parentId: ParentProfileId | string): Promise<StudentProfile[]> {
+    const records = await this.delegate.findMany({
+      where: { parentId: String(parentId) },
     });
-    return record ? this.mapper.toDomain(record) : null;
-  }
-
-  async findAll(): Promise<StudentProfile[]> {
-    const records = await this.prisma.studentProfile.findMany();
-    return records.map((record) => this.mapper.toDomain(record));
-  }
-
-  async save(entity: StudentProfile): Promise<void> {
-    const data = this.mapper.toPersistence(entity);
-    await this.prisma.studentProfile.upsert({
-      where: { id: entity.id.value },
-      create: { id: entity.id.value, ...data },
-      update: data,
-    });
-  }
-
-  async delete(id: StudentProfileId | string): Promise<void> {
-    await this.prisma.studentProfile.delete({ where: { id: String(id) } });
+    return records.map((r) => this.mapper.toDomain(r));
   }
 }

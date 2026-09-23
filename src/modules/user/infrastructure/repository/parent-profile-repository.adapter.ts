@@ -1,44 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@modules/shared';
-import { IParentProfileRepository, ParentProfile, ParentProfileId, UserId } from '../../domain';
+import { IParentProfileRepository, ParentProfile } from '../../domain';
+import { ParentProfileId } from '../../domain/value-objects';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { ParentProfileMapper } from '../mappers';
+import { ParentProfile as PrismaParentProfile } from '@generated/prisma/client';
+import { UserId } from '../../domain/value-objects';
 
 @Injectable()
-export class PrismaParentProfileRepository implements IParentProfileRepository {
+export class PrismaParentProfileRepository
+  extends PrismaBaseRepository<ParentProfileId, ParentProfile, PrismaParentProfile>
+  implements IParentProfileRepository
+{
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly mapper: ParentProfileMapper,
-  ) {}
+    protected readonly prisma: PrismaService,
+    protected readonly parentProfileMapper: ParentProfileMapper,
+  ) {
+    super(prisma, parentProfileMapper);
+  }
 
-  async findById(id: ParentProfileId | string): Promise<ParentProfile | null> {
-    const record = await this.prisma.parentProfile.findUnique({
-      where: { id: String(id) },
+  protected get delegate() {
+    return this.prisma.parentProfile;
+  }
+
+  public async findByUserId(userId: UserId | string): Promise<ParentProfile | null> {
+    const record = await this.delegate.findUnique({
+      where: { userId: String(userId) },
     });
-    return record ? this.mapper.toDomain(record) : null;
-  }
+    if (!record) return null;
 
-  async findAll(): Promise<ParentProfile[]> {
-    const records = await this.prisma.parentProfile.findMany();
-    return records.map((record) => this.mapper.toDomain(record));
-  }
-
-  async findByUserId(userId: UserId): Promise<ParentProfile | null> {
-    const record = await this.prisma.parentProfile.findUnique({
-      where: { userId: userId.value },
-    });
-    return record ? this.mapper.toDomain(record) : null;
-  }
-
-  async save(entity: ParentProfile): Promise<void> {
-    const data = this.mapper.toPersistence(entity);
-    await this.prisma.parentProfile.upsert({
-      where: { id: entity.id.value },
-      create: { id: entity.id.value, ...data },
-      update: data,
-    });
-  }
-
-  async delete(id: ParentProfileId | string): Promise<void> {
-    await this.prisma.parentProfile.delete({ where: { id: String(id) } });
+    return this.mapper.toDomain(record);
   }
 }

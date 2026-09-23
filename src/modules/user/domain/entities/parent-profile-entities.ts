@@ -1,13 +1,12 @@
+import { AggregateRoot } from '@modules/shared';
 import { UserId } from '../value-objects';
 import { ParentProfileId } from '../value-objects';
 
-class ParentProfile {
-  public readonly id: ParentProfileId;
+class ParentProfile extends AggregateRoot<ParentProfileId> {
   public readonly userId: UserId;
   private _phoneNumber: string | null;
   public readonly createdAt: Date;
   private _updatedAt: Date;
-
   private constructor(params: {
     id: ParentProfileId;
     userId: UserId;
@@ -15,13 +14,12 @@ class ParentProfile {
     createdAt: Date;
     updatedAt: Date;
   }) {
-    this.id = params.id;
+    super(params.id);
     this.userId = params.userId;
     this._phoneNumber = params.phoneNumber;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
   }
-
   public static create(params: {
     id: ParentProfileId;
     userId: UserId;

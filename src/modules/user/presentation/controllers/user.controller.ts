@@ -3,7 +3,7 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
-  CurrentUserPayload,
+  type CurrentUserPayload,
 } from '@modules/shared';
 import { RegisterStudentDto, RegisterUserDto } from '../dto';
 import { UserService } from '../services';
