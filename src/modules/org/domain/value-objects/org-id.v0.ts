@@ -1,4 +1,5 @@
-import { BaseEntityId } from '../../../shared/domain/value-object/base-entity-id.vo';
+import { BaseEntityId } from "@modules/shared";
+
 
 class OrganizationId extends BaseEntityId {
   private constructor(value: string) {
