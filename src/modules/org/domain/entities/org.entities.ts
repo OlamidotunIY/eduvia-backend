@@ -68,7 +68,6 @@ class Organization extends AggregateRoot<OrganizationId> {
   }
 
   public static create(params: {
-    id: OrganizationId;
     ownerId: string;
     name: string;
     slug: string;
@@ -104,6 +103,7 @@ class Organization extends AggregateRoot<OrganizationId> {
           organization.ownerId,
           params.name,
           params.slug,
+          params.contactEmail
         ),
         params.correlationId,
       ),

@@ -22,6 +22,7 @@ namespace OrganizationCreatedEvent {
       public readonly ownerId: string,
       public readonly name: string,
       public readonly slug: string,
+      public readonly contactEmail: string,
     ) {}
   }
 }

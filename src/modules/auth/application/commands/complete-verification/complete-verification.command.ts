@@ -1,7 +1,7 @@
 import { Command } from '@nestjs/cqrs';
-import { CompleteVerificationPayload } from './complete-verification.result';
+import {  CompleteVerificationResult } from './complete-verification.result';
 
-export class CompleteVerificationCommand extends Command<CompleteVerificationPayload> {
+export class CompleteVerificationCommand extends Command<CompleteVerificationResult> {
   constructor(
     public readonly payload: {
       email: string;

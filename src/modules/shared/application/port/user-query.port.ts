@@ -1,3 +1,10 @@
+export enum UserType {
+  TEACHER = 'teacher',
+  STUDENT = 'student',
+  PARENT = 'parent',
+  
+}
+
 export interface UserDTO {
   id: string;
   userType: string;

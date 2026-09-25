@@ -22,7 +22,6 @@ export class AuthEventProcessor extends WorkerHost {
         userId: payload.userId,
         email: payload.email,
         passwordHash: payload.passwordHash,
-        userType: payload.userType,
         scope: 'user',
         correlationId: job.data.correlationId,
       }),

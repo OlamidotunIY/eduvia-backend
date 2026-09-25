@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateUserCommand, GetUserByIdQuery, RegisterStudentCommand } from '../../application';
+import { CreateUserCommand, GetUserByIdQuery,  } from '../../application';
 import { RegisterStudentDto, RegisterUserDto } from '../dto';
 import { UserId } from '../../domain';
+import { RegisterStudentCommand } from '../../application/commands/register-student';
 
 @Injectable()
 export class UserService {

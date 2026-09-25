@@ -1,4 +1,4 @@
-export interface CompleteVerificationPayload {
+export interface CompleteVerificationResult {
   sessionId: string;
   accessToken: string;
   accessTokenExpiresAt: Date;

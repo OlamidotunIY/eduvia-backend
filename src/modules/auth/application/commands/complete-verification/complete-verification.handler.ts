@@ -10,13 +10,13 @@ import {
   VerificationType,
 } from '../../../domain';
 import { IPasswordHashPort, IUserQueryPort } from '@modules/shared';
-import { CompleteVerificationPayload } from './complete-verification.result';
 import crypto from 'node:crypto';
+import { CompleteVerificationResult } from './complete-verification.result';
 
 @CommandHandler(CompleteVerificationCommand)
 export class CompleteVerificationHandler implements ICommandHandler<
   CompleteVerificationCommand,
-  CompleteVerificationPayload
+  CompleteVerificationResult
 > {
   constructor(
     private readonly verificationRepository: IVerificationRepository,
@@ -29,7 +29,7 @@ export class CompleteVerificationHandler implements ICommandHandler<
 
   async execute(
     command: CompleteVerificationCommand,
-  ): Promise<CompleteVerificationPayload> {
+  ): Promise<CompleteVerificationResult> {
     const { payload } = command;
 
     const verification =
@@ -59,7 +59,7 @@ export class CompleteVerificationHandler implements ICommandHandler<
       throw new Error('Auth account not found');
     }
 
-    authAccount.recordEmailVerified(payload.correlationId);
+    authAccount.recordEmailVerified(payload.correlationId, payload.email);
     await this.authAccountRepository.save(authAccount);
 
     const refreshTokenResult = await this.tokenPort.generateRefreshToken();

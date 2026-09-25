@@ -18,7 +18,7 @@ class OutboxPublisherService  {
     @InjectQueue('user-events') private readonly userEventsQueue: Queue,
   ) {}
 
-   @Cron(CronExpression.EVERY_SECOND)
+   @Cron(CronExpression.EVERY_5_SECONDS)
     async publishOutboxMessages(): Promise<void> {
     await this.publishPending();
   
