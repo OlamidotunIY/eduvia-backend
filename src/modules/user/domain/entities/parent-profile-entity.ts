@@ -7,6 +7,7 @@ class ParentProfile extends AggregateRoot<ParentProfileId> {
   private _phoneNumber: string | null;
   public readonly createdAt: Date;
   private _updatedAt: Date;
+  
   private constructor(params: {
     id: ParentProfileId;
     userId: UserId;

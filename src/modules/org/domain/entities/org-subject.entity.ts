@@ -1,7 +1,7 @@
+import { AggregateRoot } from "@modules/shared";
 import { OrganizationSubjectId } from "../value-objects";
 
-class OrganizationSubject {
-  public readonly id: OrganizationSubjectId;
+class OrganizationSubject extends AggregateRoot<OrganizationSubjectId> {
   public readonly orgId: string;
   private _name: string;
   private _platformSubjectId: string | null;
@@ -18,7 +18,8 @@ class OrganizationSubject {
     isActive: boolean;
     createdAt: Date;
   }) {
-    this.id = params.id;
+    super(params.id);
+
     this.orgId = params.orgId;
     this._name = params.name;
     this._platformSubjectId = params.platformSubjectId;

@@ -5,3 +5,4 @@ export * from './parent-profile-id.vo'
 export * from './student-status.v0';
 export * from './parent-profile-id.vo'
 export * from './student-profile-id.v0'
+export * from './teacher-profile-id.v0'

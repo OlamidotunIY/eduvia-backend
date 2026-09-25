@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@modules/shared';
-import { OrganizationId, OrganizationStatus } from '../value-objects';
+import { OrganizationId, OrganizationStatus, OrganizationSubjectId } from '../value-objects';
 import { OrganizationCreatedEvent } from '../events/org-created-event';
 import { OrganizationApprovedEvent } from '../events/org-approved-event';
 import {
@@ -24,6 +24,7 @@ class Organization extends AggregateRoot<OrganizationId> {
   private _status: OrganizationStatus;
   private _marketplaceListed: boolean;
   private _acceptingTeachers: boolean;
+  private _acceptingTeachersFor: OrganizationSubjectId[];
   private _policy: OrganizationPolicy;
   public readonly createdAt: Date;
   private _updatedAt: Date;
@@ -48,6 +49,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     status: OrganizationStatus;
     marketplaceListed: boolean;
     acceptingTeachers: boolean;
+    acceptingTeachersFor: OrganizationSubjectId[];
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -65,7 +67,8 @@ class Organization extends AggregateRoot<OrganizationId> {
     this._timezone = params.timezone;
     this._status = params.status;
     this._marketplaceListed = params.marketplaceListed;
-    this._acceptingTeachers = params.acceptingTeachers;
+    this. _acceptingTeachers = params.acceptingTeachers;
+    this._acceptingTeachersFor = params.acceptingTeachersFor;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
   }
@@ -75,7 +78,11 @@ class Organization extends AggregateRoot<OrganizationId> {
     name: string;
     slug: string;
     contactEmail: string;
+    country:string;
+    timezone: string;
     correlationId: string;
+    logoUrl?: string | null;
+    websiteUrl?: string | null;
   }): Organization {
     const now = new Date();
 
@@ -85,15 +92,16 @@ class Organization extends AggregateRoot<OrganizationId> {
       name: params.name,
       slug: params.slug,
       description: null,
-      logoUrl: null,
-      websiteUrl: null,
+      logoUrl: params.logoUrl ?? null,
+      websiteUrl:  params.websiteUrl ?? null,
       contactEmail: params.contactEmail,
       contactPhone: null,
-      country: '',
-      timezone: 'UTC',
-      status: OrganizationStatus.PENDING_APPROVAL,
+      country: params.country,
+      timezone: params.timezone,
+      status: OrganizationStatus.ACTIVE,
       marketplaceListed: false,
       acceptingTeachers: false,
+      acceptingTeachersFor: [],
       createdAt: now,
       updatedAt: now,
     });
@@ -129,6 +137,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     status: OrganizationStatus;
     marketplaceListed: boolean;
     acceptingTeachers: boolean;
+    acceptingTeachersFor :OrganizationSubjectId[];
     createdAt: Date;
     updatedAt: Date;
   }): Organization {
@@ -220,7 +229,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     this._status = OrganizationStatus.SUSPENDED;
 
     this._marketplaceListed = false;
-    this._acceptingTeachers = false;
+    this._acceptingTeachersFor = [];
     this._updatedAt = new Date();
 
     this.addDomainEvent(
