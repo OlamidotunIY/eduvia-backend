@@ -8,6 +8,7 @@ import {
 } from '../errors';
 import { OrganizationSuspendedEvent } from '../events/org-suspended-event';
 import { OrganizationUpdatedEvent } from '../events/org-updated-event';
+import { OrganizationPolicy } from './org.policy.entity';
 
 class Organization extends AggregateRoot<OrganizationId> {
   public readonly ownerId: string;
@@ -23,6 +24,7 @@ class Organization extends AggregateRoot<OrganizationId> {
   private _status: OrganizationStatus;
   private _marketplaceListed: boolean;
   private _acceptingTeachers: boolean;
+  private _policy: OrganizationPolicy;
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
