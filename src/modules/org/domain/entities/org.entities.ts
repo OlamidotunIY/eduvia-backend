@@ -7,6 +7,7 @@ import {
   OrganizationNotActiveError,
 } from '../errors';
 import { OrganizationSuspendedEvent } from '../events/org-suspended-event';
+import { OrganizationUpdatedEvent } from '../events/org-updated-event';
 
 class Organization extends AggregateRoot<OrganizationId> {
   public readonly ownerId: string;
@@ -132,60 +133,69 @@ class Organization extends AggregateRoot<OrganizationId> {
     return new Organization(params);
   }
 
-  /* public updateProfile(params: {
-    name?: string;
-    description?: string | null;
-    logoUrl?: string | null;
-    websiteUrl?: string | null;
-    contactEmail?: string;
-    contactPhone?: string | null;
-    country?: string;
-    timezone?: string;
-    correlationId: string;
-  }): void{
-    
-    if (params.name !== undefined) {
-      this._name = params.name;
-    }
+  public updateProfile(params: {
+  name?: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  websiteUrl?: string | null;
+  contactEmail?: string;
+  contactPhone?: string | null;
+  country?: string;
+  timezone?: string;
+  correlationId: string;
+}): void {
+  const changedFields: Record<string, unknown> = {};
 
-    if (params.description !== undefined) {
-      this._description = params.description;
-    }
+  if (params.name !== undefined) {
+    this._name = params.name;
+    changedFields.name = params.name;
+  }
 
-    if (params.logoUrl !== undefined) {
-      this._logoUrl = params.logoUrl;
-    }
+  if (params.description !== undefined) {
+    this._description = params.description;
+    changedFields.description = params.description;
+  }
 
-    if (params.websiteUrl !== undefined) {
-      this._websiteUrl = params.websiteUrl;
-    }
+  if (params.logoUrl !== undefined) {
+    this._logoUrl = params.logoUrl;
+    changedFields.logoUrl = params.logoUrl;
+  }
 
-    if (params.contactEmail !== undefined) {
-      this._contactEmail = params.contactEmail;
-    }
+  if (params.websiteUrl !== undefined) {
+    this._websiteUrl = params.websiteUrl;
+    changedFields.websiteUrl = params.websiteUrl;
+  }
 
-    if (params.contactPhone !== undefined) {
-      this._contactPhone = params.contactPhone;
-    }
+  if (params.contactEmail !== undefined) {
+    this._contactEmail = params.contactEmail;
+    changedFields.contactEmail = params.contactEmail;
+  }
 
-    if (params.country !== undefined) {
-      this._country = params.country;
-    }
+  if (params.contactPhone !== undefined) {
+    this._contactPhone = params.contactPhone;
+    changedFields.contactPhone = params.contactPhone;
+  }
 
-    if (params.timezone !== undefined) {
-      this._timezone = params.timezone;
-    }
+  if (params.country !== undefined) {
+    this._country = params.country;
+    changedFields.country = params.country;
+  }
 
-     this._updatedAt = new Date();
+  if (params.timezone !== undefined) {
+    this._timezone = params.timezone;
+    changedFields.timezone = params.timezone;
+  }
 
-     this.addDomainEvent(
-        new OrganizationUpdatedEvent(
-            this.getId(),
-            new OrganizationUpdatedEvent.Payload(),
-            params.correlationId
-        )
-     )
-  } */
+  this._updatedAt = new Date();
+
+  this.addDomainEvent(
+    new OrganizationUpdatedEvent(
+      this.getId(),
+      new OrganizationUpdatedEvent.Payload(this.getId(), changedFields),
+      params.correlationId,
+    ),
+  );
+}
 
   public approve(correlationId: string): void {
     this._status = OrganizationStatus.ACTIVE;

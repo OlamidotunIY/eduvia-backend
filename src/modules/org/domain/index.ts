@@ -6,3 +6,4 @@ export * from './events/org-suspended-event';
 export * from './events/org-updated-event';
 export * from './repository/org.repository';
 export * from './value-objects';
+
