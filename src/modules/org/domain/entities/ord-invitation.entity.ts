@@ -53,11 +53,10 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
     subjects?: string[];
     tokenHash: string;
     rawToken: string;
-    expiresInHours: number;
     correlationId: string;
   }): OrganizationInvitation {
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + params.expiresInHours * 60 * 60 * 1000);
+    const expiresAt = new Date(now.getTime() +  60 * 60 * 1000);
 
     const invitation = new OrganizationInvitation({
       id: OrganizationInvitationId.create(),
@@ -163,6 +162,10 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
 
   public get status(): InvitationStatus {
     return this._status;
+  }
+
+  public get tokenHash(): string {
+    return this._tokenHash
   }
 
   public get acceptedAt(): Date | null {

@@ -2,7 +2,6 @@ import { MembershipStatus, OrganizationMembershipId, OrganizationRole } from "..
 
 
 class OrganizationMembership {
-  public readonly id: OrganizationMembershipId;
   public readonly orgId: string;
   public readonly userId: string;
   private _role: OrganizationRole;
@@ -12,7 +11,6 @@ class OrganizationMembership {
   private _updatedAt: Date;
 
   private constructor(params: {
-    id: OrganizationMembershipId;
     orgId: string;
     userId: string;
     role: OrganizationRole;
@@ -22,7 +20,6 @@ class OrganizationMembership {
     updatedAt: Date;
    
   }) {
-    this.id = params.id;
     this.orgId = params.orgId;
     this.userId = params.userId;
     this._role = params.role;
@@ -41,7 +38,6 @@ class OrganizationMembership {
   }): OrganizationMembership {
     const now = new Date();
     return new OrganizationMembership({
-      id: OrganizationMembershipId.create(),
       orgId: params.orgId,
       userId: params.userId,
       role: params.role,
@@ -54,7 +50,6 @@ class OrganizationMembership {
   }
 
   public static reconstitute(params: {
-    id: OrganizationMembershipId;
     orgId: string;
     userId: string;
     role: OrganizationRole;

@@ -1,7 +1,6 @@
 import { AggregateRoot } from '@modules/shared';
 import { ApplicationStatus, TeacherApplicationId } from '../value-objects';
 import { TeacherApplicationReceivedEvent } from '../events/teacher-application-received.event';
-import { TeacherApplicationAutoRejectedEvent } from '../events/teacher-application-auto-rejected.event';
 import { TeacherApplicationApprovedEvent } from '../events/teacher-application-approved.event';
 import { TeacherApplicationRejectedEvent } from '../events/teacher-application-rejected.event';
 
@@ -11,7 +10,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
   public readonly applicantUserId: string;
   public readonly appliedSubjects: string[];
   private _status: ApplicationStatus;
-  private _autoRejected: boolean;
   private _rejectionReason: string | null;
   private _reviewedBy: string | null;
   private _reviewedAt: Date | null;
@@ -26,7 +24,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     applicantUserId: string;
     appliedSubjects: string[];
     status: ApplicationStatus;
-    autoRejected: boolean;
     rejectionReason: string | null;
     reviewedBy: string | null;
     reviewedAt: Date | null;
@@ -41,7 +38,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     this.applicantUserId = params.applicantUserId;
     this.appliedSubjects = params.appliedSubjects;
     this._status = params.status;
-    this._autoRejected = params.autoRejected;
     this._rejectionReason = params.rejectionReason;
     this._reviewedBy = params.reviewedBy;
     this._reviewedAt = params.reviewedAt;
@@ -67,7 +63,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
       applicantUserId: params.applicantUserId,
       appliedSubjects: params.appliedSubjects,
       status: ApplicationStatus.PENDING_REVIEW,
-      autoRejected: false,
       rejectionReason: null,
       reviewedBy: null,
       reviewedAt: null,
@@ -99,7 +94,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     applicantUserId: string;
     appliedSubjects: string[];
     status: ApplicationStatus;
-    autoRejected: boolean;
     rejectionReason: string | null;
     reviewedBy: string | null;
     reviewedAt: Date | null;
@@ -109,22 +103,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     updatedAt: Date;
   }): TeacherApplication {
     return new TeacherApplication(params);
-  }
-
-  public autoReject(reason: string, correlationId: string): void {
-
-    this._status = ApplicationStatus.AUTO_REJECTED;
-    this._autoRejected = true;
-    this._rejectionReason = reason;
-    this._updatedAt = new Date();
-
-    this.addDomainEvent(
-      new TeacherApplicationAutoRejectedEvent(
-        this.getId(),
-        new TeacherApplicationAutoRejectedEvent.Payload(this.getId(), this.orgId, reason),
-        correlationId,
-      ),
-    );
   }
 
   public approve(reviewerId: string, correlationId: string): void {
@@ -172,10 +150,6 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     return this._status;
   }
 
-  public get autoRejected(): boolean {
-    return this._autoRejected;
-  }
-
   public get rejectionReason(): string | null {
     return this._rejectionReason;
   }
@@ -186,6 +160,10 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
 
   public get reviewedAt(): Date | null {
     return this._reviewedAt;
+  }
+
+  public get updatedAt(): Date {
+    return this._updatedAt
   }
 }
 

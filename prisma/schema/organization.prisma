@@ -1,20 +1,27 @@
 model Organization {
-  id                 String   @id @db.Uuid
-  ownerId            String   @db.Uuid
-  name               String
-  slug               String   @unique
-  description        String?
-  logoUrl            String?
-  websiteUrl         String?
-  contactEmail       String
-  contactPhone       String?
-  country            String
-  timezone           String
-  status             OrgStatus
-  marketplaceListed  Boolean  @default(false)
-  acceptingTeachers  Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                        String    @id @db.Uuid
+  ownerId                   String    @db.Uuid
+  name                      String
+  slug                      String    @unique
+  description               String?
+  logoUrl                   String?
+  websiteUrl                String?
+  contactEmail              String
+  contactPhone              String?
+  country                   String
+  timezone                  String
+  status                    OrgStatus
+  marketplaceListed         Boolean   @default(false)
+  acceptingTeachers         Boolean   @default(false)
+  acceptingTeachersFor      String[]
+  minimumBookingNoticeHours Int
+  cancellationWindowHours   Int
+  noShowWaitMinutes         Int
+  autoRescheduleOnNoShow    Boolean
+  lessonPlanRequired        Boolean
+  reportRequiredWithinHours Int
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }
 
 enum OrgStatus {

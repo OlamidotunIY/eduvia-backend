@@ -25,7 +25,7 @@ class Organization extends AggregateRoot<OrganizationId> {
   private _marketplaceListed: boolean;
   private _acceptingTeachers: boolean;
   private _acceptingTeachersFor: OrganizationSubjectId[];
-  private _policy: OrganizationPolicy;
+  private _policy: OrganizationPolicy | null;
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
@@ -50,6 +50,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     marketplaceListed: boolean;
     acceptingTeachers: boolean;
     acceptingTeachersFor: OrganizationSubjectId[];
+    policy: OrganizationPolicy | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -69,6 +70,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     this._marketplaceListed = params.marketplaceListed;
     this. _acceptingTeachers = params.acceptingTeachers;
     this._acceptingTeachersFor = params.acceptingTeachersFor;
+    this._policy = params.policy;
     this.createdAt = params.createdAt;
     this._updatedAt = params.updatedAt;
   }
@@ -102,6 +104,7 @@ class Organization extends AggregateRoot<OrganizationId> {
       marketplaceListed: false,
       acceptingTeachers: false,
       acceptingTeachersFor: [],
+      policy: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -138,6 +141,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     marketplaceListed: boolean;
     acceptingTeachers: boolean;
     acceptingTeachersFor :OrganizationSubjectId[];
+    policy: null;
     createdAt: Date;
     updatedAt: Date;
   }): Organization {
@@ -318,6 +322,14 @@ class Organization extends AggregateRoot<OrganizationId> {
 
   public get acceptingTeachers(): boolean {
     return this._acceptingTeachers;
+  }
+
+  public get acceptingTeachersFor(): OrganizationSubjectId[] {
+    return this._acceptingTeachersFor;
+  }
+
+  public get policy(): OrganizationPolicy  {
+    return this._policy as OrganizationPolicy
   }
 
   public get updatedAt(): Date {

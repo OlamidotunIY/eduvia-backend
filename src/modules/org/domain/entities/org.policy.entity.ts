@@ -2,14 +2,12 @@
 
 class OrganizationPolicy {
   public readonly orgId: string;
-  private _minimumBookingNoticeHours: number;
-  private _cancellationWindowHours: number;
-  private _noShowWaitMinutes: number;
-  private _autoRescheduleOnNoShow: boolean;
-  private _lessonPlanRequired: boolean;
-  private _reportRequiredWithinHours: number;
-  public readonly createdAt: Date;
-  private _updatedAt: Date;
+  public readonly minimumBookingNoticeHours: number;
+  public readonly cancellationWindowHours: number;
+  public readonly noShowWaitMinutes: number;
+  public readonly autoRescheduleOnNoShow: boolean;
+  public readonly lessonPlanRequired: boolean;
+  public readonly reportRequiredWithinHours: number;
 
   private constructor(params: {
     orgId: string;
@@ -19,19 +17,32 @@ class OrganizationPolicy {
     autoRescheduleOnNoShow: boolean;
     lessonPlanRequired: boolean;
     reportRequiredWithinHours: number;
-    createdAt: Date;
-    updatedAt: Date;
   }) {
     this.orgId = params.orgId;
-    this._minimumBookingNoticeHours = params.minimumBookingNoticeHours;
-    this._cancellationWindowHours = params.cancellationWindowHours;
-    this._noShowWaitMinutes = params.noShowWaitMinutes;
-    this._autoRescheduleOnNoShow = params.autoRescheduleOnNoShow;
-    this._lessonPlanRequired = params.lessonPlanRequired;
-    this._reportRequiredWithinHours = params.reportRequiredWithinHours;
-    this.createdAt = params.createdAt;
-    this._updatedAt = params.updatedAt;
+    this.minimumBookingNoticeHours = params.minimumBookingNoticeHours;
+    this.cancellationWindowHours = params.cancellationWindowHours;
+    this.noShowWaitMinutes = params.noShowWaitMinutes;
+    this.autoRescheduleOnNoShow = params.autoRescheduleOnNoShow;
+    this.lessonPlanRequired = params.lessonPlanRequired;
+    this.reportRequiredWithinHours = params.reportRequiredWithinHours;
+  
   }
+
+  public static create(orgId: string): OrganizationPolicy {
+    return new OrganizationPolicy({
+      orgId,
+      minimumBookingNoticeHours: 24,
+      cancellationWindowHours: 48,
+      noShowWaitMinutes: 15,
+      autoRescheduleOnNoShow: true,
+      lessonPlanRequired: false,
+      reportRequiredWithinHours: 24,
+    });
+  }
+
+  
+
+ 
 
   
 
