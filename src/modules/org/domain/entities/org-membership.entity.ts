@@ -1,4 +1,5 @@
-import { MembershipStatus, OrganizationMembershipId, OrganizationRole } from "../value-objects";
+import { OrganizationInvariantError } from "../errors";
+import { MembershipStatus,  OrganizationRole } from "../value-objects";
 
 
 class OrganizationMembership {
@@ -57,14 +58,13 @@ class OrganizationMembership {
     status: MembershipStatus;
     joinedAt: Date;
     updatedAt: Date;
-    removedAt: Date | null;
   }): OrganizationMembership {
     return new OrganizationMembership(params);
   }
 
   public changeRole(newRole: OrganizationRole): void {
     if (this._status !== MembershipStatus.ACTIVE) {
-      throw new Error("User is not active");
+      throw new OrganizationInvariantError("User is not active");
     }
     this._role = newRole;
     this._updatedAt = new Date();

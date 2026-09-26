@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateOrganizationSubjectCommand } from './updat-organization-subject.command';
 import { IOrganizationSubjectRepository } from '../../../domain/repository';
-import { OrganizationSubjectId } from '../../../domain';
+import { OrganizationInvariantError, OrganizationSubjectId, SubjectNotFound } from '../../../domain';
 
 @CommandHandler(UpdateOrganizationSubjectCommand)
 export class UpdateOrganizationSubjectHandler implements ICommandHandler<UpdateOrganizationSubjectCommand, void> {
@@ -14,11 +14,11 @@ export class UpdateOrganizationSubjectHandler implements ICommandHandler<UpdateO
       OrganizationSubjectId.from(payload.subjectId),
     );
     if (!subject) {
-      throw new Error('subject not found');
+      throw new SubjectNotFound();
     }
 
     if (subject.orgId !== payload.orgId) {
-      throw new Error('')
+      throw new OrganizationInvariantError("Invalid credentials")
     }
 
     if (payload.name !== undefined) subject.rename(payload.name);

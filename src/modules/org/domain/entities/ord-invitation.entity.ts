@@ -4,6 +4,7 @@ import { InvitationRole } from '../value-objects/org-invitation.role.v0';
 import { InvitationStatus } from '../value-objects/org-invitation-status.v0';
 import { OrganizationInvitationSentEvent } from '../events/org-invitation-sent.event';
 import { OrganizationInvitationAcceptedEvent } from '../events/org-invitation-accepted.event';
+import { OrganizationInvariantError, OrganizationInvitationEpired } from '../errors';
 
 
 class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
@@ -111,10 +112,10 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
 
   public accept(acceptedByUserId: string, correlationId: string): void {
     if (this._status !== InvitationStatus.PENDING) {
-      throw new Error("Invitation Not Pending");
+      throw new OrganizationInvariantError("Invitation Not Pending");
     }
     if (this.expiresAt.getTime() <= Date.now()) {
-      throw new Error("Invitation expired");
+      throw new OrganizationInvitationEpired();
     }
 
     this._status = InvitationStatus.ACCEPTED;
@@ -137,7 +138,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
 
   public revoke(): void {
     if (this._status !== InvitationStatus.PENDING) {
-      throw new Error("Invitation not pending");
+      throw new OrganizationInvariantError("Invitation not pending");
     }
 
     this._status = InvitationStatus.REVOKED;

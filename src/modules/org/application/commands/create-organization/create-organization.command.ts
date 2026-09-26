@@ -10,6 +10,8 @@ export class CreateOrganizationCommand extends Command<CreateOrganizationResult>
       name: string;
       slug: string;
       contactEmail: string,
+       country: string,
+       timezone: string,
       correlationId: string;
     },
   ) {

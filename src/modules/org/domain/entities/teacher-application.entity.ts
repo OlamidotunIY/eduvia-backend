@@ -3,6 +3,7 @@ import { ApplicationStatus, TeacherApplicationId } from '../value-objects';
 import { TeacherApplicationReceivedEvent } from '../events/teacher-application-received.event';
 import { TeacherApplicationApprovedEvent } from '../events/teacher-application-approved.event';
 import { TeacherApplicationRejectedEvent } from '../events/teacher-application-rejected.event';
+import { OrganizationInvariantError } from '../errors';
 
 
 class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
@@ -107,7 +108,7 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
 
   public approve(reviewerId: string, correlationId: string): void {
     if (this._status !== ApplicationStatus.PENDING_REVIEW) {
-      throw new Error("Only a pending application can be review");
+      throw new OrganizationInvariantError("Only a pending application can be review");
     }
 
     this._status = ApplicationStatus.APPROVED;

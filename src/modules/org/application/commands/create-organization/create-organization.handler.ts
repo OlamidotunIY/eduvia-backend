@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateOrganizationCommand } from './create-organization.command';
 import { CreateOrganizationResult } from './create-organization.result';
-import { IOrganizationRepository, Organization } from '../../../domain';
+import { IOrganizationRepository, Organization, OrganizationUserNotFound, UserCannotCreateOrganization } from '../../../domain';
 import { IUserQueryPort, UserType } from '@modules/shared';
 
 @CommandHandler(CreateOrganizationCommand)
@@ -20,11 +20,11 @@ export class CreateOrganizationHandler implements ICommandHandler<
     const { payload } = command;
     const user = await this.userQueryPort.getUserById(payload.ownerId);
     if (!user) {
-      throw new Error('User not found');
+      throw new OrganizationUserNotFound();
     }
 
     if (user.userType !== UserType.TEACHER) {
-      throw new Error('User cannot create Organization');
+      throw new UserCannotCreateOrganization();
     }
 
     const organization = Organization.create({
@@ -32,6 +32,8 @@ export class CreateOrganizationHandler implements ICommandHandler<
       name: payload.name,
       slug: payload.slug,
       contactEmail: payload.contactEmail,
+      country: payload.country,
+      timezone: payload.timezone,
       correlationId: payload.correlationId,
     });
     await this.organizationRepository.save(organization);

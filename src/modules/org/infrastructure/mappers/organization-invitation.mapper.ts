@@ -29,7 +29,7 @@ export class OrganizationInvitationMapper {
     entity: OrganizationInvitation,
   ): Omit<PrismaOrganizationInvitation, 'id'> {
     return {
-        orgId: entity.orgId,
+      orgId: entity.orgId,
       inviterUserId: entity.inviterUserId,
       inviteeEmail: entity.inviteeEmail,
       role: entity.role as InvitationRole,

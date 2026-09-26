@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateOrganizationSubjectCommand } from './create-organization-subject.command';
 import { CreateOrganizationSubjectResult } from './create-oganization-subject.result';
-import { IOrganizationRepository } from '../../../domain';
+import { IOrganizationRepository, OrganizationNotFound } from '../../../domain';
 import { IOrganizationSubjectRepository } from '../../../domain/repository';
 import { OrganizationSubject } from '../../../domain/entities';
 
@@ -21,7 +21,7 @@ export class CreateOrganizationSubjectHandler
 
     const organization = await this.organizationRepository.findById(payload.orgId);
     if (!organization) {
-      throw new Error('Organization not found');
+      throw new OrganizationNotFound();
     }
 
     const subject = OrganizationSubject.create({
