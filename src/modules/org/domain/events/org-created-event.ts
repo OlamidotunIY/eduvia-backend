@@ -18,7 +18,7 @@ class OrganizationCreatedEvent extends BaseDomainEvent<OrganizationCreatedEvent.
 namespace OrganizationCreatedEvent {
   export class Payload {
     constructor(
-      public readonly organizationId: string,
+      public readonly orgId: string,
       public readonly ownerId: string,
       public readonly name: string,
       public readonly slug: string,
