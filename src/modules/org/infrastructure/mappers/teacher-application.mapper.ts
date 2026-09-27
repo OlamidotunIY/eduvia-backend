@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationStatus,TeacherApplicationId } from '../../domain';
+import { ApplicationStatus,OrganizationId,TeacherApplicationId } from '../../domain';
 import { TeacherApplication as PrismaTeacherApplication } from '@generated/prisma/client';
 import { TeacherApplication } from '../../domain/entities';
 
@@ -9,7 +9,7 @@ export class TeacherApplicationMapper {
   toDomain(record: PrismaTeacherApplication): TeacherApplication {
     return TeacherApplication.reconstitute({
       id: TeacherApplicationId.from(record.id),
-      orgId: record.orgId,
+      orgId: OrganizationId.from(record.orgId),
       applicantUserId: record.applicantUserId,
       appliedSubjects: record.appliedSubjects,
       status: record.status as ApplicationStatus,
@@ -25,7 +25,7 @@ export class TeacherApplicationMapper {
 
   toPersistence(entity: TeacherApplication): Omit<PrismaTeacherApplication, 'id'> {
     return {
-      orgId: entity.orgId,
+      orgId: entity.orgId.value,
       applicantUserId: entity.applicantUserId,
       appliedSubjects: entity.appliedSubjects,
       status: entity.status as ApplicationStatus,

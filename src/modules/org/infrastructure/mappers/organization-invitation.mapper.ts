@@ -3,6 +3,7 @@ import { OrganizationInvitation } from '../../domain/entities';
 import {
   InvitationRole,
   InvitationStatus,
+  OrganizationId,
   OrganizationInvitationId,
 } from '../../domain';
 import { OrganizationInvitation as PrismaOrganizationInvitation } from '@generated/prisma/client';
@@ -12,7 +13,7 @@ export class OrganizationInvitationMapper {
   toDomain(record: PrismaOrganizationInvitation): OrganizationInvitation {
     return OrganizationInvitation.reconstitute({
       id: OrganizationInvitationId.from(record.id),
-      orgId: record.orgId,
+      orgId: OrganizationId.from(record.orgId),
       inviterUserId: record.inviterUserId,
       inviteeEmail: record.inviteeEmail,
       role: record.role as InvitationRole,
@@ -29,7 +30,7 @@ export class OrganizationInvitationMapper {
     entity: OrganizationInvitation,
   ): Omit<PrismaOrganizationInvitation, 'id'> {
     return {
-      orgId: entity.orgId,
+      orgId: entity.orgId.value,
       inviterUserId: entity.inviterUserId,
       inviteeEmail: entity.inviteeEmail,
       role: entity.role as InvitationRole,

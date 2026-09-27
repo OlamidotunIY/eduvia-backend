@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { OrganizationId, OrganizationSubjectId } from '../../domain';
 import { OrganizationSubject } from '../../domain/entities';
 import { OrganizationSubject as PrismaOrganizationSubject } from '@generated/prisma/client';
-import { IOrganizationInvitationRepository } from '../../domain/repository/org-invitation.repository';
 import { OrganizationSubjectMapper } from '../mappers/organization-subject.mapper';
+import { IOrganizationSubjectRepository } from '../../domain/repository';
 
 @Injectable()
 export class PrismaOrganizationSubjectRepository
@@ -13,7 +13,7 @@ export class PrismaOrganizationSubjectRepository
     OrganizationSubject,
     PrismaOrganizationSubject
   >
-  implements IOrganizationInvitationRepository
+  implements IOrganizationSubjectRepository
 {
   constructor(
     protected readonly prisma: PrismaService,

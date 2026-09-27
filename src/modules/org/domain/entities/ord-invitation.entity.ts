@@ -4,7 +4,7 @@ import { InvitationRole } from '../value-objects/org-invitation.role.v0';
 import { InvitationStatus } from '../value-objects/org-invitation-status.v0';
 import { OrganizationInvitationSentEvent } from '../events/org-invitation-sent.event';
 import { OrganizationInvitationAcceptedEvent } from '../events/org-invitation-accepted.event';
-import { OrganizationInvariantError, OrganizationInvitationEpired } from '../errors';
+import { OrganizationInvariantError, OrganizationInvitationExpired } from '../errors';
 
 
 class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
@@ -115,7 +115,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
       throw new OrganizationInvariantError("Invitation Not Pending");
     }
     if (this.expiresAt.getTime() <= Date.now()) {
-      throw new OrganizationInvitationEpired();
+      throw new OrganizationInvitationExpired();
     }
 
     this._status = InvitationStatus.ACCEPTED;

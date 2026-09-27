@@ -108,7 +108,7 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
 
   public approve(reviewerId: string, correlationId: string): void {
     if (this._status !== ApplicationStatus.PENDING_REVIEW) {
-      throw new OrganizationInvariantError("Only a pending application can be review");
+      throw new OrganizationInvariantError("Only a pending application can be approved");
     }
 
     this._status = ApplicationStatus.APPROVED;
@@ -131,6 +131,12 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
   }
 
   public reject(reviewerId: string, reason: string | null, correlationId: string): void {
+
+    if (this._status !== ApplicationStatus.PENDING_REVIEW) {
+    throw new OrganizationInvariantError(
+      'Only a pending application can be rejected',
+    );
+  }
 
     this._status = ApplicationStatus.REJECTED;
     this._rejectionReason = reason;

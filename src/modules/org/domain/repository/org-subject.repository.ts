@@ -9,7 +9,7 @@ export abstract class IOrganizationSubjectRepository extends BaseRepository<
 
   public abstract findByOrganizationId(
     orgId: OrganizationId | string,
-  ): Promise<OrganizationSubject | null>;
+  ): Promise<OrganizationSubject[]>;
 
 
   public abstract findActiveSubjectsByOrganizationId(

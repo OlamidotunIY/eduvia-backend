@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationMembership } from '../../domain/entities';
-import { MembershipStatus, OrganizationRole } from '../../domain';
+import { MembershipStatus, OrganizationId, OrganizationRole } from '../../domain';
 import { OrganizationMembership as PrismaOrganizationMembership } from '@generated/prisma/client';
 
 @Injectable()
 export class OrganizationMembershipMapper {
   toDomain(record: PrismaOrganizationMembership): OrganizationMembership {
     return OrganizationMembership.reconstitute({
-      orgId: record.orgId,
+      orgId: OrganizationId.from(record.orgId),
       userId: record.userId,
       role: record.role as OrganizationRole,
       subjects: record.subjects,
@@ -21,7 +21,7 @@ export class OrganizationMembershipMapper {
     entity: OrganizationMembership,
   ): Omit<PrismaOrganizationMembership, 'id'> {
     return {
-      orgId: entity.orgId,
+      orgId: entity.orgId.value,
       userId: entity.userId,
       role: entity.role as OrganizationRole,
       subjects: entity.subjects,
