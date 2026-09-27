@@ -2,8 +2,6 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationInvitationAcceptedCommand } from './org-invitation-accepted.command';
 import { OrganizationInvitationAcceptedResult } from './org-invitation-accepted.result';
 import { IOrganizationInvitationRepository } from '../../../domain/repository/org-invitation.repository';
-import { IOrganizationRepository, OrganizationInvitationId } from '../../../domain';
-
 @CommandHandler(OrganizationInvitationAcceptedCommand)
 export class AcceptOrganizationInvitationHandler implements ICommandHandler<
   OrganizationInvitationAcceptedCommand,

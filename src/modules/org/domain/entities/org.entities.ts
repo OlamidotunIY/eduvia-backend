@@ -29,11 +29,6 @@ class Organization extends AggregateRoot<OrganizationId> {
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
-  /* subjects:          OrgSubject[]
-  memberships:       OrgMembership[]
-  policies:          OrgPolicy (embedded)
-  subscriptionPlans: SubscriptionPlan[] */
-
   private constructor(params: {
     id: OrganizationId;
     ownerId: string;
