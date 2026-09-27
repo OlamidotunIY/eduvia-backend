@@ -1,5 +1,6 @@
 import { BaseDomainEvent } from '@modules/shared';
 import { InvitationRole } from '../value-objects/org-invitation.role.v0';
+import { OrganizationId } from '../value-objects';
 
 class OrganizationInvitationAcceptedEvent extends BaseDomainEvent<OrganizationInvitationAcceptedEvent.Payload> {
   constructor(
@@ -20,7 +21,7 @@ namespace OrganizationInvitationAcceptedEvent {
   export class Payload {
     constructor(
       public readonly invitationId: string,
-      public readonly orgId: string,
+      public readonly orgId: OrganizationId,
       public readonly acceptedByUserId: string,
       public readonly role: InvitationRole,
       public readonly subjects: string[],

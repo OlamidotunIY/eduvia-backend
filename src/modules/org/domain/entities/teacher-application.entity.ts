@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@modules/shared';
-import { ApplicationStatus, TeacherApplicationId } from '../value-objects';
+import { ApplicationStatus, OrganizationId, TeacherApplicationId } from '../value-objects';
 import { TeacherApplicationReceivedEvent } from '../events/teacher-application-received.event';
 import { TeacherApplicationApprovedEvent } from '../events/teacher-application-approved.event';
 import { TeacherApplicationRejectedEvent } from '../events/teacher-application-rejected.event';
@@ -7,7 +7,7 @@ import { OrganizationInvariantError } from '../errors';
 
 
 class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
-  public readonly orgId: string;
+  public readonly orgId: OrganizationId;
   public readonly applicantUserId: string;
   public readonly appliedSubjects: string[];
   private _status: ApplicationStatus;
@@ -21,7 +21,7 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
 
   private constructor(params: {
     id: TeacherApplicationId;
-    orgId: string;
+    orgId: OrganizationId;
     applicantUserId: string;
     appliedSubjects: string[];
     status: ApplicationStatus;
@@ -49,7 +49,7 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
   }
 
   public static create(params: {
-    orgId: string;
+    orgId: OrganizationId;
     applicantUserId: string;
     appliedSubjects: string[];
     coverLetter?: string | null;
@@ -91,7 +91,7 @@ class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
 
   public static reconstitute(params: {
     id: TeacherApplicationId;
-    orgId: string;
+    orgId: OrganizationId;
     applicantUserId: string;
     appliedSubjects: string[];
     status: ApplicationStatus;

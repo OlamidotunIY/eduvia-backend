@@ -1,8 +1,18 @@
-import { OrganizationSubjectId } from '../value-objects';
+import { OrganizationId, OrganizationSubjectId } from '../value-objects';
 import { OrganizationSubject } from '../entities/org-subject.entity';
+import { BaseRepository } from '@modules/shared';
 
-export abstract class IOrganizationSubjectRepository {
-  abstract save(subject: OrganizationSubject): Promise<void>;
-  abstract findById(id: OrganizationSubjectId): Promise<OrganizationSubject | null>;
-  abstract listActiveSubjectNames(orgId: string): Promise<string[]>;
+export abstract class IOrganizationSubjectRepository extends BaseRepository<
+  OrganizationSubject,
+  OrganizationSubjectId
+> {
+
+  public abstract findByOrganizationId(
+    orgId: OrganizationId | string,
+  ): Promise<OrganizationSubject | null>;
+
+
+  public abstract findActiveSubjectsByOrganizationId(
+    orgId: OrganizationId | string,
+  ): Promise<OrganizationSubject[]>;
 }

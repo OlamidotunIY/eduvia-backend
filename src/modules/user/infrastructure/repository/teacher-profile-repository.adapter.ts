@@ -4,21 +4,22 @@ import { IParentProfileRepository, TeacherProfile } from '../../domain';
 import { TeacherProfileMapper } from '../mappers/teacher-profile.mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { TeacherProfile as PrismaTeacherProfile } from '@generated/prisma/client';
+import { ITeacherProfileRepository } from '../../domain/repository/teacher-profile.repository';
 
 @Injectable()
 export class PrismaTeacherProfileRepository
   extends PrismaBaseRepository<TeacherProfileId, TeacherProfile, PrismaTeacherProfile>
-  implements IParentProfileRepository
+  implements ITeacherProfileRepository
 {
   constructor(
     protected readonly prisma: PrismaService,
-    protected readonly parentProfileMapper: TeacherProfileMapper,
+    protected readonly teacherProfileMapper: TeacherProfileMapper,
   ) {
-    super(prisma, parentProfileMapper);
+    super(prisma, teacherProfileMapper);
   }
 
   protected get delegate() {
-    return this.prisma.TeacherProfile;
+    return this.prisma.teacherProfile;
   }
 
   public async findByUserId(userId: UserId | string): Promise<TeacherProfile | null> {

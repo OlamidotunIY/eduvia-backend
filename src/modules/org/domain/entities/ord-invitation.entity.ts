@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@modules/shared';
-import { OrganizationInvitationId } from '../value-objects';
+import { OrganizationId, OrganizationInvitationId } from '../value-objects';
 import { InvitationRole } from '../value-objects/org-invitation.role.v0';
 import { InvitationStatus } from '../value-objects/org-invitation-status.v0';
 import { OrganizationInvitationSentEvent } from '../events/org-invitation-sent.event';
@@ -8,7 +8,7 @@ import { OrganizationInvariantError, OrganizationInvitationEpired } from '../err
 
 
 class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
-  public readonly orgId: string;
+  public readonly orgId: OrganizationId;
   public readonly inviterUserId: string;
   public readonly inviteeEmail: string;
   public readonly role: InvitationRole;
@@ -21,7 +21,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
 
   private constructor(params: {
     id: OrganizationInvitationId;
-    orgId: string;
+    orgId: OrganizationId;
     inviterUserId: string;
     inviteeEmail: string;
     role: InvitationRole;
@@ -47,7 +47,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
   }
 
   public static create(params: {
-    orgId: string;
+    orgId: OrganizationId;
     inviterUserId: string;
     inviteeEmail: string;
     role: InvitationRole;
@@ -92,7 +92,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
 
   public static reconstitute(params: {
     id: OrganizationInvitationId;
-    orgId: string;
+    orgId: OrganizationId;
     inviterUserId: string;
     inviteeEmail: string;
     role: InvitationRole;

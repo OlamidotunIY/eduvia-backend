@@ -1,8 +1,8 @@
 import { AggregateRoot } from "@modules/shared";
-import { OrganizationSubjectId } from "../value-objects";
+import { OrganizationId, OrganizationSubjectId } from "../value-objects";
 
 class OrganizationSubject extends AggregateRoot<OrganizationSubjectId> {
-  public readonly orgId: string;
+  public readonly orgId: OrganizationId;
   private _name: string;
   private _platformSubjectId: string | null;
   private _description: string | null;
@@ -11,7 +11,7 @@ class OrganizationSubject extends AggregateRoot<OrganizationSubjectId> {
 
   private constructor(params: {
     id: OrganizationSubjectId;
-    orgId: string;
+    orgId: OrganizationId;
     name: string;
     platformSubjectId: string | null;
     description: string | null;
@@ -29,7 +29,7 @@ class OrganizationSubject extends AggregateRoot<OrganizationSubjectId> {
   }
 
   public static create(params: {
-    orgId: string;
+    orgId: OrganizationId;
     name: string;
     platformSubjectId?: string | null;
     description?: string | null;
@@ -47,7 +47,7 @@ class OrganizationSubject extends AggregateRoot<OrganizationSubjectId> {
 
   public static reconstitute(params: {
     id: OrganizationSubjectId;
-    orgId: string;
+    orgId: OrganizationId;
     name: string;
     platformSubjectId: string | null;
     description: string | null;

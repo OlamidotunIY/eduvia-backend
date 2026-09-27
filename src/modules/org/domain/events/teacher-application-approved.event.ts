@@ -1,4 +1,5 @@
 import { BaseDomainEvent } from '@modules/shared';
+import { OrganizationId } from '../value-objects';
 
 class TeacherApplicationApprovedEvent extends BaseDomainEvent<TeacherApplicationApprovedEvent.Payload> {
   constructor(
@@ -19,7 +20,7 @@ namespace TeacherApplicationApprovedEvent {
   export class Payload {
     constructor(
       public readonly applicationId: string,
-      public readonly orgId: string,
+      public readonly orgId: OrganizationId,
       public readonly applicantUserId: string,
       public readonly approvedSubjects: string[],
     ) {}
