@@ -12,5 +12,5 @@ export abstract class IOrganizationMembershipRepository {
     userId: string,
   ): Promise<OrganizationMembership[]>;
 
-  
+  public abstract save(membership: OrganizationMembership): Promise<void>;
 }

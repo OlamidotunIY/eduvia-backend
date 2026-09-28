@@ -77,10 +77,10 @@ class OrganizationMembership {
 
   public suspend(): void {
     if (this._status === MembershipStatus.SUSPENDED) {
-      throw new Error("");
+      throw new OrganizationInvariantError("Membership is already suspended");
     }
     if (this._status === MembershipStatus.INACTIVE) {
-      throw new Error("");
+      throw new OrganizationInvariantError("Inactive membership cannot be suspended");
     }
     this._status = MembershipStatus.SUSPENDED;
     this._updatedAt = new Date();
@@ -92,7 +92,7 @@ class OrganizationMembership {
   }
 
   public get subjects(): string[] {
-    return this._subjects;
+    return [...this._subjects];
   }
 
   public get status(): MembershipStatus {

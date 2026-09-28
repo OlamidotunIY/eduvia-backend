@@ -328,7 +328,7 @@ class Organization extends AggregateRoot<OrganizationId> {
   }
 
   public get acceptingTeachersFor(): OrganizationSubjectId[] {
-    return this._acceptingTeachersFor;
+    return [...this._acceptingTeachersFor];
   }
 
   public get policy(): OrganizationPolicy {

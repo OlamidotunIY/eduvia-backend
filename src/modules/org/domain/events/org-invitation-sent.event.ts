@@ -23,8 +23,7 @@ namespace OrganizationInvitationSentEvent {
       public readonly invitationId: string,
       public readonly orgId: OrganizationId,
       public readonly inviteeEmail: string,
-      public readonly role: InvitationRole,
-      public readonly rawToken: string,
+      public readonly role: InvitationRole
     ) {}
   }
 }

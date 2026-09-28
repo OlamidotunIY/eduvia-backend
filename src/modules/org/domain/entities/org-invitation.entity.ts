@@ -81,7 +81,6 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
           invitation.orgId,
           invitation.inviteeEmail,
           invitation.role,
-          params.rawToken,
         ),
         params.correlationId,
       ),
@@ -172,6 +171,7 @@ class OrganizationInvitation extends AggregateRoot<OrganizationInvitationId> {
   public get acceptedAt(): Date | null {
     return this._acceptedAt;
   }
+
 }
 
 export { OrganizationInvitation };

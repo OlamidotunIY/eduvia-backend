@@ -1,5 +1,5 @@
 import { Command } from '@nestjs/cqrs';
-import { InvitationRole } from '../../../domain';
+import { InvitationRole, OrganizationId } from '../../../domain';
 import { OrganizationInvitationAcceptedResult } from './org-invitation-accepted.result';
 
 export class OrganizationInvitationAcceptedCommand extends Command<OrganizationInvitationAcceptedResult> {
@@ -8,9 +8,9 @@ export class OrganizationInvitationAcceptedCommand extends Command<OrganizationI
       invitationId: string;
       acceptedByUserId: string;
       role: InvitationRole,
+      orgId: OrganizationId,
       subjects: string[],
-      correlationId: string;
-    
+      correlationId : string
     },
   ) {
     super();
