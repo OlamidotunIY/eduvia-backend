@@ -9,10 +9,10 @@ import { ReceiveTeacherApplicationCommand } from '../../application/commands/rec
 export class OrganizationService {
   constructor(private readonly commandBus: CommandBus) {}
 
-  async createOrganization(dto: CreateOrganizationDTO, correlationId: string) {
+  async createOrganization(dto: CreateOrganizationDTO, ownerId: string, correlationId: string) {
     return this.commandBus.execute(
       new CreateOrganizationCommand({
-        ownerId: dto.ownerId,
+        ownerId,
         name: dto.name,
         slug: dto.slug,
         contactEmail: dto.contactEmail,
