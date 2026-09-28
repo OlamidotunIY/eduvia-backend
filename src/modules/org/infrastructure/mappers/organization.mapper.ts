@@ -1,10 +1,12 @@
 import { IMapper } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
-import { Organization, OrganizationId, OrganizationStatus, OrganizationSubjectId } from '../../domain';
 import {
-  
-  Organization as PrismaOrganization,
-} from '@generated/prisma/client';
+  Organization,
+  OrganizationId,
+  OrganizationStatus,
+  OrganizationSubjectId,
+} from '../../domain';
+import { Organization as PrismaOrganization } from '@generated/prisma/client';
 import { OrganizationPolicy } from '../../domain/entities/org.policy.entity';
 
 @Injectable()
@@ -28,11 +30,17 @@ export class OrganizationMapper implements IMapper<
       status: record.status as OrganizationStatus,
       marketplaceListed: record.marketplaceListed,
       acceptingTeachers: record.acceptingTeachers,
-      acceptingTeachersFor: record.acceptingTeachersFor.map((id)=> (
-        OrganizationSubjectId.from(id)
-      )),
+      acceptingTeachersFor: record.acceptingTeachersFor.map((id) =>
+        OrganizationSubjectId.from(id),
+      ),
       policy: new OrganizationPolicy({
-
+        autoRescheduleOnNoShow: record.autoRescheduleOnNoShow,
+        cancellationWindowHours: record.cancellationWindowHours,
+        lessonPlanRequired: record.lessonPlanRequired,
+        minimumBookingNoticeHours: record.minimumBookingNoticeHours,
+        noShowWaitMinutes: record.noShowWaitMinutes,
+        reportRequiredWithinHours: record.reportRequiredWithinHours,
+        orgId: record.id,
       }),
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
@@ -40,28 +48,31 @@ export class OrganizationMapper implements IMapper<
   }
 
   toPersistence(entity: Organization): Omit<PrismaOrganization, 'id'> {
-   return{
-     name: entity.name,
-    ownerId: entity.ownerId,
-    slug: entity.slug,
-    description: entity.description,
-    logoUrl: entity.logoUrl,
-    websiteUrl: entity.websiteUrl,
-    contactEmail: entity.contactEmail,
-    contactPhone: entity.contactPhone,
-    country: entity.country,
-    timezone: entity.timezone,
-    status: entity.status,
-    marketplaceListed: entity.marketplaceListed,
-    acceptingTeachers: entity.acceptingTeachers,
-    acceptingTeachersFor: entity.acceptingTeachersFor.map((id) =>(id.toString())),
-    autoRescheduleOnNoShow: entity.policy.autoRescheduleOnNoShow,
-    cancellationWindowHours: entity.policy.cancellationWindowHours,
-    lessonPlanRequired: entity.policy.lessonPlanRequired,
-    noShowWaitMinutes: entity.policy.noShowWaitMinutes,
-    reportRequiredWithinHours: entity.policy.noShowWaitMinutes,
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt
-   }
+    return {
+      name: entity.name,
+      ownerId: entity.ownerId,
+      slug: entity.slug,
+      description: entity.description,
+      logoUrl: entity.logoUrl,
+      websiteUrl: entity.websiteUrl,
+      contactEmail: entity.contactEmail,
+      contactPhone: entity.contactPhone,
+      country: entity.country,
+      timezone: entity.timezone,
+      status: entity.status,
+      marketplaceListed: entity.marketplaceListed,
+      acceptingTeachers: entity.acceptingTeachers,
+      acceptingTeachersFor: entity.acceptingTeachersFor.map((id) =>
+        id.toString(),
+      ),
+      autoRescheduleOnNoShow: entity.policy.autoRescheduleOnNoShow,
+      cancellationWindowHours: entity.policy.cancellationWindowHours,
+      lessonPlanRequired: entity.policy.lessonPlanRequired,
+      noShowWaitMinutes: entity.policy.noShowWaitMinutes,
+      reportRequiredWithinHours: entity.policy.noShowWaitMinutes,
+      minimumBookingNoticeHours: entity.policy.minimumBookingNoticeHours,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
   }
 }

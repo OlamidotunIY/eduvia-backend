@@ -36,6 +36,7 @@ export class CreateOrganizationHandler implements ICommandHandler<
       timezone: payload.timezone,
       correlationId: payload.correlationId,
     });
+    organization.addPolicy();
     await this.organizationRepository.save(organization);
 
     return {

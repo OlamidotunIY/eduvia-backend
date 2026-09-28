@@ -1,5 +1,9 @@
 import { AggregateRoot } from '@modules/shared';
-import { OrganizationId, OrganizationStatus, OrganizationSubjectId } from '../value-objects';
+import {
+  OrganizationId,
+  OrganizationStatus,
+  OrganizationSubjectId,
+} from '../value-objects';
 import { OrganizationCreatedEvent } from '../events/org-created-event';
 import { OrganizationApprovedEvent } from '../events/org-approved-event';
 import {
@@ -63,7 +67,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     this._timezone = params.timezone;
     this._status = params.status;
     this._marketplaceListed = params.marketplaceListed;
-    this. _acceptingTeachers = params.acceptingTeachers;
+    this._acceptingTeachers = params.acceptingTeachers;
     this._acceptingTeachersFor = params.acceptingTeachersFor;
     this._policy = params.policy;
     this.createdAt = params.createdAt;
@@ -75,7 +79,7 @@ class Organization extends AggregateRoot<OrganizationId> {
     name: string;
     slug: string;
     contactEmail: string;
-    country:string;
+    country: string;
     timezone: string;
     correlationId: string;
     logoUrl?: string | null;
@@ -90,7 +94,7 @@ class Organization extends AggregateRoot<OrganizationId> {
       slug: params.slug,
       description: null,
       logoUrl: params.logoUrl ?? null,
-      websiteUrl:  params.websiteUrl ?? null,
+      websiteUrl: params.websiteUrl ?? null,
       contactEmail: params.contactEmail,
       contactPhone: null,
       country: params.country,
@@ -112,7 +116,7 @@ class Organization extends AggregateRoot<OrganizationId> {
           organization.ownerId,
           params.name,
           params.slug,
-          params.contactEmail
+          params.contactEmail,
         ),
         params.correlationId,
       ),
@@ -135,77 +139,81 @@ class Organization extends AggregateRoot<OrganizationId> {
     status: OrganizationStatus;
     marketplaceListed: boolean;
     acceptingTeachers: boolean;
-    acceptingTeachersFor :OrganizationSubjectId[];
-    policy: null;
+    acceptingTeachersFor: OrganizationSubjectId[];
+    policy: OrganizationPolicy;
     createdAt: Date;
     updatedAt: Date;
   }): Organization {
     return new Organization(params);
   }
 
+  public addPolicy(): void {
+    this._policy = OrganizationPolicy.create(this.id.toString());
+  }
+
   public updateProfile(params: {
-  name?: string;
-  description?: string | null;
-  logoUrl?: string | null;
-  websiteUrl?: string | null;
-  contactEmail?: string;
-  contactPhone?: string | null;
-  country?: string;
-  timezone?: string;
-  correlationId: string;
-}): void {
-  const changedFields: Record<string, unknown> = {};
+    name?: string;
+    description?: string | null;
+    logoUrl?: string | null;
+    websiteUrl?: string | null;
+    contactEmail?: string;
+    contactPhone?: string | null;
+    country?: string;
+    timezone?: string;
+    correlationId: string;
+  }): void {
+    const changedFields: Record<string, unknown> = {};
 
-  if (params.name !== undefined) {
-    this._name = params.name;
-    changedFields.name = params.name;
+    if (params.name !== undefined) {
+      this._name = params.name;
+      changedFields.name = params.name;
+    }
+
+    if (params.description !== undefined) {
+      this._description = params.description;
+      changedFields.description = params.description;
+    }
+
+    if (params.logoUrl !== undefined) {
+      this._logoUrl = params.logoUrl;
+      changedFields.logoUrl = params.logoUrl;
+    }
+
+    if (params.websiteUrl !== undefined) {
+      this._websiteUrl = params.websiteUrl;
+      changedFields.websiteUrl = params.websiteUrl;
+    }
+
+    if (params.contactEmail !== undefined) {
+      this._contactEmail = params.contactEmail;
+      changedFields.contactEmail = params.contactEmail;
+    }
+
+    if (params.contactPhone !== undefined) {
+      this._contactPhone = params.contactPhone;
+      changedFields.contactPhone = params.contactPhone;
+    }
+
+    if (params.country !== undefined) {
+      this._country = params.country;
+      changedFields.country = params.country;
+    }
+
+    if (params.timezone !== undefined) {
+      this._timezone = params.timezone;
+      changedFields.timezone = params.timezone;
+    }
+
+    this._updatedAt = new Date();
+
+    this.addDomainEvent(
+      new OrganizationUpdatedEvent(
+        this.getId(),
+        new OrganizationUpdatedEvent.Payload(this.getId(), changedFields),
+        params.correlationId,
+      ),
+    );
   }
-
-  if (params.description !== undefined) {
-    this._description = params.description;
-    changedFields.description = params.description;
-  }
-
-  if (params.logoUrl !== undefined) {
-    this._logoUrl = params.logoUrl;
-    changedFields.logoUrl = params.logoUrl;
-  }
-
-  if (params.websiteUrl !== undefined) {
-    this._websiteUrl = params.websiteUrl;
-    changedFields.websiteUrl = params.websiteUrl;
-  }
-
-  if (params.contactEmail !== undefined) {
-    this._contactEmail = params.contactEmail;
-    changedFields.contactEmail = params.contactEmail;
-  }
-
-  if (params.contactPhone !== undefined) {
-    this._contactPhone = params.contactPhone;
-    changedFields.contactPhone = params.contactPhone;
-  }
-
-  if (params.country !== undefined) {
-    this._country = params.country;
-    changedFields.country = params.country;
-  }
-
-  if (params.timezone !== undefined) {
-    this._timezone = params.timezone;
-    changedFields.timezone = params.timezone;
-  }
-
-  this._updatedAt = new Date();
-
-  this.addDomainEvent(
-    new OrganizationUpdatedEvent(
-      this.getId(),
-      new OrganizationUpdatedEvent.Payload(this.getId(), changedFields),
-      params.correlationId,
-    ),
-  );
-}
 
   public approve(correlationId: string): void {
     this._status = OrganizationStatus.ACTIVE;
@@ -271,16 +279,16 @@ class Organization extends AggregateRoot<OrganizationId> {
     this._updatedAt = new Date();
   }
 
-  public get name(): string{
-    return this._name
+  public get name(): string {
+    return this._name;
   }
 
-  public get slug(): string{
-    return this._slug
+  public get slug(): string {
+    return this._slug;
   }
 
   public get description(): string | null {
-    return this._description
+    return this._description;
   }
 
   public get logoUrl(): string | null {
@@ -323,8 +331,8 @@ class Organization extends AggregateRoot<OrganizationId> {
     return this._acceptingTeachersFor;
   }
 
-  public get policy(): OrganizationPolicy  {
-    return this._policy as OrganizationPolicy
+  public get policy(): OrganizationPolicy {
+    return this._policy as OrganizationPolicy;
   }
 
   public get updatedAt(): Date {
@@ -340,4 +348,4 @@ class Organization extends AggregateRoot<OrganizationId> {
   }
 }
 
-export { Organization }
+export { Organization };

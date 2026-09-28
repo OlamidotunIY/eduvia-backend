@@ -1,5 +1,3 @@
-
-
 class OrganizationPolicy {
   public readonly orgId: string;
   public readonly minimumBookingNoticeHours: number;
@@ -9,7 +7,9 @@ class OrganizationPolicy {
   public readonly lessonPlanRequired: boolean;
   public readonly reportRequiredWithinHours: number;
 
-  private constructor(params: {
+  private static MINIMUM_BOOKING_NOTICE_HOURS = 24;
+
+  constructor(params: {
     orgId: string;
     minimumBookingNoticeHours: number;
     cancellationWindowHours: number;
@@ -25,7 +25,6 @@ class OrganizationPolicy {
     this.autoRescheduleOnNoShow = params.autoRescheduleOnNoShow;
     this.lessonPlanRequired = params.lessonPlanRequired;
     this.reportRequiredWithinHours = params.reportRequiredWithinHours;
-  
   }
 
   public static create(orgId: string): OrganizationPolicy {
@@ -39,15 +38,6 @@ class OrganizationPolicy {
       reportRequiredWithinHours: 24,
     });
   }
-
-  
-
- 
-
-  
-
-  
-   
 }
 
 export { OrganizationPolicy };
