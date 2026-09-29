@@ -4,7 +4,7 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
-  CurrentUserPayload,
+  type CurrentUserPayload,
 } from '@modules/shared';
 
 @UseGuards(AuthGuard)

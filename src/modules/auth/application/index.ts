@@ -8,7 +8,7 @@ export type {
 
 export { CompleteVerificationHandler } from './commands/complete-verification/complete-verification.handler';
 export { CompleteVerificationCommand } from './commands/complete-verification/complete-verification.command';
-export type { CompleteVerificationPayload } from './commands/complete-verification/complete-verification.result';
+
 
 export { ChangePasswordHandler } from './commands/change-password/change-password.handler';
 export { ChangePasswordCommand } from './commands/change-password/change-password.command';

@@ -1,8 +1,9 @@
 import { OrganizationInvariantError } from "../errors";
-import { MembershipStatus,  OrganizationId,  OrganizationRole } from "../value-objects";
+import { MembershipStatus,  OrganizationId, OrganizationMembershipId, OrganizationRole } from "../value-objects";
 
 
 class OrganizationMembership {
+  public readonly id: OrganizationMembershipId
   public readonly orgId: OrganizationId;
   public readonly userId: string;
   private _role: OrganizationRole;
@@ -12,6 +13,7 @@ class OrganizationMembership {
   private _updatedAt: Date;
 
   private constructor(params: {
+    id: OrganizationMembershipId
     orgId: OrganizationId;
     userId: string;
     role: OrganizationRole;
@@ -38,7 +40,9 @@ class OrganizationMembership {
     subjects?: string[];
   }): OrganizationMembership {
     const now = new Date();
+
     return new OrganizationMembership({
+      id: OrganizationMembershipId.create(),
       orgId: params.orgId,
       userId: params.userId,
       role: params.role,
@@ -51,6 +55,7 @@ class OrganizationMembership {
   }
 
   public static reconstitute(params: {
+    id: OrganizationMembershipId;
     orgId: OrganizationId;
     userId: string;
     role: OrganizationRole;

@@ -21,7 +21,7 @@ import {
   GetUserByEmailHandler,
   GetUserByIdHandler,
 } from './application/query';
-import { MarkEmailVerifiedHandler, RegisterStudentHandler } from './application/commands';
+import { MarkEmailVerifiedHandler, } from './application/commands';
 import {
   ParentProfileMapper,
   PrismaParentProfileRepository,
@@ -40,6 +40,7 @@ const EventProcessors = [UserEventProcessor];
 const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
 
 import { BullModule } from '@nestjs/bullmq';
+import { RegisterStudentHandler } from './application/commands/register-student';
 
 @Module({
   imports: [CqrsModule, BullModule.registerQueue({ name: 'user-events' })],

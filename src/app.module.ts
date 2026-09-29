@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CorrelationIdInterceptor } from '@modules/shared';
+import { OrgModule } from './modules/org/org.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -31,6 +32,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     OutboxModule,
     UserModule,
     AuthModule,
+    OrgModule
   ],
   controllers: [AppController],
   providers: [

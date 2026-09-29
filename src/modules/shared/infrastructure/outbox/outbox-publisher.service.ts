@@ -16,6 +16,7 @@ class OutboxPublisherService  {
     private readonly prisma: PrismaService,
     @InjectQueue('auth-events') private readonly authEventsQueue: Queue,
     @InjectQueue('user-events') private readonly userEventsQueue: Queue,
+    @InjectQueue('org-events') private readonly orgEventQueue: Queue
   ) {}
 
    @Cron(CronExpression.EVERY_5_SECONDS)
@@ -84,6 +85,10 @@ class OutboxPublisherService  {
 
     if (queueName === 'user-events') {
       return this.userEventsQueue;
+    }
+
+    if (queueName === 'org-events'){
+      return this.orgEventQueue
     }
 
     return null;
