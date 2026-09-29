@@ -89,15 +89,6 @@ import { BullModule } from '@nestjs/bullmq';
     ...CommandHandlers,
     ...QueryHandlers,
     ...EventProcessors,
-  ],
-  exports: [
-    IPasswordHashPort,
-    ITokenPort,
-    IOtpPort,
-    ITotpPort,
-    ITokenRevocationPort,
-    PrismaService,
-    AuthService,
-  ],
+  ]
 })
 export class AuthModule {}

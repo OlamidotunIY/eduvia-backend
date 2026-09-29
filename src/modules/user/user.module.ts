@@ -61,7 +61,6 @@ import { RegisterStudentHandler } from './application/commands/register-student'
     ...CommandHandlers,
     ...EventProcessors,
     ...QueryHandlers,
-  ],
-  exports: [IUserQueryPort],
+  ]
 })
 export class UserModule {}
