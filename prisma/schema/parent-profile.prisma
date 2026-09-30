@@ -1,9 +1,10 @@
 // use prisma-8
 
 model ParentProfile {
-  id          String   @id @db.Uuid
-  userId      String   @unique @db.Uuid
+  id          String   @id 
+  userId      String   @unique 
   phoneNumber String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@map("parent_profiles")
 }

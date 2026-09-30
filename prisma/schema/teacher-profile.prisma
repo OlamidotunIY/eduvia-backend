@@ -1,16 +1,17 @@
 model TeacherProfile {
-  id                   String   @id @db.Uuid
-  userId               String   @unique @db.Uuid
+  id                   String   @id 
+  userId               String   @unique 
   bio                  String?
   phoneNumber          String?
   avatarUrl            String?
   qualification        String
   yearOfExperience     Int
-  subjects             String[]
+  subjects             Json
   activeOrganizationId String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
 
   @@index([activeOrganizationId])
+  @@map("teacher_profiles")
 }

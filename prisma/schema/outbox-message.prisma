@@ -1,12 +1,12 @@
 // use prisma-8
 
 model OutboxMessage {
-  id            String @id @db.Uuid
-  eventId       String @unique @db.Uuid
+  id            String @id 
+  eventId       String @unique 
   type          String
   payload       Json
   aggregateType String
-  aggregateId   String @db.Uuid
+  aggregateId   String 
   correlationId String
   occurredAt    DateTime
   status        OutboxStatus
@@ -15,6 +15,7 @@ model OutboxMessage {
   lastError     String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  @@map("outbox_messages")
 }
 
 enum OutboxStatus {
