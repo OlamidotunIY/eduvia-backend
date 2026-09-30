@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller';
@@ -10,30 +12,37 @@ import { JwtModule } from '@nestjs/jwt';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CorrelationIdInterceptor } from '@modules/shared';
 import { OrgModule } from './modules/org/org.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     // Distributed tracing, auto-correlated logs, request/job metrics, error
     // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY!,
-      appSecret: process.env.OBSERVE_APP_SECRET!,
-      serviceId: 'eduvia',
-
+    ObserveModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        appKey: config.getOrThrow('OBSERVE_APP_KEY'),
+        appSecret: config.getOrThrow('OBSERVE_APP_SECRET'),
+        serviceId: 'eduvia',
+      }),
     }),
-    JwtModule.register({
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow('JWT_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
       global: true,
-      secret: process.env.JWT_SECRET || jwtConstants.secret,
-      signOptions: { expiresIn: '7d' },
     }),
     BullMqModule,
     OutboxModule,
     UserModule,
     AuthModule,
-    OrgModule
+    OrgModule,
   ],
   controllers: [AppController],
   providers: [
