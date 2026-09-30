@@ -25,8 +25,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ObserveModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        appKey: config.getOrThrow('OBSERVE_APP_KEY'),
-        appSecret: config.getOrThrow('OBSERVE_APP_SECRET'),
+        appKey: config.getOrThrow('OBSERVABLE_API_KEY'),
+        appSecret: config.getOrThrow('OBSERVABLE_SECRET_KEY'),
         serviceId: 'eduvia',
       }),
     }),
