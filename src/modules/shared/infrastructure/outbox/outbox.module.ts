@@ -5,7 +5,7 @@ import { OutboxPublisherService } from './outbox-publisher.service';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: 'auth-events' }, { name: 'user-events' }, { name: 'org-event' }),
+    BullModule.registerQueue({ name: 'auth-events' }, { name: 'user-events' }, { name: 'org-events' }),
   ],
   providers: [PrismaService, OutboxPublisherService],
 })

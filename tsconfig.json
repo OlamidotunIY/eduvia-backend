@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node16",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": false,
@@ -10,10 +10,7 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
-    "types": [
-      "node",
-      "jest"
-    ],
+    "types": ["node", "jest"],
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
@@ -22,21 +19,11 @@
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
     "paths": {
-      "@generated/prisma": [
-        "./src/generated/prisma"
-      ],
-      "@generated/prisma/*": [
-        "./src/generated/prisma/*"
-      ],
-      "@modules/auth": [
-        "./src/modules/auth/index.ts"
-      ],
-      "@modules/shared": [
-        "./src/modules/shared/index.ts"
-      ],
-      "@modules/user": [
-        "./src/modules/user/index.ts"
-      ]
+      "@generated/prisma": ["./src/generated/prisma"],
+      "@generated/prisma/*": ["./src/generated/prisma/*"],
+      "@modules/auth": ["./src/modules/auth/index.ts"],
+      "@modules/shared": ["./src/modules/shared/index.ts"],
+      "@modules/user": ["./src/modules/user/index.ts"]
     }
   }
 }

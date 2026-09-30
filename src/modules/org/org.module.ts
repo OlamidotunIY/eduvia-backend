@@ -48,8 +48,10 @@ const portBinding = [
     { provide: ITeacherApplicationRepository, useClass: PrismaTeacherApplicationRepository }
 ]
 
+import { UserModule } from '../user/user.module';
+
 @Module({
-    imports: [CqrsModule, BullModule.registerQueue({ name: 'org-event' })],
+    imports: [CqrsModule, BullModule.registerQueue({ name: 'org-events' }), UserModule],
     controllers: [OrganizationController],
     providers:[
         PrismaService,
