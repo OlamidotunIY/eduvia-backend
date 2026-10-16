@@ -1,1 +1,1 @@
-// BullMQ Listeners
+export * from './board-event.processor';

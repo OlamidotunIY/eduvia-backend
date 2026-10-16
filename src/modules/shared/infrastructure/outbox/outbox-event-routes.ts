@@ -28,6 +28,18 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['LessonStudentNoShowEvent', 'classroom-events'],
   ['LessonTeacherNoShowEvent', 'classroom-events'],
   ['CoverTeacherAssignedEvent', 'classroom-events'],
+  ['BoardCreatedEvent', 'board-events'],
+  ['BoardModeChangedEvent', 'board-events'],
+  ['BoardLockedEvent', 'board-events'],
+  ['BoardUnlockedEvent', 'board-events'],
+  ['QuestionAttachedToBoardEvent', 'board-events'],
+  ['QuestionRemovedFromBoardEvent', 'board-events'],
+  ['BoardSectionAddedEvent', 'board-events'],
+  ['BoardSectionUpdatedEvent', 'board-events'],
+  ['BoardSectionRemovedEvent', 'board-events'],
+  ['LessonPlanCompletedEvent', 'classroom-events'],
+  ['StudentResponseSubmittedEvent', 'board-events'],
+  ['TeacherMarkSubmittedEvent', 'board-events'],
 ]);
 
 export { OUTBOX_EVENT_ROUTES };

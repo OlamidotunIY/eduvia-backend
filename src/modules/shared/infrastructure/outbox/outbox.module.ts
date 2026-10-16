@@ -10,6 +10,7 @@ import { OutboxPublisherService } from './outbox-publisher.service';
       { name: 'user-events' },
       { name: 'org-events' },
       { name: 'classroom-events' },
+      { name: 'board-events' },
     ),
   ],
   providers: [PrismaService, OutboxPublisherService],

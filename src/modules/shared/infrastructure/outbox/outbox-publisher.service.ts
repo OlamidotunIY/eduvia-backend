@@ -18,6 +18,7 @@ class OutboxPublisherService  {
     @InjectQueue('user-events') private readonly userEventsQueue: Queue,
     @InjectQueue('org-events') private readonly orgEventQueue: Queue,
     @InjectQueue('classroom-events') private readonly classroomEventQueue: Queue,
+    @InjectQueue('board-events') private readonly boardEventsQueue: Queue,
   ) {}
 
    @Cron(CronExpression.EVERY_5_SECONDS)
@@ -94,6 +95,10 @@ class OutboxPublisherService  {
 
     if (queueName === 'classroom-events') {
       return this.classroomEventQueue;
+    }
+
+    if (queueName === 'board-events') {
+      return this.boardEventsQueue;
     }
 
     return null;
