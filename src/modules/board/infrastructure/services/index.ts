@@ -1,1 +1,1 @@
-// Service Adapters
+export * from './board-query.adapter';
