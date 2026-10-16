@@ -1,1 +1,1 @@
-// Aggregate Roots
+export * from './LearningBoard';
