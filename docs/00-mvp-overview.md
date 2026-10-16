@@ -29,20 +29,20 @@ Eduvia is an **educational operating system** that unifies scheduling, live teac
 
 | Actor | How They Join | What They Do |
 |---|---|---|
-| **Parent** | Self-registers (only self-registering human) | Adds children, discovers orgs, manages billing |
-| **Student** | Registered by parent | Attends lessons, submits classwork/assignments, sees mastery map |
-| **Teacher** | Invited by org admin OR applies via marketplace | Prepares lessons, teaches live, marks work, submits reports |
+| **Parent** | Self-registers | Adds children, discovers orgs, manages billing |
+| **Student** | Registered by parent (parent supplies email + password; student verifies email on first login) | Attends lessons, submits classwork/assignments, sees mastery map |
+| **Teacher** | Self-registers, then invited by org admin OR applies via marketplace | Prepares lessons, teaches live, marks work, submits reports |
 | **Teaching Assistant** | Invited by org admin | Limited access, assists in lessons |
-| **Lead Teacher** | Promoted by Org Admin | Reviews/approves reports, manages org curriculum resources, mentors teachers |
-| **Org Admin** | Creates org OR promoted by Org Owner | Manages org operations, teachers, scheduling, policies |
-| **Org Owner** | Creates org (auto-assigned) | Full org control |
+| **Lead Teacher** | Promoted by Org Admin | Manages org curriculum resources, mentors teachers |
+| **Org Admin** | Promoted by Org Owner | Manages org operations, teachers, scheduling, policies |
+| **Org Owner** | A teacher who creates an org (auto-assigned) | Full org control |
 | **Platform Super Admin** | Platform-level account | Manages curricula, question bank, org approvals, platform health |
 
 ### Core Differentiators
 
 | Differentiator | Description |
 |---|---|
-| Curriculum Graph | Deep hierarchical graph of international curricula — resolved per student country |
+| Curriculum Graph | Deep hierarchical graph of international curricula — resolved per student country and grade level |
 | Learning Board | Real-time multi-mode collaborative workspace — Operational Transformation (OT) synced over WebSocket |
 | Mastery Signals | Hybrid: teacher-assessed + system auto-calculated mastery per curriculum node |
 | Org-First Model | Individual tutors must be org-affiliated; orgs are the primary unit |
@@ -68,10 +68,10 @@ Eduvia is an **educational operating system** that unifies scheduling, live teac
 │     └────────┴──────────┴───────────┴───────────┘        │
 │                   NestJS CQRS Event Bus                   │
 │  ┌──────────────────────────────────────────────────┐    │
-│  │            PostgreSQL (Primary Database)          │    │
+│  │         MySQL / MariaDB (Primary Database)        │    │
 │  │        Domain tables + outbox_messages            │    │
 │  └──────────────────────┬───────────────────────────┘    │
-│                         │ Outbox Poller (setInterval)      │
+│                         │ Outbox Poller (@Cron, 5s)       │
 │  ┌──────────────────────▼───────────────────────────┐    │
 │  │             BullMQ (Redis-backed)                 │    │
 │  │  auth-events · user-events · classroom-events...  │    │
@@ -93,27 +93,28 @@ Verified from package.json, module files, and Prisma schema:
 | Framework | NestJS v12 | @nestjs/common, @nestjs/core, @nestjs/platform-express |
 | CQRS | @nestjs/cqrs v12 | Commands, Queries, Event handlers |
 | ORM | Prisma v7.10 | Multi-file schema in prisma/schema/*.prisma |
-| Database | PostgreSQL | via pg v8 + @prisma/adapter-pg |
+| Database | MySQL / MariaDB | via mariadb driver + @prisma/adapter-mariadb |
 | Cache/Pub-Sub | Redis | via ioredis v6 |
 | Job Queue | BullMQ v6 | @nestjs/bullmq wrapper |
-| Auth - Hashing | bcrypt v6 | Password hashing |
-| Auth - JWT | jsonwebtoken v9 | Access + refresh tokens |
+| Scheduling | @nestjs/schedule | `@Cron` outbox poller |
+| Auth - Hashing | bcrypt v6 | Password hashing (default 12 salt rounds) |
+| Auth - JWT | @nestjs/jwt (jsonwebtoken v9) | Access tokens (JWT_SECRET) + opaque refresh tokens |
 | Auth - TOTP | speakeasy v2 | Time-based OTP (2FA) |
 | Observability | @nestjs/observe v0.1.8 | Distributed tracing, metrics, error telemetry |
 | Linting | oxlint v1.58 | Fast Rust-based linter |
-| Language | TypeScript v6 | Strict mode, ESM ("type": "module") |
+| Language | TypeScript v6 | Strict mode |
 | Testing | Jest v30 + Supertest | Unit + E2E |
 | Real-time | Socket.io | To add — with Redis adapter |
 | Search | Elasticsearch | To add |
 | Payments | Stripe Connect + PayPal | To add |
-| AI | OpenAI / Gemini (abstracted port) | To add |
+| AI | OpenAI (GPT-4o) / Gemini (`gemini-2.0-flash`) (abstracted port) | To add |
 | Mobile | React Native | Separate repo |
 | Push | Firebase Cloud Messaging (FCM) | To add |
-| Email | SendGrid / Resend | To add |
-| File Storage | AWS S3 / Cloudflare R2 | To add (student image uploads) |
+| Email | Resend | To add |
+| File Storage | Firebase Storage | To add (student image uploads, signed upload URLs) |
 | Video | Zoom / Google Meet API | Link generation only — no owned video infra |
 
-> **Prisma 7:** Uses multi-file schema (prisma/schema/*.prisma). Generator outputs to src/generated/prisma. Uses @prisma/adapter-pg driver adapter.
+> **Prisma 7:** Uses multi-file schema (prisma/schema/*.prisma). Generator outputs to src/generated/prisma. Uses @prisma/adapter-mariadb driver adapter. MySQL has no partial unique indexes or native array columns: array-like fields are stored as `Json`, and "only one active X" rules are enforced in the application layer.
 
 ---
 
@@ -123,15 +124,16 @@ Verified from package.json, module files, and Prisma schema:
 
 | Module | Status | Detail |
 |---|---|---|
-| `auth` | Built | AuthAccount, Session, Verification aggregates; full CQRS: create, login, logout, OTP, TOTP, revoke sessions, update credentials, suspend |
-| `user` | Built | User aggregate: create, updateProfile, suspend, activate; UserCreatedEvent, UserUpdatedEvent |
-| `shared` | Built | AggregateRoot, DomainEvent base, OutboxMessage model, OutboxPublisherService (poller), BullMQ module, Redis service, Prisma service, HTTP middleware |
+| `auth` | Built | Account, Session, TwoFactor, Verification aggregates; CQRS: create auth account, login, logout, complete verification (OTP), resend OTP, request password reset, change password, revoke all sessions, get session |
+| `user` | Built | User aggregate: create, update, suspend, mark email verified; register student (parent adds child); UserCreatedEvent, UserUpdatedEvent |
+| `org` | Partially built | Domain entities built (Organization + OrganizationPolicy, OrganizationMembership, OrganizationSubject, OrganizationInvitation, TeacherApplication); commands: create organization, receive teacher application, invitation-accepted handling, update organization subject (events routed to `org-events`). Not yet built: approval/rejection flow, invitations API, marketplace search |
+| `shared` | Built | AggregateRoot, DomainEvent base, OutboxMessage model, OutboxPublisherService (`@Cron` poller, every 5s), BullMQ module, Redis service, Prisma service, HTTP middleware, shared ports (`PasswordHashPort`, `UserQueryPort`) |
 
 ### What Needs to Be Built
 
 | Module | Priority |
 |---|---|
-| Organization & Marketplace | P0 — MVP |
+| Organization & Marketplace (remaining: approval, invitations, memberships, marketplace search) | P0 — MVP |
 | Classroom & Scheduling | P0 — MVP |
 | Learning Board | P0 — MVP |
 | Question Bank & Assessment | P0 — MVP |
@@ -163,8 +165,10 @@ src/modules/{domain}/
   application/
     commands/        CQRS command + handler pairs (one folder per command)
     queries/         CQRS query + handler pairs (one folder per query)
-    events/          BullMQ processor/worker classes
   infrastructure/
+    messaging/
+      events/        Inbound event shapes consumed from BullMQ (payload contracts)
+      listeners/     BullMQ processor classes (XxxProcessor, @Processor)
     repository/      Prisma implementations of IXxxRepository
     services/        Port adapter implementations
     mappers/         Prisma record <-> Domain model mappers
@@ -173,7 +177,7 @@ src/modules/{domain}/
     dto/             Request/Response DTOs
     services/        Orchestration services (multi-command flows)
   {domain}.module.ts NestJS module — wires all providers
-  index.ts           Public barrel export (facade pattern)
+  index.ts           Public barrel export (port tokens + shared services only)
 ```
 
 ### Domain Rules
@@ -193,35 +197,39 @@ src/modules/{domain}/
 ```
 User (global — not org-scoped)
   ├── userType: student | teacher | admin | parent
-  ├── AuthAccount (1:1) — credentials, TOTP, auth status
-  │     ├── Session[] — per-device refresh token sessions
-  │     └── Verification[] — OTP / email verification records
+  ├── Account[] — credentials / OAuth provider accounts (password, tokens, scope)
+  ├── Session[] — refresh token sessions
+  ├── TwoFactor — TOTP secret + backup codes (when enabled)
+  ├── Verification[] — OTP / email verification records
   ├── ParentProfile (when userType = parent)
   │     └── StudentProfile[] — children added by this parent
-  └── OrgMembership[] (when userType = teacher | admin)
+  │           └── linked to the child's own User (userType = student) via userId
+  ├── TeacherProfile (when userType = teacher)
+  └── OrganizationMembership[] (when userType = teacher)
         └── role: OrgOwner | OrgAdmin | LeadTeacher | Teacher | TeachingAssistant
 ```
 
 ### Curriculum Resolution Rule
 
-A student has ONE curriculum, resolved from their country of residence:
+A student has ONE curriculum, resolved from their country of residence and grade level:
 ```
-StudentProfile.countryCode -> CurriculumProfile (e.g., UK, Ontario CA, IB)
+StudentProfile.countryCode + StudentProfile.gradeLevel -> CurriculumProfile
+  e.g. GB + Year 12–13 -> A-Level; GB + Year 1–11 -> England National Curriculum
 ```
-All subjects the student takes fall under this single curriculum. There is no per-subject curriculum override.
+Where the country/grade pair is ambiguous (e.g. IB, Ontario), the student must be given an explicit curriculum choice, stored on the student profile (`StudentProfile.curriculumId`, optional). All subjects the student takes fall under this single curriculum. There is no per-subject curriculum override.
 
 ### Classroom Model
 
 ```
 Organization (org_id isolation boundary)
   └── Classroom (permanent educational channel for a subject)
-        ├── primaryTeacher: OrgMembership
-        ├── coverTeacher?: OrgMembership (for lesson-level overrides)
+        ├── primaryTeacher: OrganizationMembership
+        ├── coverTeacher?: OrganizationMembership (for lesson-level overrides)
         ├── enrolledStudents: StudentEnrollment[]
-        ├── subject: OrgSubject -> PlatformSubject -> CurriculumNode
+        ├── subject: OrganizationSubject -> PlatformSubject -> CurriculumNode
         ├── recurrence: { dayOfWeek, startTime, timezone, intervalWeeks }
         └── lessons: Lesson[]
-              └── LearningBoard (1:1, auto-created with lesson)
+              └── LearningBoard (1:1, auto-created with lesson; found via LearningBoard.lessonId)
 ```
 
 ---
@@ -256,28 +264,39 @@ PENDING -> SCHEDULED -> LIVE -> COMPLETED -> MARKING -> REPORTED -> ARCHIVED
 | State | Trigger | Actor |
 |---|---|---|
 | PENDING | Generated from classroom recurrence pattern | System (cron) |
-| SCHEDULED | Parent accepts booking / admin confirms | Parent / OrgAdmin |
-| LIVE | Teacher starts session on the Learning Board | Teacher |
+| SCHEDULED | Parent accepts booking / admin confirms (meeting is created now) | Parent / OrgAdmin |
+| LIVE | Teacher starts session on the Learning Board (meeting link delivered now) | Teacher |
 | COMPLETED | Lesson end time reached OR teacher ends session | System / Teacher |
 | MARKING | Teacher enters marking mode on the board | Teacher |
 | REPORTED | Teacher approves AI report draft and submits | Teacher |
 | ARCHIVED | Report locked 7 days after submission | System |
 
+Off-path states: `CANCELLED` (from PENDING/SCHEDULED; deletes the meeting), `STUDENT_NO_SHOW` (from LIVE, marked by the teacher after `noShowWaitMinutes`), `TEACHER_NO_SHOW` (from SCHEDULED, marked by an OrgAdmin or the student/parent after `noShowWaitMinutes` from `scheduledAt`). See [03-classroom-scheduling.md](03-classroom-scheduling.md).
+
 ### Cross-Domain Event Map (Planned)
+
+Multi-queue lists assume the planned fan-out routing (see [Outbox + BullMQ Flow](#event-driven-architecture)).
 
 | Event | Producer | Consumer Queues |
 |---|---|---|
 | AuthAccountCreatedEvent | auth | user-events |
+| AuthEmailVerifiedEvent | auth | user-events |
+| AuthVerificationCreatedEvent | auth | notification-events (planned — not routed in code yet) |
 | AccountSuspendedEvent | auth | user-events |
 | UserCreatedEvent | user | auth-events |
 | UserUpdatedEvent | user | auth-events |
-| OrgCreatedEvent | org | search-events |
+| OrganizationCreatedEvent | org | org-events, search-events |
+| OrganizationInvitationAcceptedEvent | org | org-events (membership created by the org module) |
 | TeacherApplicationReceivedEvent | org | notification-events |
-| LessonScheduledEvent | classroom | notification-events, billing-events |
-| LessonStartedEvent | classroom | meet-events |
+| TeacherApplicationApprovedEvent | org | org-events (membership created by the org module), notification-events |
+| LessonScheduledEvent | classroom | notification-events, billing-events, meet-events |
+| LessonStartedEvent | classroom | notification-events, classroom-events |
+| LessonCancelledEvent | classroom | notification-events, billing-events, meet-events |
 | LessonCompletedEvent | classroom | assessment-events, notification-events |
-| LessonReportedEvent | classroom | notification-events, progress-events |
-| AssessmentSubmittedEvent | board | assessment-events |
+| LessonReportSubmittedEvent | progress (report) | notification-events, classroom-events |
+| LessonReportedEvent | classroom | progress-events |
+| StudentResponseSubmittedEvent | board | assessment-events |
+| AssessmentFinalizedEvent | assessment | ai-events (report summary trigger), progress-events |
 | MasteryUpdatedEvent | assessment | progress-events, ai-events |
 | SubscriptionCreatedEvent | billing | classroom-events |
 
@@ -310,10 +329,11 @@ Socket.io with Redis adapter for horizontal scaling.
 
 ```
 1. Client connects with JWT in socket handshake: auth.token
-2. Server guard validates JWT -> extracts { userId, orgId, role, deviceId }
+2. Server guard validates JWT -> extracts { userId, userType, scope, sessionId }
+   (access token claims: sub, userId, userType, scope, sessionId, jti, iat, exp — no orgId/role)
 3. Server auto-joins client to room: user:{userId}
-4. Client emits join_lesson or join_board with target ID
-5. Server validates membership -> joins appropriate room
+4. Client emits lesson:join or board:join with target ID (plus orgId where org context is needed)
+5. Server validates OrganizationMembership / enrollment -> joins appropriate room
 6. All WS messages carry: { event, payload, correlationId, sentAt }
 ```
 
@@ -331,18 +351,19 @@ API Handler receives request
     b. OutboxMessage written: { type, payload, status: PENDING }
   Transaction commits atomically
   |
-OutboxPublisherService polls every 5s (setInterval):
-    SELECT * FROM outbox_messages WHERE status = PENDING LIMIT 50
+OutboxPublisherService runs a @Cron job every 5s (@nestjs/schedule):
+    SELECT * FROM outbox_messages WHERE status = PENDING LIMIT 50   // OUTBOX_PUBLISH_BATCH_SIZE
     For each message:
-      OUTBOX_EVENT_ROUTES.get(message.type) -> queue name
-      queue.add(message.type, payload, { jobId: message.id })  // idempotent
+      OUTBOX_EVENT_ROUTES.get(message.type) -> queue name(s)
+      for each queue: queue.add(message.type, payload, { jobId: message.id })  // idempotent
       UPDATE outbox_messages SET status = PROCESSED
   |
-BullMQ Worker (@Processor) consumes job:
+BullMQ Processor (@Processor) consumes job:
     Executes side effect (notify, update mastery, charge billing...)
     BullMQ retries with exponential backoff on failure
-    Dead-letter handling for max-retry exhaustion
 ```
+
+> **Planned change — fan-out routing:** the code today maps each event type to a single queue (`Map<string, string>`). The target design maps each event type to a list of queues (`Map<string, string[]>`) so one event can fan out to several consumers; the multi-queue lists in the Cross-Domain Event Map and in the domain docs assume this. `outbox_messages.status` has only `PENDING` and `PROCESSED`; there is no dead-letter queue or DLQ table.
 
 ### Planned BullMQ Queues
 
@@ -364,24 +385,25 @@ BullMQ Worker (@Processor) consumes job:
 
 ## Multi-Tenancy Strategy
 
-Pattern: Shared PostgreSQL database, application-layer tenant isolation via org_id.
+Pattern: Shared MySQL/MariaDB database, application-layer tenant isolation via org_id.
 
-Every tenanted resource carries an orgId field. Prisma middleware and NestJS guards enforce that all tenanted queries include WHERE org_id = current_org_id.
+Every tenanted resource carries an orgId field. Tenant isolation is enforced in the application layer: org-scoped repositories always filter by `orgId`, and NestJS guards verify that the caller holds an `OrganizationMembership` in the target organization (the org comes from the `:organizationId` path param on REST, or from the `orgId` join payload on WebSocket — the access token carries no `orgId`).
 
 ### Global vs Org-Scoped Resources
 
 | Resource | Global | Org-Scoped |
 |---|---|---|
 | User | Yes | — |
-| AuthAccount / Session / Verification | Yes | — |
-| ParentProfile / StudentProfile | Yes | — |
+| Account / Session / Verification / TwoFactor | Yes | — |
+| ParentProfile / StudentProfile / TeacherProfile | Yes | — |
 | Curriculum Graph | Yes | — |
 | PlatformSubject / PlatformQuestions | Yes | — |
 | Organization | Yes (entity) | — |
-| OrgMembership | — | Yes |
-| OrgSubject | — | Yes |
+| OrganizationMembership | — | Yes |
+| OrganizationSubject | — | Yes |
 | Classroom / Lesson / LearningBoard | — | Yes |
 | Org Questions / Teacher Questions | — | Yes |
+| MasteryRecord | — | Yes (per student, node, org) |
 | SubscriptionPlan | — | Yes |
 | LessonReport | — | Yes |
 
@@ -391,9 +413,10 @@ Every tenanted resource carries an orgId field. Prisma middleware and NestJS gua
 
 ### Phase 1 — MVP (Months 1-6)
 
-- [x] IAM: Parent self-registration, OTP email verification, login, sessions, TOTP 2FA
-- [ ] IAM: Student registration by parent, teacher invitation/marketplace application
-- [ ] Org: Organization creation, marketplace listing, teacher hiring workflow
+- [x] IAM: Parent and teacher self-registration, OTP email verification, login, sessions
+- [ ] IAM: TOTP 2FA (TwoFactor aggregate exists; enable/verify flows not built), refresh-token endpoint (none exists yet)
+- [ ] IAM: Student registration by parent (student gets own User account), teacher invitation/marketplace application
+- [ ] Org: Organization creation (by a teacher), marketplace listing, teacher hiring workflow
 - [ ] Classroom: Creation, scheduling, availability templates, lesson state machine
 - [ ] Learning Board: Teach/Classwork/Assignment modes, OT real-time sync
 - [ ] Question Bank: Multi-tier ownership, MCQ/Short/Long Answer/Image Upload, auto+manual marking

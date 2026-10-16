@@ -58,7 +58,9 @@ node_modules/
 dist/
 
 /src/generated/prisma
-.agents
+.agents/*
+!.agents/rules/
+!.agents/skills/
 .claude
 .cursor
 .devin

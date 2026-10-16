@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IOrganizationMembershipRepository } from '../../domain/repository';
 import { PrismaService } from '@modules/shared';
 import { OrganizationMembershipMapper } from '../mappers/organization-membership.mapper';
-import { OrganizationMembership } from '../../domain/entities';
+import { OrganizationMembership } from '../../domain/model';
 import { MembershipStatus, OrganizationId, OrganizationRole } from '../../domain';
 
 @Injectable()
@@ -35,6 +35,19 @@ export class PrismaOrganizationMembershipRepository implements IOrganizationMemb
       },
     });
     return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  public async findByOrgIdAndUserId(
+    orgId: OrganizationId | string,
+    userId: string,
+  ): Promise<OrganizationMembership | null> {
+    const record = await this.delegate.findFirst({
+      where: {
+        orgId: String(orgId),
+        userId,
+      },
+    });
+    return record ? this.mapper.toDomain(record) : null;
   }
 
   public async save(membership: OrganizationMembership): Promise<void> {

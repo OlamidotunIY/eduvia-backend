@@ -142,7 +142,7 @@ StudentResponse
   studentId:       UUID (StudentProfile)
   responseType:    text | image_upload | mcq_choice
   textContent:     string? (for short/long answer)
-  imageUrl:        string? (for image uploads — stored in S3/R2)
+  imageUrl:        string? (for image uploads — stored in Firebase Storage)
   selectedOption:  string? (for MCQ — the chosen option key)
   submittedAt:     DateTime
   autoMarkResult:  AutoMarkResult? (set immediately for MCQ if options shown)
@@ -239,7 +239,7 @@ All clients apply server op and advance their local revision
 | Assignment mode can only be set after the lesson is COMPLETED | `board.switchMode(assignment)` — checks `lesson.status == COMPLETED` |
 | A student cannot submit the same response twice | `StudentResponse` has unique constraint on `(boardQuestionId, studentId)` |
 | MCQ auto-mark only triggers when `showOptions = true` | `AutoMarkResult` is only computed if question has options and board sets showOptions |
-| Image upload responses are stored in S3/R2 — only the URL is stored in DB | Upload handled by a pre-signed URL endpoint; URL saved in `StudentResponse.imageUrl` |
+| Image upload responses are stored in Firebase Storage — only the URL is stored in DB | Upload handled via Firebase Storage; URL saved in `StudentResponse.imageUrl` |
 | Teacher marks must be within 0..maxMarks | `TeacherMark` value object validates range |
 | Board is read-only once lesson is ARCHIVED | All OT ops rejected if lesson is ARCHIVED |
 
@@ -373,8 +373,7 @@ All events on `/board` namespace, room `board:{boardId}`:
 | `board:op` | Client -> Server | { op, clientRevision, correlationId } | Submit OT operation |
 | `board:op:ack` | Server -> Client (sender) | { serverRevision, correlationId } | Op accepted, server revision |
 | `board:op:broadcast` | Server -> Room | { op, serverRevision } | Broadcast transformed op to all |
-| `board:mode_changed` | Server -> Room | { mode, changedBy } | Mode switched |
-| `board:locked` | Server -> Room | { isLocked } | Board locked/unlocked |
+| `board:mode_changed` | Server -> Room | { mode, changedBy } | Mode switched (includes teach <-> locked) |
 | `board:question_attached` | Server -> Room | { boardQuestion } | Question attached |
 | `board:response_submitted` | Server -> Room | { boardQuestionId, studentId, responseType } | Response submitted |
 | `board:response_marked` | Server -> Room | { boardQuestionId, studentId, mark } | Teacher marked a response |
@@ -385,11 +384,11 @@ All events on `/board` namespace, room `board:{boardId}`:
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | /orgs/:orgId/boards/:boardId | Teacher/Student | Get full board state (initial load) |
-| POST | /orgs/:orgId/boards/:boardId/plan | Teacher | Save/update lesson plan |
-| POST | /orgs/:orgId/boards/:boardId/import | Teacher | Import sections from previous board |
-| GET | /orgs/:orgId/boards/:boardId/questions | Teacher/Student | List board questions |
+| GET | /organizations/:organizationId/boards/:boardId | Teacher/Student | Get full board state (initial load) |
+| POST | /organizations/:organizationId/boards/:boardId/plan | Teacher | Save/update lesson plan |
+| POST | /organizations/:organizationId/boards/:boardId/import | Teacher | Import sections from previous board |
+| GET | /organizations/:organizationId/boards/:boardId/questions | Teacher/Student | List board questions |
 | POST | /boards/:boardId/questions/:bqId/responses | Student | Submit response (REST fallback) |
 | GET | /boards/:boardId/questions/:bqId/responses | Teacher | Get all responses for review |
 | POST | /boards/:boardId/questions/:bqId/responses/:respId/mark | Teacher | Submit teacher mark |
-| POST | /boards/:boardId/upload-url | Student | Get pre-signed S3 upload URL for image response |
+| POST | /boards/:boardId/upload-url | Student | Get a signed Firebase Storage upload URL for image response |

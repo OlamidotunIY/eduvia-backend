@@ -1,5 +1,5 @@
 import { BaseRepository } from '../../../shared/domain/repository/base.repository';
-import { User } from '../entities/user.entities';
+import { User } from '../model/User';
 import { UserId } from '../value-objects/user-id.vo';
 
 abstract class IUserRepository extends BaseRepository<User, UserId> {

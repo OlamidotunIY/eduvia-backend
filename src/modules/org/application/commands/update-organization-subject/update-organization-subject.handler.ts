@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateOrganizationSubjectCommand } from './updat-organization-subject.command';
+import { UpdateOrganizationSubjectCommand } from './update-organization-subject.command';
 import { IOrganizationSubjectRepository } from '../../../domain/repository';
 import {
   OrganizationInvariantError,

@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError, NotFoundError } from "../../../shared";
+import { NotFoundError } from "../../../shared";
 
 export class OrganizationNotActiveError extends NotFoundError{
     constructor(message: string, details?: unknown){

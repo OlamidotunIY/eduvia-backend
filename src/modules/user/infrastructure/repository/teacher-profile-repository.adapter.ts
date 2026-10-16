@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TeacherProfileId, UserId } from '../../domain/value-objects';
-import { IParentProfileRepository, TeacherProfile } from '../../domain';
+import { TeacherProfile } from '../../domain';
 import { TeacherProfileMapper } from '../mappers/teacher-profile.mappers';
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { TeacherProfile as PrismaTeacherProfile } from '@generated/prisma/client';

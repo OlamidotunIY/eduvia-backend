@@ -1,7 +1,17 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateUserCommand } from './create-user.command';
 import { CreateUserResult } from './create-user.result';
-import { ParentProfile, IParentProfileRepository, UserType, IUserRepository, User, UserId, ParentProfileId } from '../../../domain';
+import {
+  ParentProfile,
+  IParentProfileRepository,
+  TeacherProfile,
+  ITeacherProfileRepository,
+  UserType,
+  IUserRepository,
+  User,
+  UserId,
+  ParentProfileId,
+} from '../../../domain';
 import { IPasswordHashPort } from '@modules/shared';
 
 @CommandHandler(CreateUserCommand)
@@ -12,6 +22,7 @@ export class CreateUserHandler implements ICommandHandler<
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly parentProfileRepository: IParentProfileRepository,
+    private readonly teacherProfileRepository: ITeacherProfileRepository,
     private readonly passwordHashPort: IPasswordHashPort,
   ) {}
 
@@ -42,6 +53,16 @@ export class CreateUserHandler implements ICommandHandler<
         ParentProfile.create({
           id: ParentProfileId.create(),
           userId: user.id,
+        }),
+      );
+    }
+
+    if (user.isTeacher()) {
+      await this.teacherProfileRepository.save(
+        TeacherProfile.create({
+          userId: user.id,
+          qualification: '',
+          yearOfExperience: 0,
         }),
       );
     }

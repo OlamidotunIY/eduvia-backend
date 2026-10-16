@@ -358,162 +358,58 @@ In NestJS, modules naturally want to import each other. For example, `AuthModule
 
 > **A module's domain layer may NEVER directly import anything from another module's domain or infrastructure layer.**
 
-Cross-module reads happen through one of two patterns depending on context:
+Cross-module communication uses exactly two patterns, depending on context:
 
-### Pattern A — Application Facade (for synchronous cross-module reads)
+- **Pattern A — Domain Events** for anything that changes state in another module (writes and async side effects)
+- **Pattern B — Shared Query Ports** for synchronous cross-module reads
 
-Used when one module needs to synchronously read data owned by another module.
-
-**How it works:**
-1. The consuming module defines an **Abstract Port Interface** in its own domain layer, expressing what it *needs* (not what provides it)
-2. The providing module exposes a **Facade** from its application layer
-3. An **Adapter** in the consuming module's *infrastructure* layer implements the port using the facade
-4. The consuming module's NestJS module imports the providing module and wires the adapter via DI
-
-**Example: `ClassroomModule` needs to verify a teacher's org membership before scheduling a lesson**
-
-```typescript
-// Step 1: Define the port IN the consuming module's domain
-// src/modules/classroom/domain/ports/org-membership-reader.port.ts
-
-export interface OrgMembershipReadResult {
-  membershipId: string;
-  userId: string;
-  role: string;
-  subjects: string[];
-  status: string;
-}
-
-abstract class IOrgMembershipReader {
-  abstract findActiveMembership(
-    userId: string,
-    orgId: string,
-  ): Promise<OrgMembershipReadResult | null>;
-}
-
-export { IOrgMembershipReader };
-```
-
-```typescript
-// Step 2: The OrgModule exposes a Facade from its application layer
-// src/modules/org/application/facade/org.facade.ts
-
-@Injectable()
-export class OrgFacade {
-  constructor(
-    private readonly queryBus: QueryBus,
-  ) {}
-
-  async findActiveMembership(
-    userId: string,
-    orgId: string,
-  ): Promise<OrgMembershipReadResult | null> {
-    return this.queryBus.execute(
-      new GetActiveMembershipQuery({ userId, orgId }),
-    );
-  }
-}
-```
-
-```typescript
-// Step 3: Adapter in the CONSUMING module's infrastructure layer
-// src/modules/classroom/infrastructure/adapters/org-membership-reader.adapter.ts
-
-import { Injectable } from '@nestjs/common';
-import { IOrgMembershipReader, OrgMembershipReadResult } from '../../domain/ports/org-membership-reader.port';
-import { OrgFacade } from '@modules/org';  // Importing the facade, NOT the repository
-
-@Injectable()
-class OrgMembershipReaderAdapter implements IOrgMembershipReader {
-  constructor(private readonly orgFacade: OrgFacade) {}
-
-  async findActiveMembership(
-    userId: string,
-    orgId: string,
-  ): Promise<OrgMembershipReadResult | null> {
-    return this.orgFacade.findActiveMembership(userId, orgId);
-  }
-}
-
-export { OrgMembershipReaderAdapter };
-```
-
-```typescript
-// Step 4: Wire it in the consuming module
-// src/modules/classroom/classroom.module.ts
-
-@Module({
-  imports: [
-    CqrsModule,
-    OrgModule,        // Import the providing module
-    BullModule.registerQueue({ name: 'classroom-events' }),
-  ],
-  providers: [
-    // Bind the port to the adapter
-    { provide: IOrgMembershipReader, useClass: OrgMembershipReaderAdapter },
-    // ... command handlers, repositories, etc.
-  ],
-})
-export class ClassroomModule {}
-```
-
-```typescript
-// Step 5: Inject the PORT (not the adapter) in the command handler
-// src/modules/classroom/application/commands/create-lesson/create-lesson.handler.ts
-
-@CommandHandler(CreateLessonCommand)
-export class CreateLessonHandler implements ICommandHandler<CreateLessonCommand> {
-  constructor(
-    // ✅ Depends on the INTERFACE, not the implementation
-    private readonly orgMembershipReader: IOrgMembershipReader,
-    private readonly classroomRepository: IClassroomRepository,
-    private readonly lessonRepository: ILessonRepository,
-  ) {}
-
-  async execute(command: CreateLessonCommand): Promise<void> {
-    const membership = await this.orgMembershipReader.findActiveMembership(
-      command.payload.teacherId,
-      command.payload.orgId,
-    );
-    if (!membership || membership.status !== 'active') {
-      throw new TeacherNotInOrgError();
-    }
-    // ... proceed with lesson creation
-  }
-}
-```
+There is no application "facade" layer: modules never expose their command/query buses or application services to each other.
 
 ---
 
-### Pattern B — Domain Events (for async cross-module side effects)
+### Pattern A — Domain Events (for cross-module writes and async side effects)
 
-Used when one module needs to trigger work in another module AFTER a state change, without waiting for a result.
+Used when one module needs to trigger work in another module AFTER a state change, without waiting for a result. **All cross-module writes go through events** — a module never dispatches a command or calls a port that mutates another module's data.
 
-The producing module emits a domain event → Outbox → BullMQ → consuming module's worker handles it.
+The producing module emits a domain event → Outbox → BullMQ → the consuming module's processor handles it by dispatching a command **inside its own module**.
 
-**Example: After `OrgInvitationAcceptedEvent`, the IAM module creates an `OrgMembership`**
+**Processor location & naming:** processors live in `src/modules/{module}/infrastructure/messaging/listeners/` and are named `XxxProcessor` (e.g. `UserEventProcessor`). The inbound event shapes the consumer relies on live in `infrastructure/messaging/events/` of the consuming module (so the consumer does not import the producer's domain layer).
+
+**Example: `AuthEmailVerifiedEvent` (auth) → `user` module marks the email verified**
 
 ```typescript
-// Org module emits the event (already in OutboxMessage)
-// IAM module's BullMQ worker consumes the 'org-events' queue
+// src/modules/user/infrastructure/messaging/listeners/user-events.processor.ts
+
+@Processor('user-events')
+export class UserEventProcessor extends WorkerHost {
+  constructor(private readonly commandBus: CommandBus) { super(); }
+
+  async process(job: Job<any, any, string>): Promise<void> {
+    if (job.name === AuthEmailVerifiedEvent.eventName) {
+      const payload = job.data.payload as AuthEmailVerifiedEvent['payload'];
+      await this.commandBus.execute(
+        new MarkEmailVerifiedCommand({ userId: payload.userId }),
+      );
+    }
+  }
+}
+```
+
+**Example: membership creation is owned by the `org` module.** `OrganizationInvitationAcceptedEvent` and `TeacherApplicationApprovedEvent` are both routed to `org-events` and consumed by the org module's own `OrganizationEventProcessor`, which dispatches the org module's command that creates the `OrganizationMembership`:
+
+```typescript
+// src/modules/org/infrastructure/messaging/listeners/organization-events.processor.ts
 
 @Processor('org-events')
-export class OrgEventWorker extends WorkerHost {
-  constructor(
-    private readonly commandBus: CommandBus,
-  ) { super(); }
+export class OrganizationEventProcessor extends WorkerHost {
+  constructor(private readonly commandBus: CommandBus) { super(); }
 
   async process(job: Job): Promise<void> {
     switch (job.name) {
-      case 'OrgInvitationAcceptedEvent':
-        await this.commandBus.execute(
-          new CreateOrgMembershipCommand({
-            orgId: job.data.payload.orgId,
-            userId: job.data.payload.acceptedByUserId,
-            role: job.data.payload.role,
-            correlationId: job.data.correlationId,
-          }),
-        );
+      case 'OrganizationInvitationAcceptedEvent':
+      case 'TeacherApplicationApprovedEvent':
+        // creates the OrganizationMembership inside the org module
+        await this.commandBus.execute(/* org module command built from job.data.payload */);
         break;
     }
   }
@@ -522,7 +418,7 @@ export class OrgEventWorker extends WorkerHost {
 
 ---
 
-### Pattern C — Shared Query Ports (for cross-module reads)
+### Pattern B — Shared Query Ports (for cross-module reads)
 
 When a module needs to **read** data owned by another module, it uses a **Query Port** defined in `shared/application/port/`. This is the canonical pattern used in this codebase.
 
@@ -601,9 +497,9 @@ export class LoginHandler {
 
 | Scenario | Pattern |
 |---|---|
-| Module A needs to **read** data owned by Module B | Pattern C (Query Port in `shared/application/port/`) |
-| Module A needs to trigger a **write** in Module B | Pattern B (Domain Event via Outbox + BullMQ) — NEVER write cross-module directly |
-| Module A needs to check org membership, teacher eligibility etc. | Pattern A (Port + Adapter) defined per-consumer in `domain/ports/` |
+| Module A needs to **read** data owned by Module B | Pattern B (Query Port in `shared/application/port/`) |
+| Module A needs to trigger a **write** in Module B | Pattern A (Domain Event via Outbox + BullMQ) — NEVER write cross-module directly |
+| Module A needs to check org membership, teacher eligibility etc. | Pattern B (Query Port in `shared/application/port/`, implemented by the owning module) |
 | Module A needs to trigger work in Module B immediately and synchronously | Reconsider your domain boundaries — this usually signals a design issue |
 
 ---
@@ -642,18 +538,16 @@ The module file (`xxx.module.ts`) is the ONLY place where `useClass`, `useValue`
 export class AuthModule {}
 ```
 
-### Rule 3: Cross-module exports — only facades and port interfaces
+### Rule 3: Cross-module exports — only port tokens and shared services
 
 A module's `exports` array should contain ONLY:
-- Facades (application-layer DTOs and queries)
-- Port interface tokens (so other modules can inject them)
+- Port interface tokens (so other modules can inject them — see Pattern B, Shared Query Ports)
 - Shared services (PrismaService, RedisService from SharedModule)
 
 ```typescript
 // ✅ Correct exports
 exports: [
-  UserFacade,            // ← facade: clean API surface
-  IPasswordHashPort,     // ← port token: so auth module can inject it
+  IUserQueryPort,        // ← port token: so auth module can inject it
   PrismaService,         // ← shared infrastructure service
 ]
 
@@ -669,7 +563,7 @@ exports: [
 
 If Module A imports Module B and Module B imports Module A, you have a circular dependency. Resolve this by:
 1. Extracting the shared data into a third module (SharedModule pattern)
-2. Using event-driven communication (Pattern B) instead of direct import
+2. Using event-driven communication (Pattern A) instead of direct import
 3. Re-evaluating your bounded context — the two modules might need to merge
 
 ### Rule 5: Infrastructure services (Prisma, Redis) live in SharedModule and are re-exported
@@ -682,7 +576,7 @@ If Module A imports Module B and Module B imports Module A, you have a circular 
 
 ### Rule 6: Never use `forwardRef` — it is a code smell
 
-If you need `forwardRef`, your boundaries are wrong. Use events or a facade instead.
+If you need `forwardRef`, your boundaries are wrong. Use events or a shared Query Port instead.
 
 ---
 
@@ -827,18 +721,18 @@ namespace LessonStartedEvent {
 export { LessonStartedEvent };
 ```
 
-After creating the event, register it in `OUTBOX_EVENT_ROUTES`:
+After creating the event, register it in `OUTBOX_EVENT_ROUTES`. The target design is a fan-out map (`Map<string, string[]>`, one event → one or more queues). The code today is still `Map<string, string>` (one queue per event), so the fan-out change to `OutboxPublisherService` (one `queue.add(...)` per queue, same `jobId`) is planned work:
 ```typescript
 // src/modules/shared/infrastructure/outbox/outbox-event-routes.ts
-const OUTBOX_EVENT_ROUTES = new Map<string, string>([
-  ['AuthAccountCreatedEvent', 'user-events'],
-  ['AccountSuspendedEvent',   'user-events'],
-  ['UserCreatedEvent',        'auth-events'],
-  ['UserUpdatedEvent',        'auth-events'],
+const OUTBOX_EVENT_ROUTES = new Map<string, string[]>([
+  ['AuthAccountCreatedEvent', ['user-events']],
+  ['AccountSuspendedEvent',   ['user-events']],
+  ['UserCreatedEvent',        ['auth-events']],
+  ['UserUpdatedEvent',        ['auth-events']],
   // Add new events here:
-  ['LessonStartedEvent',      'classroom-events'],
-  ['LessonCompletedEvent',    'classroom-events'],
-  ['LessonReportedEvent',     'classroom-events'],
+  ['LessonStartedEvent',      ['notification-events', 'classroom-events']],
+  ['LessonCompletedEvent',    ['assessment-events', 'notification-events']],
+  ['LessonReportedEvent',     ['progress-events']],
   // ...
 ]);
 ```
