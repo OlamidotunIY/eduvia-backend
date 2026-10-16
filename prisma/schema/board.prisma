@@ -1,0 +1,103 @@
+model LearningBoard {
+  id               String          @id
+  lessonId         String          @unique
+  orgId            String
+  mode             BoardMode
+  isLocked         Boolean         @default(false)
+  planObjectives   Json
+  planTopicNodeIds Json
+  planNotes        String?
+  planHomework     String?
+  planComplete     Boolean         @default(false)
+  planCompletedAt  DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  sections         BoardSection[]
+  questions        BoardQuestion[]
+
+  @@map("learning_boards")
+}
+
+enum BoardMode {
+  teach
+  classwork
+  assignment
+  review
+  locked
+}
+
+model BoardSection {
+  id            String      @id
+  boardId       String
+  type          SectionType
+  content       String
+  position      Int
+  createdBy     String
+  isTeacherOnly Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  board         LearningBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@map("board_sections")
+}
+
+enum SectionType {
+  text
+  image
+  questionBlock
+  divider
+}
+
+model BoardQuestion {
+  id          String            @id
+  boardId     String
+  questionId  String
+  position    Int
+  mode        QuestionMode
+  assignedAt  DateTime
+  dueAt       DateTime?
+  showOptions Boolean           @default(true)
+  maxMarks    Int
+
+  board       LearningBoard     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  responses   StudentResponse[]
+
+  @@map("board_questions")
+}
+
+enum QuestionMode {
+  classwork
+  assignment
+}
+
+model StudentResponse {
+  id                  String       @id
+  boardQuestionId     String
+  studentId           String
+  responseType        ResponseType
+  textContent         String?
+  imageUrl            String?
+  selectedOption      String?
+  submittedAt         DateTime     @default(now())
+  autoIsCorrect       Boolean?
+  autoMarksAwarded    Int?
+  autoMarkedAt        DateTime?
+  teacherMarksAwarded Int?
+  teacherMaxMarks     Int?
+  teacherFeedback     String?
+  teacherMarkedBy     String?
+  teacherMarkedAt     DateTime?
+
+  boardQuestion       BoardQuestion @relation(fields: [boardQuestionId], references: [id], onDelete: Cascade)
+
+  @@unique([boardQuestionId, studentId])
+  @@map("student_responses")
+}
+
+enum ResponseType {
+  text
+  image_upload
+  mcq_choice
+}
