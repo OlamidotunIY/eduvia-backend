@@ -1,34 +1,152 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaService, RedisService, AuthGuard } from '@modules/shared';
+import {
+  AuthGuard,
+  IBoardQueryPort,
+  PrismaService,
+  RedisService,
+} from '@modules/shared';
+import {
+  CreateBoardHandler,
+  SwitchBoardModeHandler,
+  LockBoardHandler,
+  UnlockBoardHandler,
+  SaveLessonPlanHandler,
+  CompleteLessonPlanHandler,
+  AddBoardSectionHandler,
+  UpdateBoardSectionHandler,
+  RemoveBoardSectionHandler,
+  ImportBoardContentHandler,
+  AttachBoardQuestionHandler,
+  RemoveBoardQuestionHandler,
+  SubmitStudentResponseHandler,
+  MarkStudentResponseHandler,
+} from './application/commands';
+import {
+  GetBoardByIdHandler,
+  GetBoardByLessonIdHandler,
+  ListBoardQuestionsHandler,
+  ListStudentResponsesHandler,
+  GetStudentResponseHandler,
+} from './application/queries';
+import {
+  LearningBoardMapper,
+  BoardSectionMapper,
+  BoardQuestionMapper,
+  StudentResponseMapper,
+} from './infrastructure/persistence/mappers';
+import {
+  ILearningBoardRepository,
+  IBoardSectionRepository,
+  IBoardQuestionRepository,
+  IStudentResponseRepository,
+} from './domain/repository';
+import {
+  PrismaLearningBoardRepository,
+  PrismaBoardSectionRepository,
+  PrismaBoardQuestionRepository,
+  PrismaStudentResponseRepository,
+} from './infrastructure/persistence/repository';
+import { BoardEventProcessor } from './infrastructure/messaging/listeners';
+import {
+  BoardQueryAdapter,
+  BoardOtService,
+  BoardStorageService,
+} from './infrastructure/services';
+import { BoardController } from './presentation/controllers';
+import { BoardService } from './presentation/services';
 
-const CommandHandlers: any[] = [];
-const QueryHandlers: any[] = [];
-const EventProcessors: any[] = [];
-const Mappers: any[] = [];
-const PortBindings: any[] = [];
-const Services: any[] = [];
+const commandHandlers = [
+  CreateBoardHandler,
+  SwitchBoardModeHandler,
+  LockBoardHandler,
+  UnlockBoardHandler,
+  SaveLessonPlanHandler,
+  CompleteLessonPlanHandler,
+  AddBoardSectionHandler,
+  UpdateBoardSectionHandler,
+  RemoveBoardSectionHandler,
+  ImportBoardContentHandler,
+  AttachBoardQuestionHandler,
+  RemoveBoardQuestionHandler,
+  SubmitStudentResponseHandler,
+  MarkStudentResponseHandler,
+];
+
+const queryHandlers = [
+  GetBoardByIdHandler,
+  GetBoardByLessonIdHandler,
+  ListBoardQuestionsHandler,
+  ListStudentResponsesHandler,
+  GetStudentResponseHandler,
+];
+
+const mappers = [
+  LearningBoardMapper,
+  BoardSectionMapper,
+  BoardQuestionMapper,
+  StudentResponseMapper,
+];
+
+const repositories = [
+  PrismaLearningBoardRepository,
+  PrismaBoardSectionRepository,
+  PrismaBoardQuestionRepository,
+  PrismaStudentResponseRepository,
+  {
+    provide: ILearningBoardRepository,
+    useClass: PrismaLearningBoardRepository,
+  },
+  {
+    provide: IBoardSectionRepository,
+    useClass: PrismaBoardSectionRepository,
+  },
+  {
+    provide: IBoardQuestionRepository,
+    useClass: PrismaBoardQuestionRepository,
+  },
+  {
+    provide: IStudentResponseRepository,
+    useClass: PrismaStudentResponseRepository,
+  },
+];
 
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({ name: 'board-events' }),
+    BullModule.registerQueue(
+      { name: 'board-events' },
+      { name: 'classroom-events' },
+    ),
   ],
-  controllers: [],
+  controllers: [BoardController],
   providers: [
     PrismaService,
     RedisService,
     AuthGuard,
-    ...Services,
-    ...Mappers,
-    ...PortBindings,
-    ...CommandHandlers,
-    ...QueryHandlers,
-    ...EventProcessors,
+    BoardService,
+    BoardOtService,
+    BoardStorageService,
+    ...commandHandlers,
+    ...queryHandlers,
+    ...mappers,
+    ...repositories,
+    BoardEventProcessor,
+    {
+      provide: IBoardQueryPort,
+      useClass: BoardQueryAdapter,
+    },
   ],
   exports: [
-    // Export ONLY shared query port tokens and adapters implementing shared ports
+    ILearningBoardRepository,
+    IBoardSectionRepository,
+    IBoardQuestionRepository,
+    IStudentResponseRepository,
+    IBoardQueryPort,
+    BoardService,
+    BoardOtService,
+    BoardStorageService,
   ],
 })
 export class BoardModule {}
