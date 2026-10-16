@@ -46,6 +46,9 @@
       ],
       "@modules/board": [
         "./src/modules/board/index.ts"
+      ],
+      "@modules/assessment": [
+        "./src/modules/assessment/index.ts"
       ]
     }
   }
