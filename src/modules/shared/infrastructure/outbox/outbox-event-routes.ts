@@ -11,6 +11,23 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['TeacherApplicationApprovedEvent', 'org-events'],
   ['TeacherApplicationRejectedEvent', 'org-events'],
   ['OrganizationInvitationAcceptedEvent', 'org-events'],
+  ['ClassroomCreatedEvent', 'classroom-events'],
+  ['ClassroomPausedEvent', 'classroom-events'],
+  ['ClassroomClosedEvent', 'classroom-events'],
+  ['ClassroomTeacherChangedEvent', 'classroom-events'],
+  ['ClassroomRecurrenceUpdatedEvent', 'classroom-events'],
+  ['StudentEnrolledInClassroomEvent', 'classroom-events'],
+  ['StudentRemovedFromClassroomEvent', 'classroom-events'],
+  ['LessonCreatedEvent', 'classroom-events'],
+  ['LessonScheduledEvent', 'classroom-events'],
+  ['LessonStartedEvent', 'classroom-events'],
+  ['LessonCompletedEvent', 'classroom-events'],
+  ['LessonReportedEvent', 'classroom-events'],
+  ['LessonArchivedEvent', 'classroom-events'],
+  ['LessonCancelledEvent', 'classroom-events'],
+  ['LessonStudentNoShowEvent', 'classroom-events'],
+  ['LessonTeacherNoShowEvent', 'classroom-events'],
+  ['CoverTeacherAssignedEvent', 'classroom-events'],
 ]);
 
 export { OUTBOX_EVENT_ROUTES };

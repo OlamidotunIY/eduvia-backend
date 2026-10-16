@@ -12,6 +12,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CorrelationIdInterceptor } from '@modules/shared';
 import { OrgModule } from './modules/org/org.module';
+import { ClassroomModule } from './modules/classroom/classroom.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -43,6 +44,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UserModule,
     AuthModule,
     OrgModule,
+    ClassroomModule,
   ],
   controllers: [AppController],
   providers: [

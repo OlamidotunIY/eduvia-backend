@@ -10,7 +10,10 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
-    "types": ["node", "jest"],
+    "types": [
+      "node",
+      "jest"
+    ],
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
@@ -20,11 +23,27 @@
     "resolveJsonModule": true,
     "rootDir": ".",
     "paths": {
-      "@generated/prisma": ["./src/generated/prisma"],
-      "@generated/prisma/*": ["./src/generated/prisma/*"],
-      "@modules/auth": ["./src/modules/auth/index.ts"],
-      "@modules/shared": ["./src/modules/shared/index.ts"],
-      "@modules/user": ["./src/modules/user/index.ts"]
+      "@generated/prisma": [
+        "./src/generated/prisma"
+      ],
+      "@generated/prisma/*": [
+        "./src/generated/prisma/*"
+      ],
+      "@modules/auth": [
+        "./src/modules/auth/index.ts"
+      ],
+      "@modules/shared": [
+        "./src/modules/shared/index.ts"
+      ],
+      "@modules/user": [
+        "./src/modules/user/index.ts"
+      ],
+      "@modules/classroom": [
+        "./src/modules/classroom/index.ts"
+      ],
+      "@modules/org": [
+        "./src/modules/org/index.ts"
+      ]
     }
   }
 }

@@ -17,7 +17,7 @@ function To-PascalCase {
 
 function To-KebabCase {
     param([Parameter(Mandatory = $true)][string]$String)
-    $clean = $String -replace '([a-z0-9])([A-Z])', '$1-$2'
+    $clean = $String -creplace '([a-z0-9])([A-Z])', '$1-$2'
     $clean = $clean -replace '[^a-zA-Z0-9]+', '-'
     return $clean.ToLower().Trim('-')
 }

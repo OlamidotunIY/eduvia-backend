@@ -1,0 +1,147 @@
+model Classroom {
+  id                       String          @id
+  orgId                    String
+  name                     String
+  subjectId                String
+  primaryTeacherId         String
+  status                   ClassroomStatus
+  lessonDurationMins       Int
+  maxStudents              Int             @default(1)
+  recurrenceDayOfWeek      Int
+  recurrenceStartTime      String
+  recurrenceTimezone       String
+  recurrenceIntervalWeeks  Int             @default(1)
+  recurrenceEffectiveFrom  DateTime
+  recurrenceEffectiveUntil DateTime?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+
+  enrollments              StudentEnrollment[]
+  lessons                  Lesson[]
+
+  @@map("classrooms")
+}
+
+enum ClassroomStatus {
+  active
+  paused
+  closed
+}
+
+model StudentEnrollment {
+  id          String           @id
+  classroomId String
+  studentId   String
+  orgId       String
+  status      EnrollmentStatus
+  enrolledAt  DateTime
+  removedAt   DateTime?
+
+  classroom   Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@map("student_enrollments")
+}
+
+enum EnrollmentStatus {
+  active
+  paused
+  removed
+}
+
+model Lesson {
+  id              String         @id
+  orgId           String
+  classroomId     String
+  teacherId       String
+  coverTeacherId  String?
+  scheduledAt     DateTime
+  durationMins    Int
+  status          LessonStatus
+  meetingId       String?
+  videoProvider   VideoProvider?
+  meetLink        String?
+  cancelledReason String?
+  cancelledBy     String?
+  noShowAt        DateTime?
+  noShowType      NoShowType?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  markedAt        DateTime?
+  reportedAt      DateTime?
+  archivedAt      DateTime?
+  isRecurring     Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  classroom       Classroom      @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@map("lessons")
+}
+
+enum LessonStatus {
+  PENDING
+  SCHEDULED
+  LIVE
+  COMPLETED
+  MARKING
+  REPORTED
+  ARCHIVED
+  CANCELLED
+  STUDENT_NO_SHOW
+  TEACHER_NO_SHOW
+}
+
+enum VideoProvider {
+  zoom
+  google_meet
+}
+
+enum NoShowType {
+  student
+  teacher
+}
+
+model TeacherAvailability {
+  id        String   @id
+  orgId     String
+  teacherId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slots      AvailabilitySlot[]
+  exceptions AvailabilityException[]
+
+  @@map("teacher_availabilities")
+}
+
+model AvailabilitySlot {
+  id             String              @id
+  availabilityId String
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  timezone       String
+
+  availability   TeacherAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+
+  @@map("availability_slots")
+}
+
+model AvailabilityException {
+  id             String              @id
+  availabilityId String
+  date           DateTime
+  type           ExceptionType
+  startTime      String?
+  endTime        String?
+  reason         String?
+
+  availability   TeacherAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+
+  @@map("availability_exceptions")
+}
+
+enum ExceptionType {
+  blocked
+  added
+}
