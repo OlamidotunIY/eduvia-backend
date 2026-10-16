@@ -10,7 +10,7 @@ description: >-
 Use this skill when implementing automated periodic maintenance, asynchronous reconciliation, or sweepers.
 
 ## Architectural Rules
-1. Schedulers live in `infrastructure/scheduler/<kebab-name>.scheduler.ts`.
+1. Schedulers live in `infrastructure/messaging/scheduler/<kebab-name>.scheduler.ts`.
 2. Annotated with `@Injectable()` and `@Cron(CronExpression.*)`.
 3. Dispatches CQRS commands via `CommandBus` to perform actions — schedulers do not contain business logic.
 4. Reconciliation workflows must be non-blocking and idempotent.

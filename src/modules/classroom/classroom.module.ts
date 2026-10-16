@@ -53,7 +53,7 @@ import {
 } from './infrastructure/persistence/repository';
 import { ClassroomEventProcessor } from './infrastructure/messaging/listeners';
 import { ClassroomQueryAdapter } from './infrastructure/services/classroom-query.adapter';
-import { LessonArchiveScheduler } from './infrastructure/scheduler/lesson-archive.scheduler';
+import { LessonArchiveScheduler } from './infrastructure/messaging/scheduler/lesson-archive.scheduler';
 import {
   ClassroomController,
   TeacherAvailabilityController,

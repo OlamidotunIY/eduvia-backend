@@ -11,7 +11,8 @@ $context = (& $contextScript -Module $Module -Artifact 'scheduler') | ConvertFro
 $utilsScript = Join-Path $PSScriptRoot '..\..\eduvia-module-workflow\scripts\Eduvia-Utils.ps1'
 . $utilsScript
 
-$targetDir = Join-Path $context.infraDir 'scheduler'
+$messagingDir = Join-Path $context.infraDir 'messaging'
+$targetDir = Join-Path $messagingDir 'scheduler'
 Ensure-Directory -Path $targetDir
 $indexFile = Join-Path $targetDir 'index.ts'
 
@@ -42,4 +43,6 @@ export class $SchedulerName {
 
 Set-Content -LiteralPath $targetFile -Value $content.Trim() -Encoding utf8NoBOM
 Add-ExportToIndex -IndexPath $indexFile "export * from './$kebabBase.scheduler';"
+$messagingIndex = Join-Path $messagingDir 'index.ts'
+Add-ExportToIndex -IndexPath $messagingIndex "export * from './scheduler';"
 Write-Host "CREATED SCHEDULER: $targetFile"
