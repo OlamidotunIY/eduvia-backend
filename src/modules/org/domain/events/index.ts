@@ -7,3 +7,4 @@ export * from './org-updated-event';
 export * from './teacher-application-approved.event';
 export * from './teacher-application-received.event';
 export * from './teacher-application-rejected.event';
+export * from './org-listed-marketplace.event';

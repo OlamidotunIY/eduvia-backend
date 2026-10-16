@@ -51,8 +51,9 @@ export class PrismaOrganizationMembershipRepository implements IOrganizationMemb
   }
 
   public async save(membership: OrganizationMembership): Promise<void> {
-    await this.delegate.create({
-      data: {
+    await this.delegate.upsert({
+      where: { id: membership.id.value },
+      create: {
         id: membership.id.value,
         orgId: membership.orgId.value,
         userId: membership.userId,
@@ -60,6 +61,11 @@ export class PrismaOrganizationMembershipRepository implements IOrganizationMemb
         subjects: membership.subjects,
         status: membership.status as MembershipStatus,
         joinedAt: membership.joinedAt,
+      },
+      update: {
+        role: membership.role as OrganizationRole,
+        subjects: membership.subjects,
+        status: membership.status as MembershipStatus,
       },
     });
   }

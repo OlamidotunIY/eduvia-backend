@@ -12,6 +12,7 @@ import {
 } from '../errors';
 import { OrganizationSuspendedEvent } from '../events/org-suspended-event';
 import { OrganizationUpdatedEvent } from '../events/org-updated-event';
+import { OrganizationListedOnMarketplaceEvent } from '../events/org-listed-marketplace.event';
 import { OrganizationPolicy } from '../entities/org.policy.entity';
 
 export class Organization extends AggregateRoot<OrganizationId> {
@@ -151,6 +152,21 @@ export class Organization extends AggregateRoot<OrganizationId> {
     this._policy = OrganizationPolicy.create(this.id.toString());
   }
 
+  public updatePolicy(params: {
+    minimumBookingNoticeHours?: number;
+    cancellationWindowHours?: number;
+    noShowWaitMinutes?: number;
+    autoRescheduleOnNoShow?: boolean;
+    lessonPlanRequired?: boolean;
+    reportRequiredWithinHours?: number;
+  }): void {
+    if (!this._policy) {
+      this.addPolicy();
+    }
+    this._policy = this._policy.update(params);
+    this._updatedAt = new Date();
+  }
+
   public updateProfile(params: {
     name?: string;
     description?: string | null;
@@ -248,7 +264,7 @@ export class Organization extends AggregateRoot<OrganizationId> {
     );
   }
 
-  public listOnMarketPlace(): void {
+  public listOnMarketPlace(correlationId: string): void {
     if (this._status !== OrganizationStatus.ACTIVE) {
       throw new OrganizationNotActiveError(
         'Only active organizations can be listed on marketplace',
@@ -257,6 +273,14 @@ export class Organization extends AggregateRoot<OrganizationId> {
 
     this._marketplaceListed = true;
     this._updatedAt = new Date();
+
+    this.addDomainEvent(
+      new OrganizationListedOnMarketplaceEvent(
+        this.getId(),
+        new OrganizationListedOnMarketplaceEvent.Payload(this.getId()),
+        correlationId,
+      ),
+    );
   }
 
   public delistFromMarket(): void {

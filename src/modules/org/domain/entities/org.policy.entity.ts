@@ -1,4 +1,4 @@
-class OrganizationPolicy {
+export class OrganizationPolicy {
   public readonly orgId: string;
   public readonly minimumBookingNoticeHours: number;
   public readonly cancellationWindowHours: number;
@@ -6,8 +6,6 @@ class OrganizationPolicy {
   public readonly autoRescheduleOnNoShow: boolean;
   public readonly lessonPlanRequired: boolean;
   public readonly reportRequiredWithinHours: number;
-
-  private static MINIMUM_BOOKING_NOTICE_HOURS = 24;
 
   constructor(params: {
     orgId: string;
@@ -38,6 +36,29 @@ class OrganizationPolicy {
       reportRequiredWithinHours: 24,
     });
   }
-}
 
-export { OrganizationPolicy };
+  public update(params: {
+    minimumBookingNoticeHours?: number;
+    cancellationWindowHours?: number;
+    noShowWaitMinutes?: number;
+    autoRescheduleOnNoShow?: boolean;
+    lessonPlanRequired?: boolean;
+    reportRequiredWithinHours?: number;
+  }): OrganizationPolicy {
+    return new OrganizationPolicy({
+      orgId: this.orgId,
+      minimumBookingNoticeHours:
+        params.minimumBookingNoticeHours ?? this.minimumBookingNoticeHours,
+      cancellationWindowHours:
+        params.cancellationWindowHours ?? this.cancellationWindowHours,
+      noShowWaitMinutes:
+        params.noShowWaitMinutes ?? this.noShowWaitMinutes,
+      autoRescheduleOnNoShow:
+        params.autoRescheduleOnNoShow ?? this.autoRescheduleOnNoShow,
+      lessonPlanRequired:
+        params.lessonPlanRequired ?? this.lessonPlanRequired,
+      reportRequiredWithinHours:
+        params.reportRequiredWithinHours ?? this.reportRequiredWithinHours,
+    });
+  }
+}

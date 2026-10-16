@@ -1,8 +1,8 @@
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
-import { OrganizationInvitation as PrismaOrganizationInvitationn } from '@generated/prisma/client';
+import { OrganizationInvitation as PrismaOrganizationInvitation } from '@generated/prisma/client';
 import { OrganizationId, OrganizationInvitationId } from '../../domain';
-import { OrganizationInvitation } from '../../domain/entities';
+import { OrganizationInvitation } from '../../domain/model';
 import { OrganizationInvitationMapper } from '../mappers/organization-invitation.mapper';
 import { IOrganizationInvitationRepository } from '../../domain/repository/org-invitation.repository';
 
@@ -11,7 +11,7 @@ export class PrismaOrganizationInvitationRepository
   extends PrismaBaseRepository<
     OrganizationInvitationId,
     OrganizationInvitation,
-    PrismaOrganizationInvitationn
+    PrismaOrganizationInvitation
   >
   implements IOrganizationInvitationRepository
 {
@@ -27,7 +27,7 @@ export class PrismaOrganizationInvitationRepository
   }
 
   public async findByOrganizationId(
-    orgId: OrganizationId |string,
+    orgId: OrganizationId | string,
   ): Promise<OrganizationInvitation[]> {
     const records = await this.delegate.findMany({
       where: {
@@ -38,5 +38,12 @@ export class PrismaOrganizationInvitationRepository
     return records.map((record) => this.mapper.toDomain(record));
   }
 
-  
+  public async findByTokenHash(
+    tokenHash: string,
+  ): Promise<OrganizationInvitation | null> {
+    const record = await this.delegate.findFirst({
+      where: { tokenHash },
+    });
+    return record ? this.mapper.toDomain(record) : null;
+  }
 }

@@ -7,11 +7,30 @@ import {
   PrismaService,
   RedisService,
 } from '@modules/shared';
-import { CreateOrganizationHandler } from './application/commands/create-organization';
-import { CreateOrganizationMembershipHandler } from './application/commands/create-organization-membership';
-import { AcceptOrganizationInvitationHandler } from './application/commands/org-invitation-accepted/org-invitation-accepted.handler';
-import { ReceiveTeacherApplicationHandler } from './application/commands/receive-teacher-application';
-import { UpdateOrganizationSubjectHandler } from './application/commands/update-organization-subject/update-organization-subject.handler';
+import {
+  AcceptOrganizationInvitationByTokenHandler,
+  AcceptOrganizationInvitationHandler,
+  ApproveTeacherApplicationHandler,
+  ChangeMemberRoleHandler,
+  CreateOrganizationHandler,
+  CreateOrganizationMembershipHandler,
+  CreateOrganizationSubjectHandler,
+  DelistOrganizationFromMarketplaceHandler,
+  ListOrganizationOnMarketplaceHandler,
+  ReceiveTeacherApplicationHandler,
+  RejectTeacherApplicationHandler,
+  SendOrganizationInvitationHandler,
+  SuspendMemberHandler,
+  UpdateOrganizationPolicyHandler,
+  UpdateOrganizationProfileHandler,
+  UpdateOrganizationSubjectHandler,
+} from './application/commands';
+import {
+  GetOrganizationBySlugHandler,
+  GetOrganizationMembersHandler,
+  GetOrganizationSubjectsHandler,
+  GetTeacherApplicationsHandler,
+} from './application/queries';
 import { OrganizationInvitationMapper } from './infrastructure/mappers/organization-invitation.mapper';
 import { OrganizationMembershipMapper } from './infrastructure/mappers/organization-membership.mapper';
 import { OrganizationSubjectMapper } from './infrastructure/mappers/organization-subject.mapper';
@@ -41,6 +60,24 @@ const commandHandlers = [
   AcceptOrganizationInvitationHandler,
   ReceiveTeacherApplicationHandler,
   UpdateOrganizationSubjectHandler,
+  UpdateOrganizationProfileHandler,
+  ListOrganizationOnMarketplaceHandler,
+  DelistOrganizationFromMarketplaceHandler,
+  UpdateOrganizationPolicyHandler,
+  CreateOrganizationSubjectHandler,
+  ApproveTeacherApplicationHandler,
+  RejectTeacherApplicationHandler,
+  SendOrganizationInvitationHandler,
+  AcceptOrganizationInvitationByTokenHandler,
+  ChangeMemberRoleHandler,
+  SuspendMemberHandler,
+];
+
+const queryHandlers = [
+  GetOrganizationBySlugHandler,
+  GetOrganizationSubjectsHandler,
+  GetTeacherApplicationsHandler,
+  GetOrganizationMembersHandler,
 ];
 
 const EventProcessors = [OrganizationEventProcessor];
@@ -95,6 +132,7 @@ const portBinding = [
     ...Mappers,
     ...portBinding,
     ...commandHandlers,
+    ...queryHandlers,
     ...EventProcessors,
   ],
   exports: [IOrganizationQueryPort],
