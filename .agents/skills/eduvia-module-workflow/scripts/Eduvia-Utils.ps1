@@ -38,11 +38,11 @@ function Add-ExportToIndex {
     Ensure-Directory -Path $dir
 
     if (-not (Test-Path $IndexPath)) {
-        Set-Content -LiteralPath $IndexPath -Value "$ExportStatement`n" -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText($IndexPath, "$ExportStatement`n", [System.Text.UTF8Encoding]::new($false))
         return
     }
 
-    $existing = Get-Content -LiteralPath $IndexPath -Raw -Encoding utf8
+    $existing = Get-Content -LiteralPath $IndexPath -Raw
     if ($existing -notmatch [regex]::Escape($ExportStatement.Trim())) {
         $trimmed = $existing.TrimEnd()
         if ($trimmed.Length -gt 0) {
@@ -50,6 +50,6 @@ function Add-ExportToIndex {
         } else {
             $newContent = "$ExportStatement`n"
         }
-        Set-Content -LiteralPath $IndexPath -Value $newContent -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText($IndexPath, $newContent, [System.Text.UTF8Encoding]::new($false))
     }
 }

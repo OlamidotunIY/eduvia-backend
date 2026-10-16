@@ -29,6 +29,7 @@ $subdirs = @(
     'infrastructure\persistence\mappers',
     'infrastructure\messaging\listeners',
     'infrastructure\messaging\events',
+    'infrastructure\messaging\scheduler',
     'infrastructure\services',
     'presentation\controllers',
     'presentation\dto',
@@ -130,7 +131,7 @@ const Services: any[] = [];
 })
 export class ${pascalName}Module {}
 "@
-    Set-Content -LiteralPath $moduleFile -Value $modContent -Encoding utf8NoBOM
+    [System.IO.File]::WriteAllText($moduleFile, $modContent, [System.Text.UTF8Encoding]::new($false))
     Write-Host "CREATED: $moduleFile"
 }
 
@@ -144,7 +145,7 @@ export * from './infrastructure';
 export * from './presentation';
 export { ${pascalName}Module } from './$moduleName.module';
 "@
-    Set-Content -LiteralPath $rootIndex -Value $rootContent -Encoding utf8NoBOM
+    [System.IO.File]::WriteAllText($rootIndex, $rootContent, [System.Text.UTF8Encoding]::new($false))
     Write-Host "CREATED: $rootIndex"
 }
 
@@ -157,7 +158,7 @@ if (-not (Test-Path $prismaFile)) {
 // All IDs use @id @default(uuid()) @map("_id")
 // Tables use @@map("snake_case_table_name")
 "@
-    Set-Content -LiteralPath $prismaFile -Value $prismaContent -Encoding utf8NoBOM
+    [System.IO.File]::WriteAllText($prismaFile, $prismaContent, [System.Text.UTF8Encoding]::new($false))
     Write-Host "CREATED: $prismaFile"
 }
 

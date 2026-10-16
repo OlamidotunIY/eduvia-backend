@@ -43,6 +43,9 @@
       ],
       "@modules/org": [
         "./src/modules/org/index.ts"
+      ],
+      "@modules/board": [
+        "./src/modules/board/index.ts"
       ]
     }
   }
