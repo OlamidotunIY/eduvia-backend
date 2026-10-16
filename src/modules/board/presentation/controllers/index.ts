@@ -1,1 +1,1 @@
-// Controllers
+export * from './board.controller';

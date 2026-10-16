@@ -1,1 +1,1 @@
-// Presentation Services
+export * from './board.service';
