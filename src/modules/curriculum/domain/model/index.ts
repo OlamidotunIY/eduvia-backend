@@ -1,1 +1,2 @@
-// Aggregate Roots
+export * from './CurriculumProfile';
+export * from './CurriculumNode';
