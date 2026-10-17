@@ -6,3 +6,4 @@ export * from './board-query.port';
 export * from './assessment-query.port';
 export * from './curriculum-query.port';
 export * from './progress-query.port';
+export * from './notifications-query.port';
