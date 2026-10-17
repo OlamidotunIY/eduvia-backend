@@ -97,7 +97,7 @@ export class OrgBillingAccount extends AggregateRoot<OrgBillingAccountId> {
       updatedAt: now,
     });
 
-    account.record(
+    account.addDomainEvent(
       new OrgBillingAccountCreatedEvent(
         accountId.value,
         new OrgBillingAccountCreatedEvent.Payload(
@@ -201,7 +201,7 @@ export class OrgBillingAccount extends AggregateRoot<OrgBillingAccountId> {
     this._freeTierActive = newTier === OrgPlanTier.free;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new OrgPlanUpgradedEvent(
         this.id.value,
         new OrgPlanUpgradedEvent.Payload(this.id.value, this._orgId, prevTier, newTier),
@@ -217,7 +217,7 @@ export class OrgBillingAccount extends AggregateRoot<OrgBillingAccountId> {
     this._status = BillingAccountStatus.suspended;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new OrgBillingSuspendedEvent(
         this.id.value,
         new OrgBillingSuspendedEvent.Payload(this.id.value, this._orgId, reason),

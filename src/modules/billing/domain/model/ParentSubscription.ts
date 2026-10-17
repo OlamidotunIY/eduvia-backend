@@ -120,7 +120,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
       updatedAt: now,
     });
 
-    subscription.record(
+    subscription.addDomainEvent(
       new SubscriptionCreatedEvent(
         subscriptionId.value,
         new SubscriptionCreatedEvent.Payload(
@@ -219,7 +219,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
     this._cancelReason = reason ?? null;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new SubscriptionCancelledEvent(
         this.id.value,
         new SubscriptionCancelledEvent.Payload(
@@ -245,7 +245,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
     this._status = SubscriptionStatus.paused;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new SubscriptionPausedEvent(
         this.id.value,
         new SubscriptionPausedEvent.Payload(
@@ -267,7 +267,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
     this._status = SubscriptionStatus.active;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new SubscriptionResumedEvent(
         this.id.value,
         new SubscriptionResumedEvent.Payload(
@@ -289,7 +289,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
     this._status = SubscriptionStatus.past_due;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new SubscriptionPaymentFailedEvent(
         this.id.value,
         new SubscriptionPaymentFailedEvent.Payload(
@@ -313,7 +313,7 @@ export class ParentSubscription extends AggregateRoot<ParentSubscriptionId> {
     this._status = SubscriptionStatus.active;
     this._touch();
 
-    this.record(
+    this.addDomainEvent(
       new SubscriptionRenewedEvent(
         this.id.value,
         new SubscriptionRenewedEvent.Payload(

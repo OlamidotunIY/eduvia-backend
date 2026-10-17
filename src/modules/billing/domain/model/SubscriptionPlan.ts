@@ -104,7 +104,7 @@ export class SubscriptionPlan extends AggregateRoot<SubscriptionPlanId> {
       updatedAt: now,
     });
 
-    plan.record(
+    plan.addDomainEvent(
       new SubscriptionPlanCreatedEvent(
         planId.value,
         new SubscriptionPlanCreatedEvent.Payload(
