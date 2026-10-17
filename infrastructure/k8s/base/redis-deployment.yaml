@@ -14,9 +14,34 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:7-alpine
+        image: redis:7.2-alpine
         ports:
         - containerPort: 6379
+        command:
+        - redis-server
+        - "--save"
+        - "60"
+        - "1"
+        - "--loglevel"
+        - "warning"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 apiVersion: v1
 kind: Service
@@ -25,5 +50,6 @@ metadata:
 spec:
   ports:
   - port: 6379
+    targetPort: 6379
   selector:
     app: redis

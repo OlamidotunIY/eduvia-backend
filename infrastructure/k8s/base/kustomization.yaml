@@ -2,6 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - eduvia-app-deployment.yaml
-  - redis-deployment.yaml
   - mysql-deployment.yaml
+  - redis-deployment.yaml
   - ingress.yaml

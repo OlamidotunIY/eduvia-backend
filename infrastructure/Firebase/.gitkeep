@@ -1,2 +1,2 @@
-# Place your Firebase Admin SDK service account JSON in this directory.
-# Filename should match *.json and will be synced to the VM by Makefile.
+# Place your Firebase Admin SDK service account JSON file here
+# e.g., eduvia-firebase-adminsdk.json

@@ -21,11 +21,15 @@ spec:
         - name: MYSQL_DATABASE
           value: "eduvia"
         - name: MYSQL_USER
-          value: "eduvia_admin"
+          value: "eduvia"
         - name: MYSQL_PASSWORD
           value: "eduvia"
         - name: MYSQL_ROOT_PASSWORD
           value: "root"
+        args:
+        - "--character-set-server=utf8mb4"
+        - "--collation-server=utf8mb4_unicode_ci"
+        - "--default-time-zone=+00:00"
         volumeMounts:
         - name: mysql-data
           mountPath: /var/lib/mysql
@@ -52,5 +56,6 @@ metadata:
 spec:
   ports:
   - port: 3306
+    targetPort: 3306
   selector:
     app: mysql
