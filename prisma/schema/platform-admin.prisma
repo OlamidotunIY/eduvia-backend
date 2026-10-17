@@ -1,0 +1,3 @@
+// Prisma schema for PlatformAdmin module
+// All IDs use @id @default(uuid()) @map("_id")
+// Tables use @@map("snake_case_table_name")

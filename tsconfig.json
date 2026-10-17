@@ -67,6 +67,9 @@
       ],
       "@modules/billing": [
         "./src/modules/billing/index.ts"
+      ],
+      "@modules/platform-admin": [
+        "./src/modules/platform-admin/index.ts"
       ]
     }
   }
