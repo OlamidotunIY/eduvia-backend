@@ -1,0 +1,77 @@
+model CurriculumProfile {
+  id          String   @id
+  name        String
+  shortCode   String   @unique
+  countryCode String
+  description String?  @db.Text
+  authority   String
+  isActive    Boolean  @default(true)
+  version     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  nodes       CurriculumNode[]
+  mappings    SubjectCurriculumMapping[]
+
+  @@map("curriculum_profiles")
+}
+
+model CurriculumNode {
+  id           String    @id
+  curriculumId String
+  parentNodeId String?
+  nodeType     NodeType
+  name         String
+  code         String?
+  description  String?   @db.Text
+  gradeLevel   String?
+  depth        Int
+  path         String
+  isLeaf       Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  curriculum   CurriculumProfile @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  parent       CurriculumNode?   @relation("NodeHierarchy", fields: [parentNodeId], references: [id], onDelete: Cascade)
+  children     CurriculumNode[]  @relation("NodeHierarchy")
+
+  @@index([curriculumId, depth])
+  @@index([path])
+  @@map("curriculum_nodes")
+}
+
+enum NodeType {
+  keystage
+  subject
+  strand
+  topic
+  learning_objective
+}
+
+model PlatformSubject {
+  id          String   @id
+  name        String
+  shortCode   String   @unique
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  mappings    SubjectCurriculumMapping[]
+
+  @@map("platform_subjects")
+}
+
+model SubjectCurriculumMapping {
+  id                String   @id
+  platformSubjectId String
+  curriculumId      String
+  subjectNodeId     String
+  createdAt         DateTime @default(now())
+
+  platformSubject   PlatformSubject   @relation(fields: [platformSubjectId], references: [id], onDelete: Cascade)
+  curriculum        CurriculumProfile @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([platformSubjectId, curriculumId])
+  @@map("subject_curriculum_mappings")
+}
