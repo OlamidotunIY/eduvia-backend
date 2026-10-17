@@ -1,116 +1,38 @@
 import {
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import {
   QuestionOwnerType,
   QuestionType,
   ProvenanceSource,
 } from '../../domain';
 
 export class QuestionOptionDto {
-  @IsString()
-  @IsNotEmpty()
   key: string;
-
-  @IsString()
-  @IsNotEmpty()
   text: string;
-
-  @IsString()
-  @IsOptional()
-  imageUrl?: string;
+  imageUrl?: string | null;
 }
 
 export class QuestionProvenanceDto {
-  @IsEnum(ProvenanceSource)
   source: ProvenanceSource;
-
-  @IsString()
-  @IsNotEmpty()
   createdBy: string;
-
-  @IsString()
-  @IsOptional()
-  aiModel?: string;
-
-  @IsString()
-  @IsOptional()
-  licenseRef?: string;
-
-  @IsString()
-  @IsOptional()
-  paperRef?: string;
+  aiModel?: string | null;
+  licenseRef?: string | null;
+  paperRef?: string | null;
 }
 
 export class CreateQuestionDto {
-  @IsEnum(QuestionOwnerType)
   ownerType: QuestionOwnerType;
-
-  @IsString()
-  @IsOptional()
-  ownerId?: string;
-
-  @IsString()
-  @IsOptional()
-  orgId?: string;
-
-  @IsEnum(QuestionType)
+  ownerId?: string | null;
+  orgId?: string | null;
   type: QuestionType;
-
-  @IsString()
-  @IsNotEmpty()
   stem: string;
-
-  @ValidateNested({ each: true })
-  @Type(() => QuestionOptionDto)
-  @IsOptional()
   options?: QuestionOptionDto[];
-
-  @IsString()
-  @IsOptional()
-  correctOptionKey?: string;
-
-  @IsString()
-  @IsOptional()
-  markScheme?: string;
-
-  @IsInt()
-  @Min(1)
+  correctOptionKey?: string | null;
+  markScheme?: string | null;
   maxMarks: number;
-
-  @IsInt()
-  @Min(1)
-  @Max(5)
   difficultyLevel: number;
-
-  @IsString()
-  @IsNotEmpty()
   subject: string;
-
-  @IsString()
-  @IsOptional()
-  curriculumNodeId?: string;
-
-  @IsString()
-  @IsOptional()
-  examBoard?: string;
-
-  @IsString()
-  @IsOptional()
-  yearGroup?: string;
-
-  @IsOptional()
+  curriculumNodeId?: string | null;
+  examBoard?: string | null;
+  yearGroup?: string | null;
   tags?: string[];
-
-  @ValidateNested()
-  @Type(() => QuestionProvenanceDto)
   provenance: QuestionProvenanceDto;
 }

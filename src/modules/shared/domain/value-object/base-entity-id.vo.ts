@@ -18,6 +18,10 @@ abstract class BaseEntityId {
     return this.rawValue;
   }
 
+  public unpack(): string {
+    return this.rawValue;
+  }
+
   public equals(other: BaseEntityId | string): boolean {
     return this.rawValue === String(other);
   }

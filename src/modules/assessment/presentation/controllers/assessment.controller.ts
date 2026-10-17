@@ -66,7 +66,7 @@ export class AssessmentController {
       id,
       itemId,
       dto,
-      user?.id ?? 'teacher',
+      user?.userId ?? 'teacher',
       correlationId,
     );
   }

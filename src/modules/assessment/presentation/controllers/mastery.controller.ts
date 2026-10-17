@@ -10,8 +10,6 @@ import {
 import {
   AuthGuard,
   CorrelationId,
-  CurrentUser,
-  type CurrentUserPayload,
 } from '@modules/shared';
 import { AssessmentService } from '../services/assessment.service';
 import { ApplyMasteryOverrideDto } from '../dto';
@@ -38,15 +36,15 @@ export class MasteryController {
   async applyMasteryOverride(
     @Param('studentId') studentId: string,
     @Param('nodeId') nodeId: string,
+    @Query('orgId') orgId: string | undefined,
     @Body() dto: ApplyMasteryOverrideDto,
-    @CurrentUser() user: CurrentUserPayload,
     @CorrelationId() correlationId: string,
   ) {
-    const orgId = user?.organizationId ?? 'default-org';
+    const effectiveOrgId = orgId ?? 'default-org';
     return this.assessmentService.applyMasteryOverride(
       studentId,
       nodeId,
-      orgId,
+      effectiveOrgId,
       dto,
       correlationId,
     );

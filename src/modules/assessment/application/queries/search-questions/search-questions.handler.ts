@@ -1,15 +1,15 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { SearchQuestionsQuery } from './search-questions.query';
-import { SearchQuestionsDto } from './search-questions.dto';
+import { SearchQuestionsResultDto } from './search-questions.dto';
 import { IQuestionRepository } from '../../../domain';
 
 @QueryHandler(SearchQuestionsQuery)
 export class SearchQuestionsHandler
-  implements IQueryHandler<SearchQuestionsQuery, SearchQuestionsDto>
+  implements IQueryHandler<SearchQuestionsQuery, SearchQuestionsResultDto>
 {
   constructor(private readonly questionRepository: IQuestionRepository) {}
 
-  async execute(query: SearchQuestionsQuery): Promise<SearchQuestionsDto> {
+  async execute(query: SearchQuestionsQuery): Promise<SearchQuestionsResultDto> {
     const questions = query.orgId
       ? await this.questionRepository.findForOrg(
           query.orgId,

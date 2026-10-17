@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@modules/shared';
+import { AggregateRoot, BusinessRuleViolationError } from '@modules/shared';
 import {
   AssessmentId,
   AssessmentStatus,
@@ -13,7 +13,6 @@ import {
 import {
   AssessmentAlreadyFinalizedError,
   MarkingItemNotFoundError,
-  BusinessRuleViolationError,
 } from '../errors';
 
 export interface AssessmentProps {

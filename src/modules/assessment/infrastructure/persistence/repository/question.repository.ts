@@ -45,8 +45,8 @@ export class PrismaQuestionRepository implements IQuestionRepository {
         create: {
           id: questionId,
           ...data,
-        },
-        update: data,
+        } as any,
+        update: data as any,
       });
 
       await tx.questionOption.deleteMany({

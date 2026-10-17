@@ -40,8 +40,7 @@ export class QuestionController {
     @CurrentUser() user: CurrentUserPayload,
   ) {
     return this.assessmentService.searchQuestions(dto, {
-      orgId: user?.organizationId,
-      userId: user?.id,
+      userId: user?.userId,
     });
   }
 
@@ -57,9 +56,8 @@ export class QuestionController {
     @CurrentUser() user: CurrentUserPayload,
   ) {
     return this.assessmentService.updateQuestion(id, dto, {
-      role: user?.role ?? 'TEACHER',
-      userId: user?.id,
-      orgId: user?.organizationId,
+      role: user?.userType ?? 'TEACHER',
+      userId: user?.userId,
     });
   }
 
