@@ -5,3 +5,4 @@ export * from './events';
 export * from './errors';
 export * from './repository';
 export * from './ports';
+export * from './services';

@@ -1,1 +1,1 @@
-// Child Entities
+export * from './report-comment.entity';
