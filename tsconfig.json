@@ -64,6 +64,9 @@
       ],
       "@modules/notifications": [
         "./src/modules/notifications/index.ts"
+      ],
+      "@modules/billing": [
+        "./src/modules/billing/index.ts"
       ]
     }
   }
