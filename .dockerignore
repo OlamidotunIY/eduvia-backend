@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+test
+coverage
+*.log
+.gemini
+infrastructure/terraform/.terraform
+infrastructure/terraform/terraform.tfstate*
+*.sql
+*.md
