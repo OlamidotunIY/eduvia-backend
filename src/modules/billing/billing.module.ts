@@ -1,34 +1,131 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaService, RedisService, AuthGuard } from '@modules/shared';
+import { ConfigModule } from '@nestjs/config';
+import { IBillingQueryPort } from '@modules/shared';
 
-const CommandHandlers: any[] = [];
-const QueryHandlers: any[] = [];
-const EventProcessors: any[] = [];
-const Mappers: any[] = [];
-const PortBindings: any[] = [];
-const Services: any[] = [];
+// Domain Ports & Repositories
+import {
+  IOrgBillingAccountRepository,
+  ISubscriptionPlanRepository,
+  IParentSubscriptionRepository,
+  IBillingEventRepository,
+  ISeatUsageRecordRepository,
+  IPaymentGatewayPort,
+} from './domain';
+
+// Infrastructure Persistence
+import {
+  OrgBillingAccountMapper,
+  PlanDiscountMapper,
+  SubscriptionPlanMapper,
+  ParentSubscriptionMapper,
+  BillingEventMapper,
+  SeatUsageRecordMapper,
+  PrismaOrgBillingAccountRepository,
+  PrismaSubscriptionPlanRepository,
+  PrismaParentSubscriptionRepository,
+  PrismaBillingEventRepository,
+  PrismaSeatUsageRecordRepository,
+} from './infrastructure/persistence';
+
+// Infrastructure Services & Adapters
+import {
+  StripePaymentAdapter,
+  BillingQueryAdapter,
+} from './infrastructure/services';
+
+// Infrastructure Messaging
+import {
+  BillingEventProcessor,
+  BillingDunningScheduler,
+} from './infrastructure/messaging';
+
+// Application CQRS
+import { COMMAND_HANDLERS } from './application/commands';
+import { QUERY_HANDLERS } from './application/queries';
+
+// Presentation
+import {
+  OrgBillingController,
+  SubscriptionsController,
+  WebhooksController,
+} from './presentation/controllers';
+import { BillingService } from './presentation/services';
 
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({ name: 'billing-events' }),
+    ConfigModule,
+    BullModule.registerQueue({
+      name: 'billing-events',
+    }),
   ],
-  controllers: [],
+  controllers: [
+    OrgBillingController,
+    SubscriptionsController,
+    WebhooksController,
+  ],
   providers: [
-    PrismaService,
-    RedisService,
-    AuthGuard,
-    ...Services,
-    ...Mappers,
-    ...PortBindings,
-    ...CommandHandlers,
-    ...QueryHandlers,
-    ...EventProcessors,
+    // Presentation Service
+    BillingService,
+
+    // CQRS Handlers
+    ...COMMAND_HANDLERS,
+    ...QUERY_HANDLERS,
+
+    // Mappers
+    OrgBillingAccountMapper,
+    PlanDiscountMapper,
+    SubscriptionPlanMapper,
+    ParentSubscriptionMapper,
+    BillingEventMapper,
+    SeatUsageRecordMapper,
+
+    // Repositories
+    {
+      provide: IOrgBillingAccountRepository,
+      useClass: PrismaOrgBillingAccountRepository,
+    },
+    {
+      provide: ISubscriptionPlanRepository,
+      useClass: PrismaSubscriptionPlanRepository,
+    },
+    {
+      provide: IParentSubscriptionRepository,
+      useClass: PrismaParentSubscriptionRepository,
+    },
+    {
+      provide: IBillingEventRepository,
+      useClass: PrismaBillingEventRepository,
+    },
+    {
+      provide: ISeatUsageRecordRepository,
+      useClass: PrismaSeatUsageRecordRepository,
+    },
+
+    // External Services & Ports
+    {
+      provide: IPaymentGatewayPort,
+      useClass: StripePaymentAdapter,
+    },
+    {
+      provide: IBillingQueryPort,
+      useClass: BillingQueryAdapter,
+    },
+    StripePaymentAdapter,
+    BillingQueryAdapter,
+
+    // Messaging & Schedulers
+    BillingEventProcessor,
+    BillingDunningScheduler,
   ],
   exports: [
-    // Export ONLY shared query port tokens and adapters implementing shared ports
+    IBillingQueryPort,
+    IOrgBillingAccountRepository,
+    ISubscriptionPlanRepository,
+    IParentSubscriptionRepository,
+    BillingService,
   ],
 })
 export class BillingModule {}
