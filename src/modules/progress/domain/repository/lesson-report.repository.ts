@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { LessonReportId, ReportStatus } from '../value-objects';
 import { LessonReport } from '../model/LessonReport';
 

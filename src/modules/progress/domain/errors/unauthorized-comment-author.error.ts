@@ -1,4 +1,4 @@
-import { ForbiddenError } from '@modules/shared';
+import { ForbiddenError } from '@modules/shared/domain';
 
 export class UnauthorizedCommentAuthorError extends ForbiddenError {
   constructor(role: string) {

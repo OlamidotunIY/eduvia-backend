@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { ReportCommentId } from '../value-objects';
 import { ReportComment } from '../entities';
 

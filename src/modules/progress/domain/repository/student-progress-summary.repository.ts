@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { StudentProgressSummaryId } from '../value-objects';
 import { StudentProgressSummary } from '../model/StudentProgressSummary';
 

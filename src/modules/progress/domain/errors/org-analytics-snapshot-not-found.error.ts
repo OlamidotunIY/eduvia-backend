@@ -1,4 +1,4 @@
-import { NotFoundError } from '@modules/shared';
+import { NotFoundError } from '@modules/shared/domain';
 
 export class OrgAnalyticsSnapshotNotFoundError extends NotFoundError {
   constructor(identifier: string) {

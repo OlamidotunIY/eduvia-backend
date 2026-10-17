@@ -1,4 +1,4 @@
-import { BaseDomainEvent } from '@modules/shared';
+import { BaseDomainEvent } from '@modules/shared/domain';
 import { CommentAuthorRole } from '../value-objects';
 
 class ParentCommentAddedEvent extends BaseDomainEvent<ParentCommentAddedEvent.Payload> {

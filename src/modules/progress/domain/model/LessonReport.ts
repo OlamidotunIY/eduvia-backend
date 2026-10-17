@@ -1,4 +1,4 @@
-import { AggregateRoot, BusinessRuleViolationError } from '@modules/shared';
+import { AggregateRoot, BusinessRuleViolationError } from '@modules/shared/domain';
 import {
   LessonReportId,
   ReportStatus,
@@ -169,6 +169,10 @@ export class LessonReport extends AggregateRoot<LessonReportId> {
 
   public static reconstitute(props: LessonReportProps): LessonReport {
     return new LessonReport(props);
+  }
+
+  protected touch(): void {
+    this._updatedAt = new Date();
   }
 
   public attachAiSummary(summary: string, correlationId = 'ai-worker'): void {

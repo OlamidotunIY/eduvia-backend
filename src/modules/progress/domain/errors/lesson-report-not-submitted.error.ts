@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError } from '@modules/shared';
+import { BusinessRuleViolationError } from '@modules/shared/domain';
 
 export class LessonReportNotSubmittedError extends BusinessRuleViolationError {
   constructor(reportId: string, action: string) {

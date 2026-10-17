@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { OrgAnalyticsSnapshotId } from '../value-objects';
 import { OrgAnalyticsSnapshot } from '../model/OrgAnalyticsSnapshot';
 

@@ -1,4 +1,4 @@
-import { BaseDomainEvent } from '@modules/shared';
+import { BaseDomainEvent } from '@modules/shared/domain';
 
 class ProgressSummaryUpdatedEvent extends BaseDomainEvent<ProgressSummaryUpdatedEvent.Payload> {
   constructor(
