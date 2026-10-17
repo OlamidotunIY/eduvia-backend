@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eduvia-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eduvia-app
+  template:
+    metadata:
+      labels:
+        app: eduvia-app
+    spec:
+      containers:
+      - name: eduvia-app
+        image: eduvia/app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: eduvia-secrets
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: DATABASE_URL
+          value: "mysql://eduvia_admin:eduvia@mysql:3306/eduvia"
+        volumeMounts:
+        - name: firebase-secrets
+          mountPath: /app/infrastructure/Firebase
+          readOnly: true
+      volumes:
+      - name: firebase-secrets
+        secret:
+          secretName: firebase-secrets
+          optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eduvia-app
+spec:
+  ports:
+  - port: 3000
+  selector:
+    app: eduvia-app
