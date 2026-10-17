@@ -7,3 +7,4 @@ export * from './assessment-query.port';
 export * from './curriculum-query.port';
 export * from './progress-query.port';
 export * from './notifications-query.port';
+export * from './billing-query.port';
