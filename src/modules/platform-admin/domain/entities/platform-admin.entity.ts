@@ -71,4 +71,22 @@ export class PlatformAdmin {
     this._role = newRole;
     this._updatedAt = new Date();
   }
+
+  public isSuperAdmin(): boolean {
+    return this._role === PlatformAdminRole.PlatformSuperAdmin;
+  }
+
+  public isCurriculumEditor(): boolean {
+    return (
+      this._role === PlatformAdminRole.PlatformSuperAdmin ||
+      this._role === PlatformAdminRole.CurriculumEditor
+    );
+  }
+
+  public isSupport(): boolean {
+    return (
+      this._role === PlatformAdminRole.PlatformSuperAdmin ||
+      this._role === PlatformAdminRole.PlatformSupport
+    );
+  }
 }

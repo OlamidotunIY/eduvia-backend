@@ -64,14 +64,33 @@ export class PrismaOrgApprovalRecordRepository
   public override async save(entity: OrgApprovalRecord): Promise<void> {
     const data = this.approvalMapper.toPersistence(entity);
     const recordId = entity.id.unpack();
+    const events = entity.pullDomainEvents();
 
-    await this.prisma.orgApprovalRecord.upsert({
-      where: { id: recordId },
-      create: {
-        id: recordId,
-        ...data,
-      },
-      update: data,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.orgApprovalRecord.upsert({
+        where: { id: recordId },
+        create: {
+          id: recordId,
+          ...data,
+        },
+        update: data,
+      });
+
+      for (const event of events) {
+        await tx.outboxMessage.create({
+          data: {
+            id: typeof event.eventId === 'string' ? event.eventId : String(event.eventId),
+            eventId: event.eventId,
+            type: event.eventName,
+            aggregateType: entity.constructor.name,
+            aggregateId: entity.getId(),
+            payload: event.payload as object,
+            correlationId: event.correlationId,
+            occurredAt: event.occurredAt,
+            status: 'PENDING' as any,
+          },
+        });
+      }
     });
   }
 

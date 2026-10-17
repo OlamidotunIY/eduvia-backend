@@ -14,6 +14,8 @@ export enum AnnouncementStatus {
 export enum ApprovalDecision {
   approved = 'approved',
   rejected = 'rejected',
+  suspended = 'suspended',
+  reactivated = 'reactivated',
 }
 
 export enum PlatformHealthStatus {

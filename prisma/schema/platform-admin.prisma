@@ -55,4 +55,6 @@ model OrgApprovalRecord {
 enum ApprovalDecision {
   approved
   rejected
+  suspended
+  reactivated
 }
