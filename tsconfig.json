@@ -49,6 +49,9 @@
       ],
       "@modules/assessment": [
         "./src/modules/assessment/index.ts"
+      ],
+      "@modules/curriculum": [
+        "./src/modules/curriculum/index.ts"
       ]
     }
   }
