@@ -113,7 +113,7 @@ resource "azurerm_network_interface" "nic" {
   }
 }
 
-# Connect NSG to NIC before the VM operation begins.
+# Connect NSG to NIC before the VM operation begins
 resource "azurerm_network_interface_security_group_association" "nic_nsg" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
@@ -142,7 +142,7 @@ resource "azurerm_linux_virtual_machine" "k3s_node" {
     disk_size_gb         = 64
   }
 
-  # Using Ubuntu 22.04 LTS (x86_64 architecture for broad compatibility)
+  # Canonical Ubuntu 22.04 LTS (x86_64 architecture for broad compatibility)
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"

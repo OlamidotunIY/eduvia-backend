@@ -5,7 +5,7 @@ set -e
 sudo apt-get update
 sudo apt-get upgrade -y
 
-# Install Docker
+# Install Docker CE & Containerd
 sudo apt-get install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -18,7 +18,7 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker ubuntu
 
-# Install K3s (Lightweight Kubernetes)
+# Install K3s (Lightweight Kubernetes with built-in Traefik ingress)
 curl -sfL https://get.k3s.io | sh -
 
 # Wait for node to be ready

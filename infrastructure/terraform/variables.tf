@@ -1,11 +1,11 @@
 variable "location" {
-  description = "Azure Region (East US)"
+  description = "Azure Region for Eduvia deployment"
   type        = string
   default     = "eastus"
 }
 
 variable "resource_group_name" {
-  description = "Name of the resource group"
+  description = "Name of the Azure resource group"
   type        = string
   default     = "eduvia-k3s-rg"
 }
