@@ -22,6 +22,8 @@ const config: Config = {
     '^uuid$': '<rootDir>/test/__mocks__/uuid.js',
     '^@nestjs/common$': '<rootDir>/test/__mocks__/@nestjs/common.js',
     '^@nestjs/common/(.*)$': '<rootDir>/test/__mocks__/@nestjs/common.js',
+    '^@nestjs/cqrs$': '<rootDir>/test/__mocks__/@nestjs/cqrs.js',
+    '^@nestjs/cqrs/(.*)$': '<rootDir>/test/__mocks__/@nestjs/cqrs.js',
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
   },
   collectCoverageFrom: [

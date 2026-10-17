@@ -1,4 +1,4 @@
-const noopDecorator = () => (target, key, descriptor) => descriptor || target;
+const noopDecorator = (target, key, descriptor) => descriptor || target;
 
 class Logger {
   log() {}
