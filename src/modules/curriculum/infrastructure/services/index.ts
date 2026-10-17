@@ -1,1 +1,1 @@
-// Service Adapters
+export * from './curriculum-query.adapter';
