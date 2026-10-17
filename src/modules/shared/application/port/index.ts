@@ -9,3 +9,4 @@ export * from './progress-query.port';
 export * from './notifications-query.port';
 export * from './billing-query.port';
 export * from './platform-admin-query.port';
+export * from './ai-query.port';
