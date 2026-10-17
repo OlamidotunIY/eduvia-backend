@@ -1,6 +1,6 @@
 import { BaseRepository } from '@modules/shared/domain';
 import { OrgApprovalRecordId } from '../value-objects';
-import { OrgApprovalRecord } from '../entities/org-approval-record.entity';
+import { OrgApprovalRecord } from '../model/OrgApprovalRecord';
 
 export abstract class IOrgApprovalRecordRepository extends BaseRepository<
   OrgApprovalRecord,

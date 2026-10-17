@@ -144,7 +144,7 @@ export class PlatformAnnouncement extends AggregateRoot<PlatformAnnouncementId> 
 
   public publish(correlationId?: string): void {
     if (this._status === AnnouncementStatus.published) {
-      return;
+      throw new AnnouncementAlreadyPublishedError(this.id.value);
     }
     const publishedAt = new Date();
     this._status = AnnouncementStatus.published;
