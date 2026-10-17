@@ -1,1 +1,1 @@
-// Controllers
+export * from './progress.controller';
