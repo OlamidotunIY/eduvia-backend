@@ -1,1 +1,1 @@
-// BullMQ Listeners
+export * from './curriculum-cascade-deactivate.processor';

@@ -46,6 +46,10 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['AssessmentFinalizedEvent', 'progress-events'],
   ['MasteryRecordCreatedEvent', 'progress-events'],
   ['MasteryUpdatedEvent', 'progress-events'],
+  ['CurriculumCreatedEvent', 'search-events'],
+  ['CurriculumNodeCreatedEvent', 'search-events'],
+  ['CurriculumNodeUpdatedEvent', 'search-events'],
+  ['CurriculumNodeDeactivatedEvent', 'search-events'],
 ]);
 
 export { OUTBOX_EVENT_ROUTES };
