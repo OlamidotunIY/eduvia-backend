@@ -1,4 +1,4 @@
-import { PrismaService } from '@modules/shared';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
 import {
   CurriculumNode,
@@ -6,28 +6,23 @@ import {
   CurriculumProfileId,
   ICurriculumNodeRepository,
 } from '../../../domain';
+import { CurriculumNode as PrismaCurriculumNode } from '@generated/prisma/client';
 import { CurriculumNodeMapper } from '../mappers';
 
 @Injectable()
-export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository {
+export class PrismaCurriculumNodeRepository
+  extends PrismaBaseRepository<CurriculumNodeId, CurriculumNode, PrismaCurriculumNode>
+  implements ICurriculumNodeRepository
+{
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly mapper: CurriculumNodeMapper,
-  ) {}
-
-  public async findById(id: CurriculumNodeId | string): Promise<CurriculumNode | null> {
-    const rawId = typeof id === 'string' ? id : id.unpack();
-    const record = await this.prisma.curriculumNode.findUnique({
-      where: { id: rawId },
-    });
-    return record ? this.mapper.toDomain(record) : null;
+    protected readonly prisma: PrismaService,
+    protected readonly mapper: CurriculumNodeMapper,
+  ) {
+    super(prisma, mapper);
   }
 
-  public async findAll(): Promise<CurriculumNode[]> {
-    const records = await this.prisma.curriculumNode.findMany({
-      orderBy: { depth: 'asc' },
-    });
-    return records.map((record) => this.mapper.toDomain(record));
+  protected get delegate() {
+    return this.prisma.curriculumNode;
   }
 
   public async findByCurriculumId(
@@ -38,7 +33,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
     if (depth !== undefined) {
       where.depth = depth;
     }
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where,
       orderBy: [{ depth: 'asc' }, { name: 'asc' }],
     });
@@ -46,7 +41,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
   }
 
   public async findByParentId(parentId: CurriculumNodeId): Promise<CurriculumNode[]> {
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where: { parentNodeId: parentId.unpack() },
       orderBy: { name: 'asc' },
     });
@@ -54,7 +49,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
   }
 
   public async findSubtreeByPath(pathPrefix: string): Promise<CurriculumNode[]> {
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where: {
         path: {
           startsWith: pathPrefix,
@@ -66,7 +61,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
   }
 
   public async findLeafNodes(curriculumId: CurriculumProfileId): Promise<CurriculumNode[]> {
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where: {
         curriculumId: curriculumId.unpack(),
         isLeaf: true,
@@ -92,7 +87,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
     if (curriculumId) {
       where.curriculumId = curriculumId.unpack();
     }
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where,
       orderBy: [{ depth: 'asc' }, { name: 'asc' }],
       take: 50,
@@ -101,7 +96,7 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
   }
 
   public async findRootNodes(curriculumId: CurriculumProfileId): Promise<CurriculumNode[]> {
-    const records = await this.prisma.curriculumNode.findMany({
+    const records = await this.delegate.findMany({
       where: {
         curriculumId: curriculumId.unpack(),
         parentNodeId: null,
@@ -109,26 +104,5 @@ export class PrismaCurriculumNodeRepository implements ICurriculumNodeRepository
       orderBy: { name: 'asc' },
     });
     return records.map((record) => this.mapper.toDomain(record));
-  }
-
-  public async save(entity: CurriculumNode): Promise<void> {
-    const data = this.mapper.toPersistence(entity);
-    const id = entity.id.unpack();
-
-    await this.prisma.curriculumNode.upsert({
-      where: { id },
-      create: {
-        id,
-        ...data,
-      },
-      update: data,
-    });
-  }
-
-  public async delete(id: CurriculumNodeId | string): Promise<void> {
-    const rawId = typeof id === 'string' ? id : id.unpack();
-    await this.prisma.curriculumNode.delete({
-      where: { id: rawId },
-    });
   }
 }
