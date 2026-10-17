@@ -1,1 +1,1 @@
-// Domain Ports
+export * from './ai-provider.port';
