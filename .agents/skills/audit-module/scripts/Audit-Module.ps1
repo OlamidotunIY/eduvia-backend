@@ -26,7 +26,7 @@ if (-not (Test-Path $moduleDir)) {
 }
 
 # 1. Check 4 Layers
-$allowedLayers = @('domain', 'application', 'infrastructure', 'presentation')
+$allowedLayers = @('domain', 'application', 'infrastructure', 'presentation', 'test')
 $subItems = Get-ChildItem -Path $moduleDir -Directory
 foreach ($item in $subItems) {
     if ($item.Name -notin $allowedLayers) {
