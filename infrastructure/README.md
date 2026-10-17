@@ -1,89 +1,137 @@
 # Eduvia Infrastructure & Deployment Guide
 
-This guide contains all the essential commands and architectural details to manage your Azure + Kubernetes (K3s) infrastructure for **Eduvia Backend**.
+This directory contains the Infrastructure as Code (IaC), containerization, and orchestration manifests for the **Eduvia Backend** on **Microsoft Azure** using a lightweight **K3s (Kubernetes)** architecture.
 
 ---
 
-## 🏗️ 1. Makefile Automation (Run on Windows)
+## 1. Architecture Overview
 
-These commands are run locally on your machine from the root `eduvia-backend` folder:
+```mermaid
+flowchart TD
+    subgraph Local["Local Machine (Windows / macOS / Linux)"]
+        CLI[Developer Terminal]
+        Make[Makefile Automation]
+        CLI -->|make start / deploy-stack| Make
+    end
 
-| Command | Description |
-| :--- | :--- |
-| `make start` | **From Scratch:** Provisions the Azure VM, waits for boot, installs Docker/K3s, copies secrets, builds the image, and deploys all Kubernetes pods. |
-| `make deploy-stack` | **Fast Update:** Use this if the VM is already running. It checks for secrets, optionally builds the image (if missing), and applies updated Kubernetes YAML files. |
-| `make build-image` | **Force Rebuild:** Forces the remote VM to pull your latest git code, rebuild the Docker image, and load it into K3s containerd. |
-| `make stop` | **Destroy Everything:** Automatically backs up your MySQL database to your local machine (`eduvia_backup.sql`), then destroys the Azure VM and all disks (Billing = \$0). |
-| `make backup-db` | Manually triggers a MySQL database dump from the Kubernetes pod to your local machine. |
-| `make restore-db` | Manually pushes your local `eduvia_backup.sql` file into the live MySQL Kubernetes pod. |
-| `make ssh` | Instantly logs you into the Azure VM so you can run Kubernetes / debugging commands. |
-| `make mysql-tunnel` | Opens an SSH port forward from `localhost:3307` directly to the cluster MySQL service. |
-| `make update-dns` | Updates your Cloudflare DNS `A` record for `api.eduvia.name.ng` to point to the VM public IP. |
+    subgraph Azure["Azure Cloud Infrastructure (Terraform)"]
+        subgraph VNet["Virtual Network (10.0.0.0/16)"]
+            NSG["NSG Rules: 22 (SSH), 80 (HTTP), 443 (HTTPS), 6443 (K3s)"]
+            VM["Azure Linux VM (Ubuntu 22.04 LTS Gen2)<br/>Standard_D2ads_v7 (2 vCPU, 8GB RAM, 64GB SSD)"]
+            StaticIP["Static Public IP"]
+            StaticIP --> NSG --> VM
+        end
+    end
+
+    subgraph K3s["K3s Cluster (Inside VM)"]
+        Ingress["Traefik Ingress Controller (Port 80/443)"]
+        App["eduvia-app Pod (NestJS / Node 22, Port 3000)"]
+        MySQL["mysql Pod (MySQL 8.0 + 5Gi PVC, Port 3306)"]
+        Redis["redis Pod (Redis 7.2 + 2Gi PVC, Port 6379)"]
+
+        Ingress -->|HTTP / HTTPS| App
+        App -->|Prisma ORM| MySQL
+        App -->|BullMQ & Cache| Redis
+    end
+
+    Make -->|Terraform Apply| Azure
+    Make -->|SSH / SCP / kubectl| K3s
+```
+
+### Key Highlights
+- **Zero Idle Cost**: Running `make stop` dumps the MySQL database to `eduvia_backup.sql` locally and executes `terraform destroy -auto-approve` so Azure billing drops to **\$0**.
+- **One-Command Bootstrap**: Running `make start` brings up the Azure VM, installs Docker & K3s via cloud-init, provisions secrets, builds the Docker image, applies Kubernetes manifests, and restores database state.
+- **Resource Optimization**: BullMQ on Redis handles asynchronous job queues and domain event outbox delivery natively, avoiding heavy messaging clusters and saving ~1.5 GB RAM.
 
 ---
 
-## ☸️ 2. Kubernetes Commands (Run inside the VM)
+## 2. Directory Layout
 
-To run these, first type `make ssh` to enter the remote server. K3s has standard `kubectl` built-in:
-
-### Checking if Apps are Running
-* **See all running pods:** `kubectl get pods`
-* **See all cluster resources:** `kubectl get all`
-* **Check ingress routes:** `kubectl get ingress`
-
-### Viewing Logs (Debugging)
-* **Stream live logs for NestJS API:**
-  ```bash
-  kubectl logs -f -l app=eduvia-app
-  ```
-* **Stream live logs for MySQL:**
-  ```bash
-  kubectl logs -f -l app=mysql
-  ```
-* **Stream live logs for Redis:**
-  ```bash
-  kubectl logs -f -l app=redis
-  ```
-
-### Troubleshooting Crashes
-If a pod says `CrashLoopBackOff` or `Error`:
-1. Find out the exact pod name: `kubectl get pods`
-2. Describe the pod to see events:
-   ```bash
-   kubectl describe pod <pod-name>
-   ```
-3. Check the previous crash logs:
-   ```bash
-   kubectl logs <pod-name> --previous
-   ```
-
-### Restarting the Application
-To gracefully restart the NestJS API pod:
-```bash
-kubectl rollout restart deployment/eduvia-app
+```
+infrastructure/
+├── README.md                  # This operations guide
+├── docker/
+│   └── docker-compose.yml     # Local developer stack (MySQL 8.0 + Redis 7)
+├── Firebase/
+│   └── .gitkeep               # Place Firebase Admin SDK credentials here
+├── k8s/
+│   └── base/
+│       ├── eduvia-app-deployment.yaml # NestJS app Deployment & Service (port 3000)
+│       ├── mysql-deployment.yaml      # MySQL 8.0 Deployment, PVC (5Gi), Service
+│       ├── redis-deployment.yaml      # Redis 7 Deployment, PVC (2Gi), Service
+│       ├── ingress.yaml               # Traefik Ingress routing for api.eduvia.name.ng
+│       └── kustomization.yaml         # Kustomize root bundle
+└── terraform/
+    ├── main.tf                # Resource group, VNet, Subnet, NSG, VM, Public IP
+    ├── variables.tf           # Configuration inputs (subscription_id, ssh_public_key, etc.)
+    ├── outputs.tf             # Public and Private IP outputs
+    ├── install_k3s.sh         # Cloud-init script to install Docker CE & K3s
+    └── terraform.tfvars.example # Template for credentials
 ```
 
 ---
 
-## ☁️ 3. Terraform Commands (Run on Windows)
+## 3. Prerequisites
 
-You rarely need to run these manually because `make start` and `make stop` handle them automatically:
-
-| Command | Description |
-| :--- | :--- |
-| `cd infrastructure/terraform` | Move into the Terraform directory. |
-| `terraform output k3s_vm_public_ip` | Prints the exact public IP address of your current Azure VM. |
-| `terraform state list` | Lists all the Azure resources currently provisioned. |
+1. **Azure CLI**: Logged in via `az login` with an active subscription.
+2. **Terraform**: Version `>= 1.5.0` installed locally.
+3. **OpenSSH**: Configured with an SSH key pair (default `~/.ssh/id_rsa_azure` or `%USERPROFILE%\.ssh\id_rsa_azure`).
+4. **Make**: GNU Make or Windows `make.exe`.
+5. **Configuration**:
+   Copy `infrastructure/terraform/terraform.tfvars.example` to `infrastructure/terraform/terraform.tfvars` and provide your Azure subscription ID and SSH public key:
+   ```hcl
+   subscription_id     = "YOUR_AZURE_SUBSCRIPTION_ID"
+   resource_group_name = "eduvia-k3s-rg"
+   location            = "eastus"
+   vm_size             = "Standard_D2ads_v7"
+   ssh_public_key      = "ssh-rsa AAAA... YOUR_PUBLIC_KEY"
+   ```
 
 ---
 
-## 🔐 4. Required Secrets Configuration
+## 4. Operation Commands
 
-Before running `make start` or `make deploy-stack`, ensure the following are configured:
+### Full Deployment Workflow
 
-1. **`.env.production`** (in repository root):
-   Copy `.env.production.example` to `.env.production` and fill in production secrets (`JWT_SECRET`, `OBSERVABLE_API_KEY`, etc.).
-2. **`infrastructure/Firebase/`**:
-   Place your Firebase Admin SDK service account key JSON here (e.g. `eduvia-firebase-adminsdk.json`). It will be automatically synced and mounted as a secret inside the pod.
-3. **`infrastructure/terraform/terraform.tfvars`**:
-   Contains your Azure `subscription_id` and `ssh_public_key`.
+```bash
+# 1. Provision Azure infrastructure and boot the cluster
+make start
+
+# 2. Re-deploy manifests, sync secrets, or update app rollout
+make deploy-stack
+
+# 3. Build Docker image remotely and load into K3s containerd
+make build-image
+
+# 4. SSH into the Azure VM
+make ssh
+
+# 5. Open a local port forward to MySQL (localhost:3307 -> mysql:3306)
+make mysql-tunnel
+
+# 6. Backup the remote database to local eduvia_backup.sql
+make backup-db
+
+# 7. Restore local eduvia_backup.sql to remote MySQL
+make restore-db
+
+# 8. Update Cloudflare DNS record to point to the new VM IP
+make update-dns
+
+# 9. Destroy infrastructure ($0 billing) after backing up MySQL
+make stop
+```
+
+---
+
+## 5. Local Development Stack
+
+To run MySQL and Redis locally without starting Kubernetes:
+
+```bash
+# Start MySQL and Redis in background
+docker compose -f infrastructure/docker/docker-compose.yml up -d
+
+# Stop and wipe local volumes
+docker compose -f infrastructure/docker/docker-compose.yml down -v
+```
