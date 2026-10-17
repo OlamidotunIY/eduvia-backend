@@ -16,6 +16,7 @@ import { ClassroomModule } from './modules/classroom/classroom.module';
 import { BoardModule } from './modules/board/board.module';
 import { AssessmentModule } from './modules/assessment/assessment.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
+import { ProgressModule } from './modules/progress/progress.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -51,6 +52,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     BoardModule,
     AssessmentModule,
     CurriculumModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [
