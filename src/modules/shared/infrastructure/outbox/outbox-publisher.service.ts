@@ -19,6 +19,9 @@ class OutboxPublisherService  {
     @InjectQueue('org-events') private readonly orgEventQueue: Queue,
     @InjectQueue('classroom-events') private readonly classroomEventQueue: Queue,
     @InjectQueue('board-events') private readonly boardEventsQueue: Queue,
+    @InjectQueue('assessment-events') private readonly assessmentEventsQueue: Queue,
+    @InjectQueue('search-events') private readonly searchEventsQueue: Queue,
+    @InjectQueue('progress-events') private readonly progressEventsQueue: Queue,
   ) {}
 
    @Cron(CronExpression.EVERY_5_SECONDS)
@@ -99,6 +102,18 @@ class OutboxPublisherService  {
 
     if (queueName === 'board-events') {
       return this.boardEventsQueue;
+    }
+
+    if (queueName === 'assessment-events') {
+      return this.assessmentEventsQueue;
+    }
+
+    if (queueName === 'search-events') {
+      return this.searchEventsQueue;
+    }
+
+    if (queueName === 'progress-events') {
+      return this.progressEventsQueue;
     }
 
     return null;
