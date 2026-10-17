@@ -1,1 +1,2 @@
-// Incoming Events
+// Incoming / outgoing messaging events
+export {};
