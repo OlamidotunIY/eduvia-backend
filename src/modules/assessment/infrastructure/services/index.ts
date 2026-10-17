@@ -1,1 +1,1 @@
-// Service Adapters
+export * from './assessment-query.adapter';
