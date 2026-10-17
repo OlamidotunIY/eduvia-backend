@@ -1,1 +1,1 @@
-// Domain Ports
+export * from './payment-gateway.port';
