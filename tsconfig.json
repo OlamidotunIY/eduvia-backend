@@ -61,6 +61,9 @@
       ],
       "@modules/progress": [
         "./src/modules/progress/index.ts"
+      ],
+      "@modules/notifications": [
+        "./src/modules/notifications/index.ts"
       ]
     }
   }
