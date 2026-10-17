@@ -65,3 +65,14 @@ dist/
 .cursor
 .devin
 .windsurf
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+infrastructure/terraform/terraform.tfvars
+
+# Infrastructure secrets & keys
+infrastructure/Firebase/*.json
+!infrastructure/Firebase/.gitkeep
+*.sql

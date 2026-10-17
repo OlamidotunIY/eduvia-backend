@@ -1,0 +1,4 @@
+subscription_id = "your-azure-subscription-id"
+ssh_public_key  = "ssh-rsa AAAA..."
+location        = "eastus"
+vm_size         = "Standard_D2ads_v7"
