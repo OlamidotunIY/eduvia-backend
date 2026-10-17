@@ -1,2 +1,2 @@
-export * from './events';
+export * from './scheduler';
 export * from './listeners';

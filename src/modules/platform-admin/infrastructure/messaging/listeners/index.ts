@@ -1,1 +1,1 @@
-// BullMQ Listeners
+export * from './announcement-event.processor';

@@ -58,6 +58,13 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['SubscriptionRenewedEvent', 'notification-events'],
   ['OrgPlanUpgradedEvent', 'org-events'],
   ['OrgBillingSuspendedEvent', 'org-events'],
+  ['AnnouncementCreatedEvent', 'platform-admin-events'],
+  ['AnnouncementPublishedEvent', 'notification-events'],
+  ['AnnouncementArchivedEvent', 'notification-events'],
+  ['OrgApprovedEvent', 'org-events'],
+  ['OrgRejectedEvent', 'notification-events'],
+  ['OrgSuspendedEvent', 'org-events'],
+  ['OrgReactivatedEvent', 'org-events'],
 ]);
 
 export { OUTBOX_EVENT_ROUTES };
