@@ -52,6 +52,9 @@
       ],
       "@modules/curriculum": [
         "./src/modules/curriculum/index.ts"
+      ],
+      "@modules/progress": [
+        "./src/modules/progress/index.ts"
       ]
     }
   }
