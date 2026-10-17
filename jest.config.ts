@@ -17,7 +17,13 @@ const config: Config = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
+  moduleNameMapper: {
+    '^@generated/prisma(.*)$': '<rootDir>/test/__mocks__/prisma.js',
+    '^uuid$': '<rootDir>/test/__mocks__/uuid.js',
+    '^@nestjs/common$': '<rootDir>/test/__mocks__/@nestjs/common.js',
+    '^@nestjs/common/(.*)$': '<rootDir>/test/__mocks__/@nestjs/common.js',
+    ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
+  },
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
     'libs/**/*.(t|j)s',

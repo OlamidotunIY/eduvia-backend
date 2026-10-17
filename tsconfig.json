@@ -35,6 +35,12 @@
       "@modules/shared": [
         "./src/modules/shared/index.ts"
       ],
+      "@modules/shared/domain": [
+        "./src/modules/shared/domain/index.ts"
+      ],
+      "@modules/shared/domain/*": [
+        "./src/modules/shared/domain/*"
+      ],
       "@modules/user": [
         "./src/modules/user/index.ts"
       ],
