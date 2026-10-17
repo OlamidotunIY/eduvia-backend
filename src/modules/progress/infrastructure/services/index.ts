@@ -1,1 +1,1 @@
-// Service Adapters
+export * from './progress-query.adapter';
