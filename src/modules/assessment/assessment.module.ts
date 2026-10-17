@@ -1,34 +1,115 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaService, RedisService, AuthGuard } from '@modules/shared';
+import {
+  AuthGuard,
+  IAssessmentQueryPort,
+  PrismaService,
+  RedisService,
+} from '@modules/shared';
+import { COMMAND_HANDLERS } from './application/commands';
+import { QUERY_HANDLERS } from './application/queries';
+import {
+  QuestionOptionMapper,
+  QuestionMapper,
+  MarkingItemMapper,
+  AssessmentMapper,
+  MasteryHistoryEntryMapper,
+  MasteryRecordMapper,
+} from './infrastructure/persistence/mappers';
+import {
+  IQuestionRepository,
+  IAssessmentRepository,
+  IMarkingItemRepository,
+  IMasteryRecordRepository,
+} from './domain/repository';
+import {
+  PrismaQuestionRepository,
+  PrismaAssessmentRepository,
+  PrismaMarkingItemRepository,
+  PrismaMasteryRecordRepository,
+} from './infrastructure/persistence/repository';
+import {
+  AssessmentEventProcessor,
+  AssessmentFinalizedProcessor,
+} from './infrastructure/messaging/listeners';
+import { AssessmentQueryAdapter } from './infrastructure/services/assessment-query.adapter';
+import {
+  QuestionController,
+  AssessmentController,
+  MasteryController,
+} from './presentation/controllers';
+import { AssessmentService } from './presentation/services';
 
-const CommandHandlers: any[] = [];
-const QueryHandlers: any[] = [];
-const EventProcessors: any[] = [];
-const Mappers: any[] = [];
-const PortBindings: any[] = [];
-const Services: any[] = [];
+const mappers = [
+  QuestionOptionMapper,
+  QuestionMapper,
+  MarkingItemMapper,
+  AssessmentMapper,
+  MasteryHistoryEntryMapper,
+  MasteryRecordMapper,
+];
+
+const repositories = [
+  PrismaQuestionRepository,
+  PrismaAssessmentRepository,
+  PrismaMarkingItemRepository,
+  PrismaMasteryRecordRepository,
+  {
+    provide: IQuestionRepository,
+    useClass: PrismaQuestionRepository,
+  },
+  {
+    provide: IAssessmentRepository,
+    useClass: PrismaAssessmentRepository,
+  },
+  {
+    provide: IMarkingItemRepository,
+    useClass: PrismaMarkingItemRepository,
+  },
+  {
+    provide: IMasteryRecordRepository,
+    useClass: PrismaMasteryRecordRepository,
+  },
+];
 
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({ name: 'assessment-events' }),
+    BullModule.registerQueue(
+      { name: 'assessment-events' },
+      { name: 'classroom-events' },
+      { name: 'progress-events' },
+    ),
   ],
-  controllers: [],
+  controllers: [
+    QuestionController,
+    AssessmentController,
+    MasteryController,
+  ],
   providers: [
     PrismaService,
     RedisService,
     AuthGuard,
-    ...Services,
-    ...Mappers,
-    ...PortBindings,
-    ...CommandHandlers,
-    ...QueryHandlers,
-    ...EventProcessors,
+    AssessmentService,
+    ...COMMAND_HANDLERS,
+    ...QUERY_HANDLERS,
+    ...mappers,
+    ...repositories,
+    AssessmentEventProcessor,
+    AssessmentFinalizedProcessor,
+    {
+      provide: IAssessmentQueryPort,
+      useClass: AssessmentQueryAdapter,
+    },
   ],
   exports: [
-    // Export ONLY shared query port tokens and adapters implementing shared ports
+    IQuestionRepository,
+    IAssessmentRepository,
+    IMarkingItemRepository,
+    IMasteryRecordRepository,
+    IAssessmentQueryPort,
+    AssessmentService,
   ],
 })
 export class AssessmentModule {}

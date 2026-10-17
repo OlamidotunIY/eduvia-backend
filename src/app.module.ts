@@ -14,6 +14,7 @@ import { CorrelationIdInterceptor } from '@modules/shared';
 import { OrgModule } from './modules/org/org.module';
 import { ClassroomModule } from './modules/classroom/classroom.module';
 import { BoardModule } from './modules/board/board.module';
+import { AssessmentModule } from './modules/assessment/assessment.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -47,6 +48,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     OrgModule,
     ClassroomModule,
     BoardModule,
+    AssessmentModule,
   ],
   controllers: [AppController],
   providers: [
