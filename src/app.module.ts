@@ -20,6 +20,7 @@ import { ProgressModule } from './modules/progress/progress.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
+import { AiModule } from './modules/ai/ai.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -59,6 +60,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     NotificationsModule,
     BillingModule,
     PlatformAdminModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

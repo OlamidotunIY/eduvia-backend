@@ -24,6 +24,8 @@ const config: Config = {
     '^@nestjs/common/(.*)$': '<rootDir>/test/__mocks__/@nestjs/common.js',
     '^@nestjs/cqrs$': '<rootDir>/test/__mocks__/@nestjs/cqrs.js',
     '^@nestjs/cqrs/(.*)$': '<rootDir>/test/__mocks__/@nestjs/cqrs.js',
+    '^@nestjs/config$': '<rootDir>/test/__mocks__/@nestjs/config.js',
+    '^@nestjs/config/(.*)$': '<rootDir>/test/__mocks__/@nestjs/config.js',
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
   },
   collectCoverageFrom: [

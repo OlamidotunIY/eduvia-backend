@@ -1,34 +1,111 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaService, RedisService, AuthGuard } from '@modules/shared';
+import { ConfigModule } from '@nestjs/config';
+import { IAiQueryPort } from '@modules/shared';
 
-const CommandHandlers: any[] = [];
-const QueryHandlers: any[] = [];
-const EventProcessors: any[] = [];
-const Mappers: any[] = [];
-const PortBindings: any[] = [];
-const Services: any[] = [];
+// Domain Repositories & Ports
+import {
+  IAiJobRepository,
+  IAiPromptTemplateRepository,
+  IAiProviderPort,
+  IAiProviderFactory,
+} from './domain';
+
+// Infrastructure Persistence
+import {
+  AiJobMapper,
+  AiPromptTemplateMapper,
+  PrismaAiJobRepository,
+  PrismaAiPromptTemplateRepository,
+} from './infrastructure/persistence';
+
+// Infrastructure Services & Adapters
+import {
+  OpenAiAdapter,
+  GeminiAdapter,
+  AiProviderFactory,
+  AiQueryAdapter,
+} from './infrastructure/services';
+
+// Infrastructure Messaging
+import { AiEventProcessor } from './infrastructure/messaging';
+
+// Application CQRS
+import { COMMAND_HANDLERS } from './application/commands';
+import { QUERY_HANDLERS } from './application/queries';
+
+// Presentation
+import {
+  AiController,
+  AiPromptTemplateController,
+} from './presentation/controllers';
+import { AiService } from './presentation/services';
 
 @Module({
   imports: [
     CqrsModule,
-    BullModule.registerQueue({ name: 'ai-events' }),
+    ConfigModule,
+    BullModule.registerQueue({
+      name: 'ai-events',
+    }),
   ],
-  controllers: [],
+  controllers: [
+    AiController,
+    AiPromptTemplateController,
+  ],
   providers: [
-    PrismaService,
-    RedisService,
-    AuthGuard,
-    ...Services,
-    ...Mappers,
-    ...PortBindings,
-    ...CommandHandlers,
-    ...QueryHandlers,
-    ...EventProcessors,
+    // Presentation Service
+    AiService,
+
+    // CQRS Handlers
+    ...COMMAND_HANDLERS,
+    ...QUERY_HANDLERS,
+
+    // Mappers
+    AiJobMapper,
+    AiPromptTemplateMapper,
+
+    // Repositories
+    {
+      provide: IAiJobRepository,
+      useClass: PrismaAiJobRepository,
+    },
+    {
+      provide: IAiPromptTemplateRepository,
+      useClass: PrismaAiPromptTemplateRepository,
+    },
+    PrismaAiJobRepository,
+    PrismaAiPromptTemplateRepository,
+
+    // AI Providers & Ports
+    OpenAiAdapter,
+    GeminiAdapter,
+    {
+      provide: IAiProviderPort,
+      useClass: OpenAiAdapter,
+    },
+    {
+      provide: IAiProviderFactory,
+      useClass: AiProviderFactory,
+    },
+    AiProviderFactory,
+
+    // Shared Query Port
+    {
+      provide: IAiQueryPort,
+      useClass: AiQueryAdapter,
+    },
+    AiQueryAdapter,
+
+    // BullMQ Event Listeners
+    AiEventProcessor,
   ],
   exports: [
-    // Export ONLY shared query port tokens and adapters implementing shared ports
+    IAiQueryPort,
+    AiQueryAdapter,
+    IAiJobRepository,
+    IAiPromptTemplateRepository,
   ],
 })
 export class AiModule {}
