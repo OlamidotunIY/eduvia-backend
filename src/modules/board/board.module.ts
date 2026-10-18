@@ -55,6 +55,10 @@ import {
   BoardOtService,
   BoardStorageService,
 } from './infrastructure/services';
+import {
+  ShareDBBackendService,
+  BoardDocumentService,
+} from './infrastructure/sharedb';
 import { BoardController } from './presentation/controllers';
 import { BoardService } from './presentation/services';
 
@@ -130,6 +134,8 @@ const repositories = [
     BoardService,
     BoardOtService,
     BoardStorageService,
+    ShareDBBackendService,
+    BoardDocumentService,
     ...commandHandlers,
     ...queryHandlers,
     ...mappers,
@@ -149,6 +155,8 @@ const repositories = [
     BoardService,
     BoardOtService,
     BoardStorageService,
+    ShareDBBackendService,
+    BoardDocumentService,
   ],
 })
 export class BoardModule {}

@@ -28,6 +28,17 @@ async function bootstrap() {
     app.useWebSocketAdapter(new SocketIoAdapter(app));
   }
 
+  // Attach ShareDB OT server to /board-sync on the HTTP server
+  try {
+    const { ShareDBBackendService } = await import(
+      './modules/board/infrastructure/sharedb/sharedb-backend.service'
+    );
+    const shareDB = app.get(ShareDBBackendService);
+    shareDB.attachToServer(app.getHttpServer());
+  } catch {
+    // Non-fatal if ShareDB service is mocked or optional in tests
+  }
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
