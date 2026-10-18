@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import {
+  FirebaseStorageService,
+  UploadUrlResult as FirebaseUploadUrlResult,
+} from '@modules/shared';
 
 export interface UploadUrlResult {
   uploadUrl: string;
@@ -8,20 +12,29 @@ export interface UploadUrlResult {
 
 @Injectable()
 export class BoardStorageService {
+  constructor(private readonly firebaseStorage: FirebaseStorageService) {}
+
   async getUploadUrl(
     boardId: string,
     filename: string,
     contentType: string,
   ): Promise<UploadUrlResult> {
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    const sanitizedName = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `boards/${boardId}/responses/${Date.now()}_${sanitizedName}`;
+    const ext = filename.split('.').pop() ?? 'jpg';
+    const result: FirebaseUploadUrlResult =
+      await this.firebaseStorage.generateUploadUrl({
+        folder: 'student-responses',
+        orgId: 'boards',
+        userId: boardId,
+        fileExtension: ext,
+        contentType,
+        maxSizeBytes: 5 * 1024 * 1024,
+        expiresInSeconds: 900,
+      });
 
-    // Return signed upload URL structure for Firebase Storage
     return {
-      uploadUrl: `https://storage.googleapis.com/eduvia-uploads/${storagePath}?uploadType=resumable&contentType=${encodeURIComponent(contentType)}`,
-      fileUrl: `https://storage.googleapis.com/eduvia-uploads/${storagePath}`,
-      expiresAt,
+      uploadUrl: result.uploadUrl,
+      fileUrl: result.downloadUrl,
+      expiresAt: result.expiresAt,
     };
   }
 }

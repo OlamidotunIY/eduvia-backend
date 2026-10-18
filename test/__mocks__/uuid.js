@@ -20,7 +20,12 @@ function version(val) {
   return parseInt(val.charAt(14), 16);
 }
 
+function v4() {
+  return crypto.randomUUID();
+}
+
 module.exports = {
+  v4,
   v7,
   validate,
   version,

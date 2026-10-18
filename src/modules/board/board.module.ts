@@ -6,6 +6,7 @@ import {
   IBoardQueryPort,
   PrismaService,
   RedisService,
+  FirebaseStorageService,
 } from '@modules/shared';
 import {
   CreateBoardHandler,
@@ -125,6 +126,7 @@ const repositories = [
     PrismaService,
     RedisService,
     AuthGuard,
+    FirebaseStorageService,
     BoardService,
     BoardOtService,
     BoardStorageService,
