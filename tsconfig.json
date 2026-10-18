@@ -73,6 +73,9 @@
       ],
       "@modules/ai": [
         "./src/modules/ai/index.ts"
+      ],
+      "@modules/websocket": [
+        "./src/modules/websocket/index.ts"
       ]
     }
   }

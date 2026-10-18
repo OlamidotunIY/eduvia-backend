@@ -21,6 +21,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { BillingModule } from './modules/billing/billing.module';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 import { AiModule } from './modules/ai/ai.module';
+import { WebSocketModule } from './modules/websocket/websocket.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -61,6 +62,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     BillingModule,
     PlatformAdminModule,
     AiModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [

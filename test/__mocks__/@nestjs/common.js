@@ -24,6 +24,11 @@ module.exports = {
   Param: () => () => {},
   Body: () => () => {},
   UseGuards: () => noopDecorator,
+  UseFilters: () => noopDecorator,
+  UsePipes: () => noopDecorator,
+  UseInterceptors: () => noopDecorator,
+  Catch: () => noopDecorator,
+  SetMetadata: () => noopDecorator,
   createParamDecorator: () => () => {},
   Logger,
 };
