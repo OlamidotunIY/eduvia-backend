@@ -1,2 +1,1 @@
-// Domain Ports
-export {};
+export * from './video-provider.port';

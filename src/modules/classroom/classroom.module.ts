@@ -62,6 +62,11 @@ import {
   ClassroomService,
   TeacherAvailabilityService,
 } from './presentation/services';
+import {
+  ZoomAdapter,
+  GoogleMeetAdapter,
+  VideoProviderFactory,
+} from './infrastructure/video';
 
 const commandHandlers = [
   CreateClassroomHandler,
@@ -131,6 +136,9 @@ const repositories = [
     ...repositories,
     ClassroomEventProcessor,
     LessonArchiveScheduler,
+    ZoomAdapter,
+    GoogleMeetAdapter,
+    VideoProviderFactory,
     {
       provide: IClassroomQueryPort,
       useClass: ClassroomQueryAdapter,
@@ -144,6 +152,7 @@ const repositories = [
     IClassroomQueryPort,
     ClassroomService,
     TeacherAvailabilityService,
+    VideoProviderFactory,
   ],
 })
 export class ClassroomModule {}

@@ -30,6 +30,12 @@ const config: Config = {
     '^@nestjs/websockets/(.*)$': '<rootDir>/test/__mocks__/@nestjs/websockets.js',
     '^@nestjs/jwt$': '<rootDir>/test/__mocks__/@nestjs/jwt.js',
     '^@nestjs/jwt/(.*)$': '<rootDir>/test/__mocks__/@nestjs/jwt.js',
+    '^@nestjs/bullmq$': '<rootDir>/test/__mocks__/@nestjs/bullmq.js',
+    '^@nestjs/bullmq/(.*)$': '<rootDir>/test/__mocks__/@nestjs/bullmq.js',
+    '^@nestjs/schedule$': '<rootDir>/test/__mocks__/@nestjs/schedule.js',
+    '^@nestjs/schedule/(.*)$': '<rootDir>/test/__mocks__/@nestjs/schedule.js',
+    '^@nestjs/platform-socket\\.io$': '<rootDir>/test/__mocks__/@nestjs/platform-socket.io.js',
+    '^@nestjs/platform-socket\\.io/(.*)$': '<rootDir>/test/__mocks__/@nestjs/platform-socket.io.js',
     ...pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
   },
   collectCoverageFrom: [
