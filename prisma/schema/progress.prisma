@@ -1,0 +1,109 @@
+model LessonReport {
+  id                       String            @id
+  lessonId                 String            @unique
+  orgId                    String
+  classroomId              String
+  teacherId                String
+  studentId                String
+  status                   ReportStatus
+  topicNodeIds             Json
+  attendanceStatus         AttendanceStatus
+  teacherNarrative         String?           @db.Text
+  aiGeneratedSummary       String?           @db.Text
+  teacherApprovedAiSummary String?           @db.Text
+  homeworkSet              String?           @db.Text
+  nextSteps                String?           @db.Text
+  overallRating            Int?
+  parentCanView            Boolean           @default(false)
+  totalQuestionsAttempted  Int               @default(0)
+  totalQuestionsCorrect    Int               @default(0)
+  totalMarksAwarded        Int?
+  totalMaxMarks            Int               @default(0)
+  scorePercent             Float?
+  questionBreakdown        Json?
+  submittedAt              DateTime?
+  archivedAt               DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  comments                 ReportComment[]
+
+  @@map("lesson_reports")
+}
+
+enum ReportStatus {
+  draft
+  ai_draft
+  teacher_reviewing
+  submitted
+  archived
+}
+
+enum AttendanceStatus {
+  attended
+  absent
+  late
+  no_show
+}
+
+model ReportComment {
+  id              String            @id
+  reportId        String
+  authorId        String
+  authorRole      CommentAuthorRole
+  content         String            @db.Text
+  parentCommentId String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  report          LessonReport      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  parent          ReportComment?    @relation("CommentThread", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  replies         ReportComment[]   @relation("CommentThread")
+
+  @@map("report_comments")
+}
+
+enum CommentAuthorRole {
+  parent
+  admin
+}
+
+model StudentProgressSummary {
+  id                    String    @id
+  studentId             String
+  orgId                 String
+  subjectId             String
+  totalLessonsAttended  Int       @default(0)
+  totalLessonsMissed    Int       @default(0)
+  totalAssessments      Int       @default(0)
+  averageScorePercent   Float?
+  masteredTopicsCount   Int       @default(0)
+  inProgressTopicsCount Int       @default(0)
+  notStartedTopicsCount Int       @default(0)
+  overallMasteryLevel   Float?
+  lastLessonAt          DateTime?
+  lastUpdatedAt         DateTime
+
+  @@unique([studentId, orgId, subjectId])
+  @@map("student_progress_summaries")
+}
+
+model OrgAnalyticsSnapshot {
+  id                           String   @id
+  orgId                        String
+  snapshotDate                 DateTime
+  totalActiveStudents          Int
+  totalActiveTeachers          Int
+  totalLessonsThisMonth        Int
+  totalLessonsLastMonth        Int
+  avgLessonCompletionRate      Float
+  avgReportSubmissionTimeHours Float
+  teacherPerformance          Json
+  studentChurnRisk             Json
+  funnelStats                  Json
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  @@unique([orgId, snapshotDate])
+  @@map("org_analytics_snapshots")
+}

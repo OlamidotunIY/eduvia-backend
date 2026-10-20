@@ -7,9 +7,9 @@ import {
   ITokenPort,
   PreAuthTokenPayload,
 } from '../../domain/ports';
-import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class JwtTokenAdapter implements ITokenPort {
@@ -19,7 +19,9 @@ export class JwtTokenAdapter implements ITokenPort {
   private readonly preAuthTtl: number;
   private readonly saltRounds: number;
 
-  constructor() {
+  constructor(
+    private jwtService: JwtService
+  ) {
     this.secret = process.env['JWT_SECRET']!;
     this.accessTtl = parseInt(process.env['JWT_ACCESS_TTL'] ?? '900', 10);
     this.refreshTtl = parseInt(process.env['JWT_REFRESH_TTL'] ?? '2592000', 10);
@@ -44,17 +46,9 @@ export class JwtTokenAdapter implements ITokenPort {
       exp: now + this.accessTtl,
     };
 
-    const token = jwt.sign(fullPayload, this.secret, { algorithm: 'HS256' });
+    const token = await this.jwtService.signAsync(fullPayload);
 
     return { token, jti, expiresAt: new Date((now + this.accessTtl) * 1000) };
-  }
-
-  async verifyAccessToken(token: string): Promise<AccessTokenPayload> {
-    try {
-      return jwt.verify(token, this.secret) as unknown as AccessTokenPayload;
-    } catch {
-      throw new Error('Invalid or expired access token');
-    }
   }
 
   async generateRefreshToken(): Promise<GenerateRefreshTokenResult> {
@@ -76,22 +70,8 @@ export class JwtTokenAdapter implements ITokenPort {
       exp: now + this.preAuthTtl,
     };
 
-    const token = jwt.sign(payload, this.secret, { algorithm: 'HS256' });
+    const token = await this.jwtService.signAsync(payload);
 
     return { token, expiresAt: new Date((now + this.preAuthTtl) * 1000) };
-  }
-
-  async verifyPreAuthToken(token: string): Promise<PreAuthTokenPayload> {
-    try {
-      const payload = jwt.verify(token, this.secret) as unknown as PreAuthTokenPayload;
-
-      if (payload.purpose !== 'email_verification') {
-        throw new Error('Token is not a pre-auth token');
-      }
-
-      return payload;
-    } catch {
-      throw new Error('Invalid or expired pre-auth token');
-    }
   }
 }

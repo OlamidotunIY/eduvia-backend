@@ -1,7 +1,9 @@
 # 01 — IAM & Auth
 
-> **Module:** `src/modules/auth` + `src/modules/user`
-> **Status:** Partially built — AuthAccount, Session, Verification, User aggregates exist. Missing: ParentProfile, StudentProfile.
+> **Modules:** `src/modules/auth` + `src/modules/user`
+> **Status:** Core flow built (register → OTP verification → login → logout). ParentProfile, StudentProfile and TeacherProfile aggregates exist. TOTP enable/verify flows and a refresh-token endpoint are not built yet.
+>
+> Items marked **(planned)** describe the target design and are not in the code yet.
 
 ---
 
@@ -9,113 +11,163 @@
 
 The IAM & Auth module is the identity backbone of Eduvia. It handles:
 
-- User registration (parent-initiated; teachers and students cannot self-register)
+- User registration (parents and teachers self-register; students are registered by a parent)
 - Email verification via OTP
-- Authentication: password login, session management, JWT access + refresh tokens
-- Device-level session tracking and per-device revocation
-- TOTP two-factor authentication
-- Credential updates and account suspension
+- Authentication: password login, session management, JWT access tokens
+- Session tracking and revocation
+- TOTP two-factor authentication (data model only so far)
+- Password change / password reset request
 - Parent-child student profile management
+
+---
+
+## Module Boundaries
+
+| Module | Owns | Does NOT own |
+|---|---|---|
+| `auth` | `Account` (domain aggregate `AuthAccount`), `Session`, `Verification`, `TwoFactor` aggregates | User identity, profiles |
+| `user` | `User`, `ParentProfile`, `StudentProfile`, `TeacherProfile` aggregates | Credentials, sessions, organization membership |
+
+Organization membership (`OrganizationMembership`) is owned by the `org` module — see [02-org-marketplace.md](02-org-marketplace.md).
+
+Cross-module communication (all writes via events, reads via shared Query Ports — see [00-ddd-architecture.md](00-ddd-architecture.md)):
+- **`user → auth`**: `UserCreatedEvent` → BullMQ `auth-events` queue → `AuthEventProcessor` → `CreateAuthAccountCommand`
+- **`auth → user`**: `AuthEmailVerifiedEvent` and `AccountSuspendedEvent` → BullMQ `user-events` queue → `UserEventProcessor` → `MarkEmailVerifiedCommand` / `SuspendUserCommand`
+- **`auth` reads `user`**: via `IUserQueryPort` (defined in `shared/application/port/`) — never directly accessing `UserRepository`
+
+Processors live in `infrastructure/messaging/listeners/` of each module; the inbound event shapes they use live in `infrastructure/messaging/events/`.
+
+---
+
+## Registration & Verification Flow
+
+```
+1. POST /users/register  { email, password, firstName, lastName, userType, timezone? }
+     CreateUserCommand — userType must be parent or teacher
+       - hashes the password (bcrypt, IPasswordHashPort)
+       - User.create(...) -> emits UserCreatedEvent (carries the password hash)
+       - parents also get a ParentProfile
+2. UserCreatedEvent -> Outbox -> auth-events -> AuthEventProcessor
+     CreateAuthAccountCommand
+       - creates a credentials Account (scope = 'user')
+       - generates an email-verification OTP (raw code held in Redis 10 min, bcrypt hash in Verification,
+         maxAttempts = 5) -> Verification.create emits AuthVerificationCreatedEvent
+3. POST /auth/verify-otp  { email, code }
+     CompleteVerificationCommand
+       - verifies the OTP, marks the Account email as verified -> emits AuthEmailVerifiedEvent
+       - creates a Session and returns { sessionId, accessToken, refreshToken, ... }
+4. AuthEmailVerifiedEvent -> user-events -> UserEventProcessor -> MarkEmailVerifiedCommand (User.emailVerified = true)
+```
+
+Login with an unverified email: `LoginCommand` validates credentials, then — if `User.emailVerified` is false — issues a fresh OTP and fails with `AccountPendingVerificationError` (the client must call `/auth/verify-otp`).
+
+**Students (planned):** a parent registers a child via `POST /users/parents/students`, supplying the child's email and a password. The child gets their own `User` (`userType = student`) linked to the `StudentProfile` via `userId`, and an `Account`. The student verifies their email on **first login** through the same OTP flow above; at first login the student is then *suggested* (not forced) to change the parent-chosen password.
 
 ---
 
 ## Domain Models
 
-### 1. User (Aggregate Root) — BUILT
+### 1. User (Aggregate Root) — `user` module
 
 Global platform identity. Not org-scoped.
 
 ```
 User
-  id:          UUID
-  userType:    student | teacher | admin | parent
-  firstName:   string
-  lastName:    string
-  email:       string (unique, lowercase)
-  status:      active | suspended
-  createdAt:   DateTime
-  updatedAt:   DateTime
+  id:               UUIDv7
+  userType:         student | teacher | admin | parent
+  firstName:        string
+  lastName:         string
+  email:            string (unique, required)
+  username:         string? (unique)
+  image:            string?
+  emailVerified:    boolean
+  twoFactorEnabled: boolean?
+  status:           active | suspended
+  timezone:         string
+  createdAt:        DateTime
+  updatedAt:        DateTime
 ```
+
+> `userType = admin` does **not** mean platform admin. Platform admins are identified by the `PlatformAdmin` record (see [11-platform-admin.md](11-platform-admin.md)); their `userType` is one of the normal values.
 
 **Domain Methods:**
 - `User.create(params)` — validates email, name; emits `UserCreatedEvent`
-- `user.updateProfile(params)` — emits `UserUpdatedEvent`
-- `user.suspend()` — throws `UserAlreadySuspendedError` if already suspended
+- `user.updateProfile(params)` — updates profile fields; emits `UserUpdatedEvent`
+- `user.suspend()` — throws if already suspended
 - `user.activate()` — idempotent
-- `user.isTeacher()`, `user.isParent()`, `user.isStudent()`, `user.isAdmin()` — type guards
+- `user.markEmailVerified()` — sets `emailVerified = true`
+- `user.isTeacher()`, `user.isParent()`, `user.isStudent()`, `user.isAdmin()`, `user.isActive()`, `user.isSuspended()` — type/state guards
 
 ---
 
-### 2. AuthAccount (Aggregate Root) — BUILT
+### 2. Account / AuthAccount (Aggregate Root) — `auth` module
 
-Holds authentication credentials and status. Linked 1:1 to a User after email verification.
-
-```
-AuthAccount
-  id:             UUID
-  userId:         UUID? (null until email verified and User record created)
-  credentialHash: string (bcrypt hashed password)
-  scope:          string (e.g. "parent:self" | "teacher:org-invite")
-  totpSecret:     string? (null if TOTP not enabled)
-  totpEnabled:    boolean
-  authStatus:     active | suspended | pending_email_verification | pending_password_reset
-  createdAt:      DateTime
-  updatedAt:      DateTime
-```
-
-**Domain Methods:**
-- `AuthAccount.create(params)` — sets status to `pending_email_verification`; emits `AuthAccountCreatedEvent` (carries preAuthToken + profileData for downstream User creation)
-- `authAccount.linkUser(userId)` — links to User record after email verification; throws if already linked
-- `authAccount.activate()` — idempotent
-- `authAccount.suspend(correlationId)` — emits `AccountSuspendedEvent`; throws `AuthAccountAlreadySuspendedError`
-- `authAccount.updateCredentials(credentialHash)` — validates non-empty hash
-- `authAccount.markPendingEmailVerification()` — throws if suspended
-- `authAccount.markPendingPasswordReset()` — throws if suspended
-- `authAccount.enableTotp(secret)` — throws if already enabled
-- `authAccount.disableTotp()` — idempotent
-- `authAccount.canAuthenticate()` — throws if suspended; returns false if pending verification
-- `authAccount.isPendingEmailVerification()`, `authAccount.isSuspended()`, `authAccount.isActive()`
-
----
-
-### 3. Session (Aggregate Root) — BUILT
-
-One session = one device login. Holds the refresh token hash and expiry.
+Holds authentication credentials for a user. The Prisma model is `Account` (table `accounts`); the domain aggregate that wraps it is `AuthAccount`. A user has one credentials account (and may have OAuth provider accounts).
 
 ```
-Session
-  id:                    UUID
-  authAccountId:         UUID
-  refreshTokenHash:      string (bcrypt hashed)
-  accessTokenExpiresAt:  DateTime
-  refreshTokenExpiresAt: DateTime
-  ipAddress:             string
-  userAgent:             string
-  sessionStatus:         active | revoked | expired
-  revokedAt:             DateTime?
+Account (AuthAccount aggregate)
+  id:                    UUIDv7
+  accountId:             string (provider-side account id)
+  providerId:            string (e.g. "credential" or an OAuth provider)
+  userId:                string (FK → User)
+  accessToken:           string?
+  refreshToken:          string?
+  idToken:               string?
+  accessTokenExpiresAt:  DateTime?
+  refreshTokenExpiresAt: DateTime?
+  scope:                 string? (e.g. "user")
+  password:              string? (bcrypt hash — credentials accounts)
   createdAt:             DateTime
   updatedAt:             DateTime
 ```
 
 **Domain Methods:**
-- `Session.create(params)` — emits `AuthSessionCreatedEvent` + `TokenIssuedEvent`
-- `session.revoke()` — idempotent; sets `revokedAt`
-- `session.expire()` — idempotent
-- `session.isActive()`, `session.isRevoked()`, `session.isExpired()` — status checks; `isExpired()` also checks `refreshTokenExpiresAt` wall-clock time
+- `AuthAccount.createCredentialsAccount(params)` — email/password account
+- `AuthAccount.createOAuthAccount(params)` — OAuth provider account
+- `AuthAccount.reconstitute(params)` — re-hydrate from persistence
+- `authAccount.updateTokens(params)` — updates OAuth tokens
+- `authAccount.updatePassword(passwordHash)` — replaces the stored hash
+- `authAccount.recordEmailVerified(correlationId, email)` — emits `AuthEmailVerifiedEvent`
 
 ---
 
-### 4. Verification (Aggregate Root) — BUILT
+### 3. Session (Aggregate Root) — `auth` module
 
-Tracks a one-time verification challenge (email OTP, TOTP setup).
+One session = one login. The session `token` is a random opaque identifier (32 random bytes, hex), unique per row.
+
+```
+Session
+  id:         UUIDv7
+  expiresAt:  DateTime
+  token:      string (unique — random 32-byte hex session token)
+  ipAddress:  string?
+  userAgent:  string?
+  userId:     string
+  createdAt:  DateTime
+  updatedAt:  DateTime
+```
+
+The refresh token is generated by `ITokenPort.generateRefreshToken()` as `{ raw, hash (bcrypt), expiresAt }`: the **raw** value is returned to the client and `expiresAt` becomes `Session.expiresAt`. The hash is **not** persisted today, and there is no refresh endpoint yet.
+
+**Domain Methods:**
+- `Session.create(params)` — validates token non-empty
+- `session.extend(newExpiresAt)` — extends expiry; throws if new date is not in the future
+- `session.isExpired()` — checks wall-clock vs `expiresAt`
+
+There is no `revoke()` method: logout deletes the session row (`sessionRepository.delete`) and blocklists the access token's `jti` in Redis.
+
+---
+
+### 4. Verification (Aggregate Root) — `auth` module
+
+Tracks a one-time verification challenge (email OTP, password reset, TOTP setup).
 
 ```
 Verification
-  id:                 UUID
-  authAccountId:      UUID
-  identifier:         string (email address for email verifications)
-  valueHash:          string (bcrypt hashed OTP value)
-  verificationType:   email_verification | email_otp | totp_setup
+  id:                 UUIDv7
+  identifier:         string (email address)
+  valueHash:          string (bcrypt hashed OTP)
+  verificationType:   email_verification | email_otp | password_reset | totp_setup
   verificationStatus: pending | verified | expired | max_attempts_exceeded
   expiresAt:          DateTime
   attempts:           int (default 0)
@@ -125,187 +177,264 @@ Verification
 ```
 
 **Domain Methods:**
-- `Verification.create(params)` — emits `AuthVerificationCreatedEvent`; validates non-empty identifier/hash and maxAttempts > 0
-- `verification.verify(value, compareValue)` — async; increments attempts; throws on expired, max attempts, or invalid value; sets status to `verified` on success
-- `verification.expire()` — idempotent; skips if already verified or exhausted
-- `verification.isPending()`, `verification.isVerified()`, `verification.isExpired()`, `verification.hasExceededMaxAttempts()`
+- `Verification.create(params)` — emits `AuthVerificationCreatedEvent`
+- `verification.recordAttempt()` — increments attempts; sets `max_attempts_exceeded` when `maxAttempts` is reached; throws if expired
+- `verification.markAsVerified()` — throws if expired or max attempts exceeded; sets status `verified`
+- `verification.isExpired()` — wall-clock check
 
 ---
 
-### 5. ParentProfile (Entity) — TO BUILD
+### 5. TwoFactor (Aggregate Root) — `auth` module
+
+Stores TOTP secret and backup codes per user. (Enable/verify command flows are not built yet.)
+
+```
+TwoFactor
+  id:          UUIDv7
+  secret:      string (TOTP secret)
+  backupCodes: string (stringified/hashed backup codes)
+  userId:      string
+```
+
+**Domain Methods:**
+- `TwoFactor.create(params)` — validates non-empty secret and backup codes
+- `twoFactor.updateBackupCodes(newBackupCodes)` — replaces backup codes
+
+---
+
+### 6. ParentProfile (Aggregate Root) — `user` module
 
 Profile data for parents. Global (not org-scoped).
 
 ```
 ParentProfile
-  id:          UUID
-  userId:      UUID (FK -> User)
+  id:          UUIDv7
+  userId:      UUID (FK → User, unique)
   phoneNumber: string?
-  timezone:    string (IANA tz, e.g. "Europe/London")
-  avatarUrl:   string?
   createdAt:   DateTime
   updatedAt:   DateTime
-
-  students: StudentProfile[]
 ```
+
+**Domain Methods:**
+- `ParentProfile.create(params)` — trims phoneNumber
+- `parentProfile.updateProfile(params)` — updates phoneNumber
 
 ---
 
-### 6. StudentProfile (Entity) — TO BUILD
+### 7. StudentProfile (Aggregate Root) — `user` module
 
-Represents a child registered by a parent.
+Represents a child registered by a parent. Names and email come from the student's own `User`.
 
 ```
 StudentProfile
-  id:            UUID
-  parentId:      UUID (FK -> ParentProfile)
-  firstName:     string
-  lastName:      string
-  dateOfBirth:   Date
-  countryCode:   string (ISO 3166-1 alpha-2, e.g. "GB", "CA", "NG")
-  timezone:      string
-  gradeLevel:    string? (e.g. "Year 10", "Grade 8")
-  avatarUrl:     string?
-  status:        active | inactive
-  createdAt:     DateTime
-  updatedAt:     DateTime
-
-  enrollments:   StudentEnrollment[]  (which classrooms this student is in)
-  curriculumProfile: resolved at query time from countryCode
+  id:           UUIDv7
+  parentId:     UUID (FK → ParentProfile)
+  userId:       UUID (FK → User, unique)            ← planned (not in the schema yet)
+  curriculumId: UUID? (FK → CurriculumProfile)      ← planned; only for ambiguous curricula (IB, Ontario)
+  dateOfBirth:  Date
+  countryCode:  string (ISO 3166-1 alpha-2, e.g. "GB", "NG")
+  timezone:     string (IANA tz)
+  gradeLevel:   string?
+  createdAt:    DateTime
+  updatedAt:    DateTime
 ```
 
-**Domain Logic:**
-- `countryCode` drives curriculum resolution for ALL subjects the student takes
-- A student cannot be enrolled in two classrooms with conflicting time slots
-- Student has no auth account by default; parent manages their access
+The student's curriculum is resolved from `countryCode` + `gradeLevel` (see [06-curriculum-graph.md](06-curriculum-graph.md)); `curriculumId` is only set when the parent/student must choose explicitly.
+
+**Domain Methods:**
+- `StudentProfile.create(params)` — validates non-empty countryCode and timezone; throws `StudentProfileInvariantError`
+- `studentProfile.updateProfile(params)` — validates updated fields
+
+---
+
+### 8. TeacherProfile (Aggregate Root) — `user` module
+
+Professional profile for teachers. Global (not org-scoped).
+
+```
+TeacherProfile
+  id:                   UUIDv7
+  userId:               UUID (FK → User, unique)
+  bio:                  string?
+  phoneNumber:          string?
+  avatarUrl:            string?
+  qualification:        string
+  yearOfExperience:     int
+  subjects:             Json (array of subject identifiers)
+  activeOrganizationId: UUID?
+  createdAt:            DateTime
+  updatedAt:            DateTime
+```
+
+> `CreateUserCommand` creates a `ParentProfile` for parents only; it does not create a `TeacherProfile` today.
+
+**Domain Methods:**
+- `TeacherProfile.create(params)` / `TeacherProfile.reconstitute(params)`
 
 ---
 
 ## Domain Events
 
-| Event | Emitted By | Payload | Consumer |
+| Event | Emitted By | Queue | Consumer |
 |---|---|---|---|
-| `AuthAccountCreatedEvent` | AuthAccount.create | authAccountId, preAuthToken, profileData | user-events (create User + ParentProfile) |
-| `AccountSuspendedEvent` | authAccount.suspend | authAccountId, userId | user-events (suspend User) |
-| `AuthSessionCreatedEvent` | Session.create | authAccountId | (audit log) |
-| `TokenIssuedEvent` | Session.create | authAccountId | (audit log) |
-| `AuthVerificationCreatedEvent` | Verification.create | verificationId, authAccountId, identifier, type | notification-events (send OTP email) |
-| `UserCreatedEvent` | User.create | userId, userType, email, authAccountId? | auth-events (link User to AuthAccount) |
-| `UserUpdatedEvent` | user.updateProfile | userId, userType, email | auth-events (update JWT claims cache) |
+| `UserCreatedEvent` | `User.create` | `auth-events` | `AuthEventProcessor` → creates the credentials Account + OTP |
+| `UserUpdatedEvent` | `user.updateProfile` | `auth-events` | (routed; no handler yet) |
+| `AuthVerificationCreatedEvent` | `Verification.create` | `notification-events` **(planned — not routed in code yet)** | Send OTP email (template `account_verification`) |
+| `AuthEmailVerifiedEvent` | `authAccount.recordEmailVerified` | `user-events` | `UserEventProcessor` → marks user email verified |
+| `AuthAccountCreatedEvent` | — | `user-events` | Routed in code; no emitting method in the current flow |
+| `AccountSuspendedEvent` | — | `user-events` | `UserEventProcessor` → suspends User (routed and handled; no emitting method in the current `AuthAccount`) |
 
 ---
 
-## Domain Logic
+## Commands (auth module)
 
-Domain logic = rules enforced inside the domain model, independent of infrastructure.
-
-| Rule | Where Enforced |
-|---|---|
-| An AuthAccount can only be linked to one User | `authAccount.linkUser()` — throws if `userId !== null` |
-| A suspended account cannot authenticate | `authAccount.canAuthenticate()` — throws `AuthAccountAlreadySuspendedError` |
-| A suspended account cannot be re-suspended | `authAccount.suspend()` — throws if already suspended |
-| Verification attempts are bounded | `verification.verify()` — throws after `maxAttempts` exceeded |
-| Expired verifications cannot be reused | `verification.verify()` — checks wall-clock vs `expiresAt` |
-| OTP identifier must be non-empty | `Verification.create()` — throws `AuthInvariantError` |
-| Sessions track wall-clock expiry independent of status | `session.isExpired()` — checks `refreshTokenExpiresAt` directly |
-| Student countryCode determines their curriculum — no per-subject override | ParentProfile domain service |
-
----
-
-## Business Actions
-
-Business actions = application-layer operations that coordinate domain objects.
-
-### Implemented
-
-| Action | Command | Handler |
+| Command | Handler | Description |
 |---|---|---|
-| Register a parent account | `CreateAuthAccountCommand` | Creates AuthAccount (pending_email_verification) + Verification (OTP) |
-| Complete email OTP verification | `CompleteVerificationCommand` | Verifies OTP, activates AuthAccount, triggers User creation |
-| Login | `LoginCommand` | Validates credentials, handles pending verification, creates Session + issues tokens |
-| Logout | `LogoutCommand` | Revokes current Session |
-| Revoke all sessions | `RevokeAllSessionsCommand` | Revokes all Sessions for an AuthAccount |
-| Issue new auth tokens (refresh) | `IssueAuthTokensCommand` | Validates refresh token, creates new Session |
-| Resend OTP | `ResendOtpCommand` | Creates new Verification record, emits for email delivery |
-| Update credentials (password) | `UpdateCredentialsCommand` | Hashes new password, calls `authAccount.updateCredentials()` |
-| Suspend account | `SuspendAuthAccountCommand` | Calls `authAccount.suspend()`, revokes all sessions |
+| `CreateAuthAccountCommand` | `CreateAuthAccountHandler` | Creates the credentials Account + email-verification OTP (triggered by `UserCreatedEvent`) |
+| `CompleteVerificationCommand` | `CompleteVerificationHandler` | Verifies OTP, records email verified (emits `AuthEmailVerifiedEvent`), creates Session, issues tokens |
+| `LoginCommand` | `LoginHandler` | Validates credentials; if email unverified issues a new OTP and fails; otherwise creates Session and issues tokens |
+| `LogoutCommand` | `LogoutHandler` | Deletes the current Session and blocklists the access token `jti` |
+| `RevokeAllSessionsCommand` | `RevokeAllSessionsHandler` | Revokes all Sessions for a userId (no HTTP route yet) |
+| `ResendOtpCommand` | `ResendOtpHandler` | Creates new Verification, emits for email delivery |
+| `ChangePasswordCommand` | `ChangePasswordHandler` | Hashes new password, calls `authAccount.updatePassword()` |
+| `RequestPasswordResetCommand` | `RequestPasswordResetHandler` | Creates password-reset Verification |
 
-### To Build
+---
 
-| Action | Notes |
-|---|---|
-| Register student (by parent) | Parent creates StudentProfile for their child; no auth account created |
+## Commands (user module)
+
+| Command | Handler | Description |
+|---|---|---|
+| `CreateUserCommand` | `CreateUserHandler` | Registers a parent or teacher: creates User (+ ParentProfile for parents); emits `UserCreatedEvent` |
+| `RegisterStudentCommand` | `RegisterStudentHandler` | Parent creates a StudentProfile for their child |
+| `UpdateUserCommand` | `UpdateUserHandler` | Updates user profile fields |
+| `MarkEmailVerifiedCommand` | `MarkEmailVerifiedHandler` | Marks User email as verified (triggered by `AuthEmailVerifiedEvent`) |
+| `SuspendUserCommand` | `SuspendUserHandler` | Suspends the User (triggered by `AccountSuspendedEvent`) |
+
+---
+
+## Queries
+
+| Query | Module | Handler | Description |
+|---|---|---|---|
+| `GetSessionQuery` | `auth` | `GetSessionHandler` | Fetches a Session |
+| `GetUserByEmailQuery` | `user` | `GetUserByEmailHandler` | Fetches User by email (used by auth via `IUserQueryPort`) |
+| `GetUserByIdQuery` | `user` | `GetUserByIdHandler` | Fetches User by ID |
 
 ---
 
 ## Infrastructure Ports
 
-Interfaces defined in `domain/ports/` — implemented in `infrastructure/services/`:
+Auth-specific ports are defined in `domain/ports/` and implemented in `infrastructure/services/`:
 
 | Port | Implementation | Description |
 |---|---|---|
-| `IPasswordHashPort` | `BcryptPasswordHashAdapter` | Hash + compare passwords (bcrypt) |
-| `ITokenPort` | `JwtTokenAdapter` | Generate/verify access tokens, refresh tokens, pre-auth tokens |
-| `IOtpPort` | `CryptoOtpAdapter` | Generate + hash OTP codes (crypto random) |
-| `ITotpPort` | `SpeakeasyTotpAdapter` | Generate TOTP secrets, verify TOTP codes |
-| `ITokenRevocationPort` | `RedisTokenRevocationAdapter` | Blocklist revoked access tokens in Redis |
+| `ITokenPort` | `JwtTokenAdapter` | Generate/verify JWT access tokens, refresh tokens (`{ raw, hash, expiresAt }`), pre-auth tokens |
+| `IOtpPort` | OTP adapter | Generates `{ code, hash }` for email OTPs |
+| `ITokenRevocationPort` | Redis adapter | Blocklists an access token `jti` (`revoked:{jti}`) |
+
+Cross-module ports (defined in `shared/application/port/`):
+
+| Port | Implementation | Provided By |
+|---|---|---|
+| `IPasswordHashPort` | `BcryptPasswordHashAdapter` | `shared` — hash + compare passwords (bcrypt) |
+| `IUserQueryPort` | `UserQueryAdapter` | `user` module — injected by `auth` module |
 
 ---
 
 ## Repositories
 
-| Repository | Interface | Implementation | Scope |
-|---|---|---|---|
-| AuthAccount | `IAuthAccountRepository` | `PrismaAuthAccountRepository` | Global |
-| Session | `ISessionRepository` | `PrismaSessionRepository` | Global |
-| Verification | `IVerificationRepository` | `PrismaVerificationRepository` | Global |
-| User | `IUserRepository` | `PrismaUserRepository` | Global |
-| ParentProfile | `IParentProfileRepository` | To build | Global |
-| StudentProfile | `IStudentProfileRepository` | To build | Global |
+### auth module
+
+| Repository Interface | Implementation | Prisma Delegate |
+|---|---|---|
+| `IAuthAccountRepository` | `PrismaAuthAccountRepository` | `prisma.account` |
+| `ISessionRepository` | `PrismaSessionRepository` | `prisma.session` |
+| `IVerificationRepository` | `PrismaVerificationRepository` | `prisma.verification` |
+
+### user module
+
+| Repository Interface | Implementation | Prisma Delegate |
+|---|---|---|
+| `IUserRepository` | `PrismaUserRepository` | `prisma.user` |
+| `IParentProfileRepository` | `PrismaParentProfileRepository` | `prisma.parentProfile` |
+| `IStudentProfileRepository` | `PrismaStudentProfileRepository` | `prisma.studentProfile` |
+
+All repositories extend `PrismaBaseRepository` — `save()` writes the entity + outbox messages atomically in one `$transaction`.
 
 ---
 
-## Prisma Schema (Existing)
+## Prisma Schema
 
-Located in `prisma/schema/`:
+Located in `prisma/schema/` (MySQL / MariaDB datasource, `@prisma/adapter-mariadb`):
 
+- `auth.prisma` — Account, Session, Verification, TwoFactor models + auth enums (`VerificationType`, `VerificationStatus`)
 - `user.prisma` — User model + UserType/UserStatus enums
-- `auth-account.prisma` — AuthAccount model + AuthStatus enum
-- `session.prisma` — Session model + SessionStatus enum
-- `verification.prisma` — Verification model + VerificationType/VerificationStatus enums
-- `outbox-message.prisma` — OutboxMessage model + OutboxStatus enum
-
-**To add:**
 - `parent-profile.prisma` — ParentProfile model
 - `student-profile.prisma` — StudentProfile model
-- Update `user.prisma` to add relations to ParentProfile
-
----
-
-## WebSocket Events (IAM)
-
-IAM does not have real-time WebSocket events. Auth events are REST-only. Session changes (revoke, expire) may trigger push notifications via the Notifications module.
+- `teacher-profile.prisma` — TeacherProfile model
+- `outbox-message.prisma` — OutboxMessage model + OutboxStatus enum (`PENDING`, `PROCESSED`)
 
 ---
 
 ## API Surface (Presentation Layer)
 
-### Existing Endpoints (via AuthService + controllers)
+### Auth Controller (`/auth`)
 
-| Method | Path | Auth | Description |
+| Method | Path | Guard | Description |
 |---|---|---|---|
-| POST | /auth/register | None | Register parent: create AuthAccount + send OTP |
-| POST | /auth/verify-email | PreAuth token | Complete OTP verification |
-| POST | /auth/login | None | Login: validate credentials, issue tokens |
-| POST | /auth/logout | Access token | Revoke current session |
-| POST | /auth/refresh | Refresh token | Issue new access + refresh tokens |
-| POST | /auth/resend-otp | PreAuth token | Resend verification OTP |
-| POST | /auth/revoke-all | Access token | Revoke all sessions for account |
-| PATCH | /auth/credentials | Access token | Update password |
+| POST | `/auth/login` | None | Login: validate credentials, issue tokens (or issue OTP if email unverified) |
+| POST | `/auth/verify-otp` | None | Complete OTP verification; returns session + tokens |
+| POST | `/auth/resend-otp` | None | Resend verification OTP |
+| POST | `/auth/request-password-reset` | None | Request password reset OTP |
+| POST | `/auth/change-password` | None (as built) | Change password |
+| POST | `/logout` | `AuthGuard` | Logout current session (served by the me controller, empty controller path) |
 
-### To Add
+### User Controller (`/users`)
 
-| Method | Path | Auth | Description |
+| Method | Path | Guard | Description |
 |---|---|---|---|
-| POST | /parents/students | Parent access token | Register a student (child) |
-| GET | /parents/students | Parent access token | List parent's students |
+| POST | `/users/register` | None | Register a parent or teacher (`CreateUserCommand`) |
+| GET | `/users/me` | `AuthGuard` | Get current user profile |
+| POST | `/users/parents/students` | `AuthGuard` | Parent registers a student |
+
+---
+
+## JWT Token Structure
+
+**Access Token** (`sessionId`, `jti` used for revocation; signed with `@nestjs/jwt` / `JWT_SECRET`):
+
+```typescript
+interface AccessTokenPayload {
+  sub: string;        // Account (AuthAccount) ID
+  userId: string;     // User ID
+  userType: string;
+  scope: string;      // e.g. "user"
+  sessionId: string;  // Session aggregate ID
+  jti: string;        // unique token ID (for revocation)
+  iat: number;
+  exp: number;
+}
+```
+
+The token carries **no** `orgId`, `role`, `email` or `deviceId`. Organization context is resolved per request: REST uses the `:organizationId` path param plus an `OrganizationMembership` check; WebSocket uses an `orgId` in the join payload, validated against `OrganizationMembership`.
+
+`AuthGuard` verifies the JWT and then checks Redis: the `jti` must not be blocklisted (`revoked:{jti}`) and the session must exist (`auth:session:{sessionId}`).
+
+**Pre-Auth Token** (defined by `ITokenPort`; not used by the current registration flow):
+
+```typescript
+interface PreAuthTokenPayload {
+  authAccountId: string;
+  purpose: 'email_verification';
+  iat: number;
+  exp: number;
+}
+```
+
+Environment variables:
+- `JWT_SECRET` — signing secret (required)
+- `JWT_ACCESS_TTL` — access token TTL in seconds (default: 900 = 15 min)
+- `JWT_REFRESH_TTL` — refresh token TTL in seconds (default: 2592000 = 30 days)
+- `PRE_AUTH_TOKEN_TTL` — pre-auth token TTL in seconds (default: 600 = 10 min)
+- `BCRYPT_SALT_ROUNDS` — bcrypt cost (default: 12)

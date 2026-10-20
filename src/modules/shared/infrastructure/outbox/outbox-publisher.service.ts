@@ -16,9 +16,15 @@ class OutboxPublisherService  {
     private readonly prisma: PrismaService,
     @InjectQueue('auth-events') private readonly authEventsQueue: Queue,
     @InjectQueue('user-events') private readonly userEventsQueue: Queue,
+    @InjectQueue('org-events') private readonly orgEventQueue: Queue,
+    @InjectQueue('classroom-events') private readonly classroomEventQueue: Queue,
+    @InjectQueue('board-events') private readonly boardEventsQueue: Queue,
+    @InjectQueue('assessment-events') private readonly assessmentEventsQueue: Queue,
+    @InjectQueue('search-events') private readonly searchEventsQueue: Queue,
+    @InjectQueue('progress-events') private readonly progressEventsQueue: Queue,
   ) {}
 
-   @Cron(CronExpression.EVERY_SECOND)
+   @Cron(CronExpression.EVERY_5_SECONDS)
     async publishOutboxMessages(): Promise<void> {
     await this.publishPending();
   
@@ -84,6 +90,30 @@ class OutboxPublisherService  {
 
     if (queueName === 'user-events') {
       return this.userEventsQueue;
+    }
+
+    if (queueName === 'org-events'){
+      return this.orgEventQueue;
+    }
+
+    if (queueName === 'classroom-events') {
+      return this.classroomEventQueue;
+    }
+
+    if (queueName === 'board-events') {
+      return this.boardEventsQueue;
+    }
+
+    if (queueName === 'assessment-events') {
+      return this.assessmentEventsQueue;
+    }
+
+    if (queueName === 'search-events') {
+      return this.searchEventsQueue;
+    }
+
+    if (queueName === 'progress-events') {
+      return this.progressEventsQueue;
     }
 
     return null;

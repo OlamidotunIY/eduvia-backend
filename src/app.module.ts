@@ -1,30 +1,74 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BullMqModule, OutboxModule } from '@modules/shared';
+import { BullMqModule, OutboxModule, ElasticsearchModule } from '@modules/shared';
 import { UserModule } from '@modules/user';
 import { AuthModule } from '@modules/auth';
 import { ScheduleModule } from '@nestjs/schedule';
+import { JwtModule } from '@nestjs/jwt';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CorrelationIdInterceptor } from '@modules/shared';
+import { OrgModule } from './modules/org/org.module';
+import { ClassroomModule } from './modules/classroom/classroom.module';
+import { BoardModule } from './modules/board/board.module';
+import { AssessmentModule } from './modules/assessment/assessment.module';
+import { CurriculumModule } from './modules/curriculum/curriculum.module';
+import { ProgressModule } from './modules/progress/progress.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
+import { AiModule } from './modules/ai/ai.module';
+import { WebSocketModule } from './modules/websocket/websocket.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     // Distributed tracing, auto-correlated logs, request/job metrics, error
     // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'eduvia-backend',
+    ObserveModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        appKey: config.getOrThrow('OBSERVABLE_API_KEY'),
+        appSecret: config.getOrThrow('OBSERVABLE_SECRET_KEY'),
+        serviceId: 'eduvia',
+      }),
+    }),
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow('JWT_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
+      global: true,
     }),
     BullMqModule,
     OutboxModule,
+    ElasticsearchModule,
     UserModule,
     AuthModule,
+    OrgModule,
+    ClassroomModule,
+    BoardModule,
+    AssessmentModule,
+    CurriculumModule,
+    ProgressModule,
+    NotificationsModule,
+    BillingModule,
+    PlatformAdminModule,
+    AiModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_INTERCEPTOR, useClass: CorrelationIdInterceptor },
+  ],
 })
 export class AppModule {}

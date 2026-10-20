@@ -1,0 +1,178 @@
+model OrgBillingAccount {
+  id               String               @id
+  orgId            String               @unique @map("org_id")
+  billingModel     BillingModel         @map("billing_model")
+  stripeAccountId  String?              @map("stripe_account_id")
+  paypalMerchantId String?              @map("paypal_merchant_id")
+  paymentProvider  PaymentProvider?     @map("payment_provider")
+  stripeCustomerId String?              @map("stripe_customer_id")
+  seatCount        Int                  @default(0) @map("seat_count")
+  freeTierActive   Boolean              @default(true) @map("free_tier_active")
+  planTier         OrgPlanTier          @default(free) @map("plan_tier")
+  currentPeriodEnd DateTime?            @map("current_period_end")
+  status           BillingAccountStatus @default(active)
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  @@map("org_billing_accounts")
+}
+
+enum BillingModel {
+  marketplace
+  saas
+}
+
+enum PaymentProvider {
+  stripe
+  paypal
+}
+
+enum OrgPlanTier {
+  free
+  starter
+  professional
+  enterprise
+}
+
+enum BillingAccountStatus {
+  active
+  suspended
+  past_due
+  cancelled
+}
+
+model SubscriptionPlan {
+  id                 String          @id
+  orgId              String          @map("org_id")
+  subjectId          String          @map("subject_id")
+  name               String
+  description        String?         @db.Text
+  priceAmount        Int             @map("price_amount")
+  currency           String
+  billingInterval    BillingInterval @map("billing_interval")
+  lessonsPerInterval Int             @map("lessons_per_interval")
+  isActive           Boolean         @default(true) @map("is_active")
+  stripePriceId      String?         @map("stripe_price_id")
+  paypalPlanId       String?         @map("paypal_plan_id")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  discounts          PlanDiscount[]
+  subscriptions      ParentSubscription[]
+
+  @@index([orgId])
+  @@index([subjectId])
+  @@map("subscription_plans")
+}
+
+enum BillingInterval {
+  monthly
+  quarterly
+  annually
+}
+
+model PlanDiscount {
+  id        String        @id
+  planId    String        @map("plan_id")
+  type      DiscountType
+  amount    Int
+  currency  String?
+  scope     DiscountScope
+  parentId  String?       @map("parent_id")
+  expiresAt DateTime?     @map("expires_at")
+  isActive  Boolean       @default(true) @map("is_active")
+  code      String?
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([code])
+  @@map("plan_discounts")
+}
+
+enum DiscountType {
+  percentage
+  fixed_amount
+}
+
+enum DiscountScope {
+  all_parents
+  specific_parent
+}
+
+model ParentSubscription {
+  id                     String             @id
+  orgId                  String             @map("org_id")
+  planId                 String             @map("plan_id")
+  parentId               String             @map("parent_id")
+  studentId              String             @map("student_id")
+  subjectId              String             @map("subject_id")
+  provider               PaymentProvider
+  providerSubscriptionId String             @map("provider_subscription_id")
+  status                 SubscriptionStatus
+  discountId             String?            @map("discount_id")
+  effectivePriceAmount   Int                @map("effective_price_amount")
+  currentPeriodStart     DateTime           @map("current_period_start")
+  currentPeriodEnd       DateTime           @map("current_period_end")
+  cancelledAt            DateTime?          @map("cancelled_at")
+  cancelReason           String?            @map("cancel_reason")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  plan                   SubscriptionPlan   @relation(fields: [planId], references: [id])
+
+  @@unique([parentId, studentId, subjectId, orgId])
+  @@index([parentId])
+  @@index([studentId])
+  @@index([orgId])
+  @@index([providerSubscriptionId])
+  @@map("parent_subscriptions")
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  paused
+  trialing
+}
+
+model BillingEvent {
+  id              String           @id
+  orgId           String           @map("org_id")
+  subscriptionId  String?          @map("subscription_id")
+  type            BillingEventType
+  provider        PaymentProvider
+  providerEventId String           @unique @map("provider_event_id")
+  amount          Int?
+  currency        String?
+  metadata        Json
+  occurredAt      DateTime         @map("occurred_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@index([orgId])
+  @@index([subscriptionId])
+  @@map("billing_events")
+}
+
+enum BillingEventType {
+  subscription_created
+  subscription_renewed
+  payment_failed
+  subscription_cancelled
+  refund_issued
+}
+
+model SeatUsageRecord {
+  id         String    @id
+  orgId      String    @map("org_id")
+  month      String
+  seatCount  Int       @default(0) @map("seat_count")
+  tierAtTime String    @map("tier_at_time")
+  invoicedAt DateTime? @map("invoiced_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([orgId, month])
+  @@map("seat_usage_records")
+}

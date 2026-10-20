@@ -1,0 +1,28 @@
+model OrganizationInvitation {
+  id             String   @id 
+  orgId          String   
+  inviterUserId  String   
+  inviteeEmail   String
+  role           InvitationRole
+  subjects       Json
+  tokenHash      String
+  status         InvitationStatus
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@map("organization_invitations")
+}
+
+enum InvitationRole {
+  Teacher
+  TeachingAssistant
+  parent
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}

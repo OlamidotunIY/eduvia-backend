@@ -1,0 +1,11 @@
+model OrganizationSubject {
+  id               String   @id 
+  orgId            String   
+  name             String
+  platformSubjectId String? 
+  description      String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  @@map("organization_subjects")
+}

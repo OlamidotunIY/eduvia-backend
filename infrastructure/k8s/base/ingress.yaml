@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eduvia-ingress
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: api.eduvia.name.ng
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: eduvia-app
+            port:
+              number: 3000

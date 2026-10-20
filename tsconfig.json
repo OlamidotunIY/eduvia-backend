@@ -2,7 +2,6 @@
   "compilerOptions": {
     "module": "preserve",
     "moduleResolution": "bundler",
-    "resolvePackageJsonExports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": false,
@@ -22,6 +21,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
+    "rootDir": ".",
     "paths": {
       "@generated/prisma": [
         "./src/generated/prisma"
@@ -35,8 +35,47 @@
       "@modules/shared": [
         "./src/modules/shared/index.ts"
       ],
+      "@modules/shared/domain": [
+        "./src/modules/shared/domain/index.ts"
+      ],
+      "@modules/shared/domain/*": [
+        "./src/modules/shared/domain/*"
+      ],
       "@modules/user": [
         "./src/modules/user/index.ts"
+      ],
+      "@modules/classroom": [
+        "./src/modules/classroom/index.ts"
+      ],
+      "@modules/org": [
+        "./src/modules/org/index.ts"
+      ],
+      "@modules/board": [
+        "./src/modules/board/index.ts"
+      ],
+      "@modules/assessment": [
+        "./src/modules/assessment/index.ts"
+      ],
+      "@modules/curriculum": [
+        "./src/modules/curriculum/index.ts"
+      ],
+      "@modules/progress": [
+        "./src/modules/progress/index.ts"
+      ],
+      "@modules/notifications": [
+        "./src/modules/notifications/index.ts"
+      ],
+      "@modules/billing": [
+        "./src/modules/billing/index.ts"
+      ],
+      "@modules/platform-admin": [
+        "./src/modules/platform-admin/index.ts"
+      ],
+      "@modules/ai": [
+        "./src/modules/ai/index.ts"
+      ],
+      "@modules/websocket": [
+        "./src/modules/websocket/index.ts"
       ]
     }
   }

@@ -22,6 +22,8 @@ export class GetUserByEmailHandler implements IQueryHandler<GetUserByEmailQuery>
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      emailVerified: user.emailVerified,
+      twoFactorEnabled: user.twoFactorEnabled,
       status: user.status,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

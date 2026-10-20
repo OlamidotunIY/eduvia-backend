@@ -1,7 +1,7 @@
 import { Command } from '@nestjs/cqrs';
-import { IssueAuthTokensResult } from '../issue-auth-tokens/issue-auth-tokens.result';
+import { AuthTokensResult } from './login.result';
 
-export class LoginCommand extends Command<IssueAuthTokensResult> {
+export class LoginCommand extends Command<AuthTokensResult> {
   constructor(
     public readonly payload: {
       email: string;

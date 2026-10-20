@@ -1,3 +1,4 @@
 export * from './domain';
-export * from './repository';
 export * from './infrastructure';
+export * from './application'
+export * from './presentation'

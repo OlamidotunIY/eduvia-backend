@@ -1,0 +1,60 @@
+model PlatformAdmin {
+  id        String            @id
+  userId    String            @unique @map("user_id")
+  role      PlatformAdminRole
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@map("platform_admins")
+}
+
+enum PlatformAdminRole {
+  PlatformSuperAdmin
+  CurriculumEditor
+  PlatformSupport
+}
+
+model PlatformAnnouncement {
+  id          String             @id
+  title       String
+  body        String             @db.Text
+  targetRoles Json               @map("target_roles")
+  status      AnnouncementStatus @default(draft)
+  scheduledAt DateTime?          @map("scheduled_at")
+  publishedAt DateTime?          @map("published_at")
+  archivedAt  DateTime?          @map("archived_at")
+  createdBy   String             @map("created_by")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("platform_announcements")
+}
+
+enum AnnouncementStatus {
+  draft
+  scheduled
+  published
+  archived
+}
+
+model OrgApprovalRecord {
+  id         String           @id
+  orgId      String           @map("org_id")
+  reviewedBy String           @map("reviewed_by")
+  decision   ApprovalDecision
+  reason     String?          @db.Text
+  reviewedAt DateTime         @map("reviewed_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([orgId])
+  @@map("org_approval_records")
+}
+
+enum ApprovalDecision {
+  approved
+  rejected
+  suspended
+  reactivated
+}

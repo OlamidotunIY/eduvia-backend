@@ -1,0 +1,69 @@
+# ==============================================================================
+# Eduvia — Local Development Stack
+# Usage: docker compose -f infrastructure/docker/docker-compose.yml up -d
+# Services: MySQL 8.0, Redis 7 (BullMQ & Cache)
+#
+# All data is persisted in named volumes so containers can be recreated without data loss.
+# Stop and remove everything (including volumes): docker compose -f infrastructure/docker/docker-compose.yml down -v
+# ==============================================================================
+
+name: eduvia
+
+services:
+
+  # ── MySQL 8.x ──────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: eduvia-mysql
+    restart: unless-stopped
+    networks:
+      - eduvia-net
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eduvia
+      MYSQL_USER: eduvia
+      MYSQL_PASSWORD: eduvia
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO
+      --default-time-zone=+00:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "eduvia", "-peduvia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: eduvia-redis
+    restart: unless-stopped
+    networks:
+      - eduvia-net
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ── Shared network ────────────────────────────────────────────────────────────
+networks:
+  eduvia-net:
+    name: eduvia-net
+    driver: bridge
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+  redis_data:

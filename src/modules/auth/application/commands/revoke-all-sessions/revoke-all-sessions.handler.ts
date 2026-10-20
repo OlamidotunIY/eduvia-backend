@@ -11,12 +11,6 @@ export class RevokeAllSessionsHandler implements ICommandHandler<RevokeAllSessio
     async execute(command: RevokeAllSessionCommand): Promise<void> {
         const { payload } = command;
 
-        const sessions = await this.sessionRepository.findByUserId(payload.userId);
-
-        for (const session of sessions){
-             session.revoke();
-
-            await this.sessionRepository.save(session);
-        }
+        await this.sessionRepository.deleteByUserId(payload.userId);
     }
 }

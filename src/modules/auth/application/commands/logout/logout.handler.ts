@@ -18,14 +18,12 @@ export class LogoutHandler implements ICommandHandler<LogoutCommand> {
       throw new Error('Session not found');
     }
 
-    session.revoke();
-
-    await this.sessionRepository.save(session);
+    await this.sessionRepository.delete(session.getId());
 
     // Blocklist jti so the access token is immediately rejected
     const ttlSeconds = Math.max(
       0,
-      Math.floor((session.accessTokenExpiresAt.getTime() - Date.now()) / 1000),
+      Math.floor((session.expiresAt.getTime() - Date.now()) / 1000),
     );
 
     if (ttlSeconds > 0) {

@@ -1,4 +1,4 @@
-import { IPasswordHashPort } from '../../domain';
+import { IPasswordHashPort } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 

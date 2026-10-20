@@ -1,0 +1,16 @@
+// use prisma-8
+
+model StudentProfile {
+  id           String   @id @default(uuid()) 
+  parentId     String   
+  dateOfBirth  DateTime
+  countryCode  String
+  timezone     String
+  gradeLevel   String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([parentId])
+  @@map("student_profiles")
+}

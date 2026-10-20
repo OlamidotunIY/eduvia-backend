@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { GetSessionQuery } from "./get-session.query";
 import { SessionDTO } from "./get-session.query.payload";
-import { ISessionRepository } from "../../../domain/repository/session.repository";
+import { ISessionRepository } from "../../../domain";
 
 @QueryHandler(GetSessionQuery)
 export class GetSessionHandler implements IQueryHandler<GetSessionQuery> {
@@ -18,13 +18,10 @@ export class GetSessionHandler implements IQueryHandler<GetSessionQuery> {
 
     return {
       id: session.getId(),
-      authAccountId: session.authAccountId,
-      accessTokenExpiresAt: session.accessTokenExpiresAt,
-      refreshTokenExpiresAt: session.refreshTokenExpiresAt,
+      userId: session.userId,
+      expiresAt: session.expiresAt,
       ipAddress: session.ipAddress,
       userAgent: session.userAgent,
-      sessionStatus: session.sessionStatus,
-      revokedAt: session.revokedAt,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
     };

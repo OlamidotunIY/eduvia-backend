@@ -2,7 +2,5 @@
 export * from './services';
 
 // Mappers
-export * from './mappers';
-
-// Repositories
-export * from './repository';
+export * from './persistence';
+export * from './messaging';

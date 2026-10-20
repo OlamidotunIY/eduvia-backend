@@ -3,3 +3,6 @@ export * from './redis';
 export * from './bullmq';
 export * from './http/filters/domain-exception.filters';
 export * from './outbox';
+export * from './services';
+export * from './storage';
+export * from './elasticsearch';

@@ -22,9 +22,9 @@ namespace AuthVerificationCreatedEvent {
   export class Payload {
     constructor(
       public readonly verificationId: string,
-      public readonly authAccountId: string,
       public readonly identifier: string,
       public readonly verificationType: VerificationType,
+      public readonly rawValueRedisKey?: string,
     ) {}
   }
 }

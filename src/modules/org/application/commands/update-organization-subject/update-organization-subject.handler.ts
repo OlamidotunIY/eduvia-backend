@@ -1,0 +1,48 @@
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { UpdateOrganizationSubjectCommand } from './update-organization-subject.command';
+import { IOrganizationSubjectRepository } from '../../../domain/repository';
+import {
+  OrganizationInvariantError,
+  OrganizationSubjectId,
+  SubjectNotFound,
+} from '../../../domain';
+
+@CommandHandler(UpdateOrganizationSubjectCommand)
+export class UpdateOrganizationSubjectHandler implements ICommandHandler<
+  UpdateOrganizationSubjectCommand,
+  void
+> {
+  constructor(
+    private readonly orgSubjectRepository: IOrganizationSubjectRepository,
+  ) {}
+
+  async execute(command: UpdateOrganizationSubjectCommand): Promise<void> {
+    const { payload } = command;
+
+    const subject = await this.orgSubjectRepository.findById(
+      OrganizationSubjectId.from(payload.subjectId),
+    );
+    if (!subject) {
+      throw new SubjectNotFound();
+    }
+
+    if (subject.orgId.toString() !== payload.orgId) {
+      throw new OrganizationInvariantError('Invalid credentials');
+    }
+
+    if (payload.name !== undefined) subject.rename(payload.name);
+    if (payload.description !== undefined)
+      subject.updateDescription(payload.description);
+    if (payload.platformSubjectId !== undefined)
+      subject.linkToPlatformSubject(payload.platformSubjectId);
+    if (payload.isActive !== undefined) {
+      if (payload.isActive) {
+        subject.activate();
+      } else {
+        subject.deactivate();
+      }
+    }
+
+    await this.orgSubjectRepository.save(subject);
+  }
+}

@@ -1,0 +1,26 @@
+model OrganizationMembership {
+  id        String   @id 
+  orgId     String   
+  userId    String   
+  role      OrganizationRole
+  subjects  Json
+  status    MembershipStatus
+  joinedAt  DateTime
+  updatedAt DateTime @updatedAt
+
+  @@map("organization_memberships")
+}
+
+enum OrganizationRole {
+  OrgOwner
+  OrgAdmin
+  LeadTeacher
+  Teacher
+  TeachingAssistant
+}
+
+enum MembershipStatus {
+  active
+  inactive
+  suspended
+}

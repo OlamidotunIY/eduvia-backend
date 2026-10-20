@@ -3,6 +3,7 @@ export interface AccessTokenPayload {
   userId: string;
   userType: string;
   scope: string;
+  sessionId: string;
   jti: string;
   iat: number;
   exp: number;
@@ -37,14 +38,10 @@ export abstract class ITokenPort {
     payload: Omit<AccessTokenPayload, 'iat' | 'exp' | 'jti'>,
   ): Promise<GenerateAccessTokenResult>;
 
-  abstract verifyAccessToken(token: string): Promise<AccessTokenPayload>;
-
   abstract generateRefreshToken(): Promise<GenerateRefreshTokenResult>;
 
   abstract generatePreAuthToken(params: {
     authAccountId: string;
   }): Promise<GeneratePreAuthTokenResult>;
-
-  abstract verifyPreAuthToken(token: string): Promise<PreAuthTokenPayload>;
 }
 

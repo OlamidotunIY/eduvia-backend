@@ -1,0 +1,23 @@
+model TeacherApplication {
+  id               String   @id 
+  orgId            String   
+  applicantUserId  String   
+  appliedSubjects  Json
+  status           ApplicationStatus
+  rejectionReason  String?
+  reviewedBy       String?  
+  reviewedAt       DateTime?
+  coverLetter      String?
+  qualifications   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("teacher_applications")
+}
+
+enum ApplicationStatus {
+  pending_review
+  auto_rejected
+  approved
+  rejected
+}

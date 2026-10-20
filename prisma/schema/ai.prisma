@@ -1,0 +1,65 @@
+model AIJob {
+  id                String       @id
+  type              AIJobType
+  status            AIJobStatus
+  inputPayload      Json         @map("input_payload")
+  outputPayload     Json?        @map("output_payload")
+  provider          AIProvider
+  model             String
+  promptVersion     String       @map("prompt_version")
+  tokensUsed        Int?         @map("tokens_used")
+  errorMessage      String?      @db.Text @map("error_message")
+  relatedEntityId   String       @map("related_entity_id")
+  relatedEntityType AIEntityType @map("related_entity_type")
+  orgId             String       @map("org_id")
+  requestedBy       String?      @map("requested_by")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  completedAt       DateTime?    @map("completed_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([type, relatedEntityId, status])
+  @@map("ai_jobs")
+}
+
+enum AIJobType {
+  report_summary
+  question_generation
+  next_lesson_suggestion
+}
+
+enum AIJobStatus {
+  queued
+  processing
+  completed
+  failed
+  cancelled
+}
+
+enum AIProvider {
+  openai
+  gemini
+}
+
+enum AIEntityType {
+  lesson
+  curriculum_node
+  student
+}
+
+model AIPromptTemplate {
+  id                 String     @id
+  name               String
+  type               AIJobType
+  version            String
+  systemPrompt       String     @db.Text @map("system_prompt")
+  userPromptTemplate String     @db.Text @map("user_prompt_template")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  deprecatedAt       DateTime?  @map("deprecated_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  @@unique([type, version])
+  @@index([type, isActive])
+  @@map("ai_prompt_templates")
+}

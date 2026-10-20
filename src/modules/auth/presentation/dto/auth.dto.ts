@@ -1,11 +1,3 @@
-export class RegisterDto {
-  email!: string;
-  password!: string;
-  firstName!: string;
-  lastName!: string;
-  userType!: string;
-}
-
 export class LoginDto {
   email!: string;
   password!: string;
@@ -18,9 +10,19 @@ export class LogoutDto {
 
 export class VerifyOtpDto {
   code!: string;
-  authAccountId!: string;
+  email!: string;
 }
 
 export class ResendOtpDto {
-  authAccountId!: string;
+  email!: string;
+}
+
+export class RequestPasswordResetDto {
+  email!: string;
+}
+
+export class ChangePasswordDto {
+  email!: string;
+  code!: string;
+  newPassword!: string;
 }

@@ -1,4 +1,4 @@
-import { BadRequestError, ConflictError } from "../../../shared";
+import { ConflictError } from "../../../shared";
 
 export class UserAlreadySuspendedError extends ConflictError{
     constructor( details?: unknown){

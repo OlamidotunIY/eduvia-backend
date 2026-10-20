@@ -11,6 +11,8 @@ export interface UserDTO {
     firstName: string;
     lastName: string;
     email: string;
+    emailVerified: boolean;
+    twoFactorEnabled: boolean | null;
     status: UserStatus;
     createdAt: Date;
     updatedAt: Date;

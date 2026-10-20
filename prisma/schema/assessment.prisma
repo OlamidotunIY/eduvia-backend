@@ -1,0 +1,153 @@
+model Question {
+  id                    String            @id
+  ownerType             QuestionOwnerType
+  ownerId               String?
+  orgId                 String?
+  type                  QuestionType
+  stem                  String            @db.Text
+  correctOptionKey      String?
+  markScheme            String?           @db.Text
+  maxMarks              Int
+  difficultyLevel       Int
+  subject               String
+  curriculumNodeId      String?
+  examBoard             String?
+  yearGroup             String?
+  tags                  Json
+  provenanceSource      ProvenanceSource
+  provenanceCreatedBy   String
+  provenanceAiModel     String?
+  provenanceLicenseRef  String?
+  provenancePaperRef    String?
+  provenanceApprovedBy  String?
+  provenanceApprovedAt  DateTime?
+  isPublished           Boolean           @default(false)
+  usageCount            Int               @default(0)
+  avgScore              Float?
+  correctRate           Float?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  options               QuestionOption[]
+
+  @@map("questions")
+}
+
+enum QuestionOwnerType {
+  platform
+  org
+  teacher
+}
+
+enum QuestionType {
+  mcq
+  short_answer
+  long_answer
+  image_upload
+}
+
+enum ProvenanceSource {
+  original
+  ai_generated
+  licensed
+  past_paper
+}
+
+model QuestionOption {
+  id         String   @id
+  questionId String
+  key        String
+  text       String   @db.Text
+  imageUrl   String?
+
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+model Assessment {
+  id                 String           @id
+  orgId              String
+  lessonId           String
+  boardId            String
+  studentId          String
+  status             AssessmentStatus
+  totalMaxMarks      Int
+  totalMarksAwarded  Int?
+  scorePercent       Float?
+  autoMarkedCount    Int              @default(0)
+  teacherMarkedCount Int              @default(0)
+  pendingMarkCount   Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  markingItems       MarkingItem[]
+
+  @@map("assessments")
+}
+
+enum AssessmentStatus {
+  pending_marking
+  partially_marked
+  fully_marked
+}
+
+model MarkingItem {
+  id                String        @id
+  assessmentId      String
+  boardQuestionId   String
+  studentResponseId String
+  questionType      QuestionType
+  maxMarks          Int
+  autoMarked        Boolean       @default(false)
+  marksAwarded      Int?
+  feedback          String?       @db.Text
+  markedBy          String?
+  markedAt          DateTime?
+  status            MarkingStatus
+
+  assessment        Assessment    @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("marking_items")
+}
+
+enum MarkingStatus {
+  pending
+  auto_marked
+  teacher_marked
+}
+
+model MasteryRecord {
+  id                    String                @id
+  studentId             String
+  curriculumNodeId      String
+  orgId                 String
+  masteryLevel          Float
+  teacherAssessedScore  Float?
+  systemCalculatedScore Float?
+  assessmentCount       Int                   @default(0)
+  lastUpdatedAt         DateTime
+
+  history               MasteryHistoryEntry[]
+
+  @@unique([studentId, curriculumNodeId, orgId])
+  @@map("mastery_records")
+}
+
+model MasteryHistoryEntry {
+  id              String         @id
+  masteryRecordId String
+  masteryLevel    Float
+  trigger         MasteryTrigger
+  lessonId        String?
+  recordedAt      DateTime
+
+  masteryRecord   MasteryRecord  @relation(fields: [masteryRecordId], references: [id], onDelete: Cascade)
+
+  @@map("mastery_history_entries")
+}
+
+enum MasteryTrigger {
+  assessment
+  teacher_override
+}
