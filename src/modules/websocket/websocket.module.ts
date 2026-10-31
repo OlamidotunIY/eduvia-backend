@@ -6,6 +6,7 @@ import {
   BoardGateway,
   NotificationsGateway,
   ChatGateway,
+  UserGateway,
 } from './gateways';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 import { WsExceptionFilter } from './filters/ws-exception.filter';
@@ -18,6 +19,7 @@ import { WsExceptionFilter } from './filters/ws-exception.filter';
     BoardGateway,
     NotificationsGateway,
     ChatGateway,
+    UserGateway,
     WsJwtGuard,
     WsExceptionFilter,
   ],
@@ -26,6 +28,7 @@ import { WsExceptionFilter } from './filters/ws-exception.filter';
     BoardGateway,
     NotificationsGateway,
     ChatGateway,
+    UserGateway,
     WsJwtGuard,
   ],
 })

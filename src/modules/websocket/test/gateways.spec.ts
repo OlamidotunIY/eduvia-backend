@@ -2,6 +2,7 @@ import { NotificationsGateway } from '../gateways/notifications.gateway';
 import { LessonGateway } from '../gateways/lesson.gateway';
 import { BoardGateway } from '../gateways/board.gateway';
 import { ChatGateway } from '../gateways/chat.gateway';
+import { UserGateway } from '../gateways/user.gateway';
 
 describe('WebSocket Gateways', () => {
   let mockServer: any;
@@ -78,6 +79,21 @@ describe('WebSocket Gateways', () => {
           lessonId: 'lesson-1',
           status: 'LIVE',
         }),
+      );
+    });
+  });
+
+  describe('UserGateway', () => {
+    it('should publish active organization changes to the user room', () => {
+      const gateway = new UserGateway();
+      gateway.server = mockServer;
+
+      gateway.activeOrganizationChanged('user-123', 'org-456');
+
+      expect(mockServer.to).toHaveBeenCalledWith('user:user-123');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        'user:active_organization_changed',
+        { organizationId: 'org-456' },
       );
     });
   });
