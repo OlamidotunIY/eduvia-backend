@@ -4,3 +4,4 @@ export * from './auth-email-verified';
 export * from './auth-session-created';
 export * from './auth-verification-created';
 export * from './token-issued';
+export * from './user-registration-requested-event';

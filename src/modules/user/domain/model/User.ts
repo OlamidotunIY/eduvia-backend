@@ -4,8 +4,9 @@ import {
   NameRequiredError,
   UserAlreadySuspendedError,
 } from '../errors';
-import { UserCreatedEvent } from '../events/user-created-event';
+import { UserRegistrationCreatedEvent } from '../events/user-registration-created-event';
 import { UserUpdatedEvent } from '../events/user-updated-event';
+import { OnboardingStatus } from '../value-objects/onboarding-status.vo';
 import { UserId } from '../value-objects/user-id.vo';
 import { UserStatus } from '../value-objects/user-status.v0';
 import { UserType } from '../value-objects/user-type.v0';
@@ -13,7 +14,7 @@ import { UserType } from '../value-objects/user-type.v0';
 export class User extends AggregateRoot<UserId> {
   private constructor(
     id: UserId,
-    public readonly userType: UserType,
+    private _userType: UserType,
     private _firstName: string,
     private _lastName: string,
     private _email: string,
@@ -22,6 +23,7 @@ export class User extends AggregateRoot<UserId> {
     private _emailVerified: boolean,
     private _twoFactorEnabled: boolean | null,
     private _status: UserStatus,
+    private _onboardingStatus: OnboardingStatus,
     private _timezone: string,
     public readonly createdAt: Date,
     private _updatedAt: Date,
@@ -30,19 +32,19 @@ export class User extends AggregateRoot<UserId> {
   }
 
   public isTeacher(): boolean {
-    return this.userType === UserType.TEACHER;
+    return this._userType === UserType.TEACHER;
   }
 
   public isAdmin(): boolean {
-    return this.userType === UserType.ADMIN;
+    return this._userType === UserType.ADMIN;
   }
 
   public isParent(): boolean {
-    return this.userType === UserType.PARENT;
+    return this._userType === UserType.PARENT;
   }
 
   public isStudent(): boolean {
-    return this.userType === UserType.STUDENT;
+    return this._userType === UserType.STUDENT;
   }
 
   public isActive(): boolean {
@@ -55,6 +57,18 @@ export class User extends AggregateRoot<UserId> {
 
   public get firstName(): string {
     return this._firstName;
+  }
+
+  public get userType(): UserType {
+    return this._userType;
+  }
+
+  public get onboardingStatus(): OnboardingStatus {
+    return this._onboardingStatus;
+  }
+
+  public isOnboardingComplete(): boolean {
+    return this._onboardingStatus === OnboardingStatus.COMPLETED;
   }
 
   public get lastName(): string {
@@ -99,57 +113,80 @@ export class User extends AggregateRoot<UserId> {
     email: string;
     firstName: string;
     lastName: string;
-    passwordHash: string;
+    image?: string | null;
+    emailVerified?: boolean;
     timezone?: string;
-    correlationId: string;
+    onboardingStatus?: OnboardingStatus;
   }): User {
     const email = params.email.trim().toLowerCase();
     const firstName = params.firstName.trim();
     const lastName = params.lastName.trim();
-
-    if (!email) {
-      throw new EmailRequired();
-    }
-
-    if (!firstName || !lastName) {
-      throw new NameRequiredError();
-    }
-
+    if (!email) throw new EmailRequired();
+    if (!firstName || !lastName) throw new NameRequiredError();
     const now = new Date();
-
-    const user = new User(
+    return new User(
       params.id,
       params.userType,
       firstName,
       lastName,
       email,
       null,
-      null,
-      false,
+      params.image?.trim() || null,
+      params.emailVerified ?? false,
       false,
       UserStatus.ACTIVE,
+      params.onboardingStatus ?? OnboardingStatus.COMPLETED,
       params.timezone?.trim() || 'UTC',
       now,
       now,
     );
+  }
 
+  public static createPendingRegistration(params: {
+    id: UserId;
+    registrationRequestId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    image?: string | null;
+    emailVerified: boolean;
+    timezone?: string;
+    correlationId: string;
+  }): User {
+    const email = params.email.trim().toLowerCase();
+    const firstName = params.firstName.trim();
+    const lastName = params.lastName.trim();
+    if (!email) throw new EmailRequired();
+    if (!firstName || !lastName) throw new NameRequiredError();
+
+    const now = new Date();
+    const user = new User(
+      params.id,
+      UserType.PENDING,
+      firstName,
+      lastName,
+      email,
+      null,
+      params.image?.trim() || null,
+      params.emailVerified,
+      false,
+      UserStatus.ACTIVE,
+      OnboardingStatus.PENDING,
+      params.timezone?.trim() || 'UTC',
+      now,
+      now,
+    );
     user.addDomainEvent(
-      new UserCreatedEvent(
+      new UserRegistrationCreatedEvent(
         user.getId(),
-        new UserCreatedEvent.Payload(
+        new UserRegistrationCreatedEvent.Payload(
+          params.registrationRequestId,
           user.getId(),
-          user.userType,
           user.email,
-          user.firstName,
-          user.lastName,
-          params.passwordHash,
-          user.status,
-          user.timezone,
         ),
         params.correlationId,
       ),
     );
-
     return user;
   }
 
@@ -183,6 +220,34 @@ export class User extends AggregateRoot<UserId> {
     }
     this._updatedAt = new Date();
 
+    this.addDomainEvent(
+      new UserUpdatedEvent(
+        this.getId(),
+        new UserUpdatedEvent.Payload(this.getId(), this.userType, this.email),
+        params.correlationId,
+      ),
+    );
+  }
+
+  public completeOnboarding(params: {
+    userType: UserType;
+    firstName: string;
+    lastName: string;
+    timezone?: string;
+    correlationId: string;
+  }): void {
+    if (params.userType !== UserType.PARENT && params.userType !== UserType.TEACHER) {
+      throw new Error('Only parent and teacher roles can complete self-service onboarding');
+    }
+    const firstName = params.firstName.trim();
+    const lastName = params.lastName.trim();
+    if (!firstName || !lastName) throw new NameRequiredError();
+    this._userType = params.userType;
+    this._firstName = firstName;
+    this._lastName = lastName;
+    this._timezone = params.timezone?.trim() || this._timezone;
+    this._onboardingStatus = OnboardingStatus.COMPLETED;
+    this._updatedAt = new Date();
     this.addDomainEvent(
       new UserUpdatedEvent(
         this.getId(),
@@ -230,6 +295,7 @@ export class User extends AggregateRoot<UserId> {
     emailVerified: boolean;
     twoFactorEnabled: boolean | null;
     status: UserStatus;
+    onboardingStatus: OnboardingStatus;
     timezone: string;
     updatedAt: Date;
     createdAt: Date;
@@ -245,6 +311,7 @@ export class User extends AggregateRoot<UserId> {
       params.emailVerified,
       params.twoFactorEnabled,
       params.status,
+      params.onboardingStatus,
       params.timezone,
       params.createdAt,
       params.updatedAt,

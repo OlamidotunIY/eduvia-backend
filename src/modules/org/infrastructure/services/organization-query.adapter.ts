@@ -3,6 +3,7 @@ import {
   IOrganizationQueryPort,
   OrganizationMembershipDTO,
   OrganizationSummaryDTO,
+  UserOrganizationDTO,
 } from '@modules/shared';
 import { OrganizationId } from '../../domain/value-objects';
 import {
@@ -72,6 +73,31 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
       userId,
     );
     return membership !== null && membership.isActive();
+  }
+
+  async getOrganizationsForUser(userId: string): Promise<UserOrganizationDTO[]> {
+    const memberships = await this.membershipRepository.findByUserId(userId);
+    const activeMemberships = memberships.filter((membership) => membership.isActive());
+    const organizations = await Promise.all(activeMemberships.map(async (membership) => {
+      const [organization, organizationMembers] = await Promise.all([
+        this.orgRepository.findById(membership.orgId),
+        this.membershipRepository.findByOrganizationId(membership.orgId),
+      ]);
+      if (!organization) return null;
+      return {
+        organization: {
+          id: organization.getId(), ownerId: organization.ownerId, name: organization.name,
+          slug: organization.slug, status: organization.status,
+          marketplaceListed: organization.marketplaceListed,
+        },
+        membership: {
+          id: membership.id.value, orgId: membership.orgId.value, userId: membership.userId,
+          role: membership.role, status: membership.status, subjects: membership.subjects,
+        },
+        memberCount: organizationMembers.filter((member) => member.isActive()).length,
+      };
+    }));
+    return organizations.filter((item): item is UserOrganizationDTO => item !== null);
   }
 
   async isOrgActive(id: string): Promise<boolean> {

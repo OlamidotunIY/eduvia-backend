@@ -8,6 +8,10 @@ abstract class IAuthAccountRepository extends BaseRepository<
 > {
   abstract findByUserId(userId: string): Promise<AuthAccount | null>;
   abstract findCredentialsByUserId(userId: string): Promise<AuthAccount | null>;
+  abstract findByProviderAccount(
+    providerId: string,
+    accountId: string,
+  ): Promise<AuthAccount | null>;
 }
 
 export { IAuthAccountRepository };

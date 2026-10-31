@@ -1,30 +1,39 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserModule } from '@modules/user';
+import { OrgModule } from '@modules/org';
 import {
   ChangePasswordHandler,
   CompleteVerificationHandler,
-  CreateAuthAccountHandler,
   GetSessionHandler,
+  GetCurrentUserBootstrapHandler,
   LoginHandler,
   RefreshSessionHandler,
   LogoutHandler,
   RequestPasswordResetHandler,
   ResendOtpHandler,
   RevokeAllSessionsHandler,
+  StartGoogleOAuthHandler,
+  CompleteGoogleOAuthHandler,
+  ExchangeGoogleOAuthHandler,
+  FinalizeRegistrationHandler,
+  StartEmailRegistrationHandler,
 } from './application';
 import {
-  AuthEventProcessor,
+  AuthRegistrationEventProcessor,
   AuthAccountMapper,
   CryptoOtpAdapter,
   JwtTokenAdapter,
   PrismaAuthAccountRepository,
   PrismaSessionRepository,
   PrismaVerificationRepository,
+  PrismaRegistrationRequestRepository,
   RedisTokenRevocationAdapter,
   SessionMapper,
   SpeakeasyTotpAdapter,
+  GoogleOAuthAdapter,
   VerificationMapper,
+  RegistrationRequestMapper,
 } from './infrastructure';
 import {
   IAuthAccountRepository,
@@ -34,6 +43,8 @@ import {
   ITokenRevocationPort,
   ITotpPort,
   IVerificationRepository,
+  IGoogleOAuthPort,
+  IRegistrationRequestRepository,
 } from './domain';
 import {
   AuthGuard,
@@ -45,7 +56,6 @@ import { AuthController } from './presentation/controllers/auth.controller';
 import { MeController } from './presentation/controllers/me.controller';
 
 const CommandHandlers = [
-  CreateAuthAccountHandler,
   CompleteVerificationHandler,
   ChangePasswordHandler,
   RevokeAllSessionsHandler,
@@ -54,13 +64,18 @@ const CommandHandlers = [
   RequestPasswordResetHandler,
   LoginHandler,
   RefreshSessionHandler,
+  StartGoogleOAuthHandler,
+  CompleteGoogleOAuthHandler,
+  ExchangeGoogleOAuthHandler,
+  FinalizeRegistrationHandler,
+  StartEmailRegistrationHandler,
 ];
 
-const EventProcessors = [AuthEventProcessor];
+const EventProcessors = [AuthRegistrationEventProcessor];
 
-const QueryHandlers = [GetSessionHandler];
+const QueryHandlers = [GetSessionHandler, GetCurrentUserBootstrapHandler];
 
-const Mappers = [AuthAccountMapper, SessionMapper, VerificationMapper];
+const Mappers = [AuthAccountMapper, SessionMapper, VerificationMapper, RegistrationRequestMapper];
 
 const PortBindings = [
   { provide: IPasswordHashPort, useClass: BcryptPasswordHashAdapter },
@@ -71,6 +86,8 @@ const PortBindings = [
   { provide: IAuthAccountRepository, useClass: PrismaAuthAccountRepository },
   { provide: ISessionRepository, useClass: PrismaSessionRepository },
   { provide: IVerificationRepository, useClass: PrismaVerificationRepository },
+  { provide: IRegistrationRequestRepository, useClass: PrismaRegistrationRequestRepository },
+  { provide: IGoogleOAuthPort, useClass: GoogleOAuthAdapter },
 ];
 
 import { BullModule } from '@nestjs/bullmq';
@@ -79,6 +96,7 @@ import { BullModule } from '@nestjs/bullmq';
   imports: [
     CqrsModule,
     UserModule,
+    OrgModule,
     BullModule.registerQueue({ name: 'auth-events' }),
   ],
   controllers: [AuthController, MeController],

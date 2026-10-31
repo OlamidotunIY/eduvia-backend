@@ -5,25 +5,27 @@ import {
   CurrentUser,
   type CurrentUserPayload,
 } from '@modules/shared';
-import { RegisterStudentDto, RegisterUserDto, UpdateUserDto } from '../dto';
+import { CompleteUserOnboardingDto, RegisterStudentDto, UpdateUserDto } from '../dto';
 import { UserService } from '../services';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('register')
-  async register(
-    @Body() dto: RegisterUserDto,
-    @CorrelationId() correlationId: string,
-  ) {
-    return this.userService.register(dto, correlationId);
-  }
-
   @UseGuards(AuthGuard)
   @Get('me')
   async getMe(@CurrentUser() currentUser: CurrentUserPayload) {
     return this.userService.getMe(currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('me/onboarding')
+  async completeOnboarding(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Body() dto: CompleteUserOnboardingDto,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.userService.completeOnboarding(currentUser.userId, dto, correlationId);
   }
 
   @UseGuards(AuthGuard)

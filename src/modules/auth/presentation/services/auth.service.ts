@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ChangePasswordDto,
   LoginDto,
@@ -8,6 +8,9 @@ import {
   ResendOtpDto,
   RefreshTokenDto,
   VerifyOtpDto,
+  GoogleAuthorizationDto,
+  GoogleTokenExchangeDto,
+  RegisterEmailDto,
 } from '../dto/auth.dto';
 import {
   ChangePasswordCommand,
@@ -17,11 +20,47 @@ import {
   RefreshSessionCommand,
   ResendOtpCommand,
   CompleteVerificationCommand,
+  StartGoogleOAuthCommand,
+  CompleteGoogleOAuthCommand,
+  ExchangeGoogleOAuthCommand,
+  StartEmailRegistrationCommand,
+  GetCurrentUserBootstrapQuery,
 } from '../../application';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  async getCurrentUserBootstrap(userId: string) {
+    return this.queryBus.execute(new GetCurrentUserBootstrapQuery({ userId }));
+  }
+
+  async beginGoogle(dto: GoogleAuthorizationDto) {
+    return this.commandBus.execute(
+      new StartGoogleOAuthCommand({
+        intent: dto.intent,
+        returnPath: dto.returnPath,
+      }),
+    );
+  }
+
+  async completeGoogle(
+    code: string | undefined,
+    state: string | undefined,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    return this.commandBus.execute(
+      new CompleteGoogleOAuthCommand({ code, state, ipAddress, userAgent }),
+    );
+  }
+
+  async exchangeGoogle(dto: GoogleTokenExchangeDto) {
+    return this.commandBus.execute(new ExchangeGoogleOAuthCommand(dto));
+  }
 
   async login(
     dto: LoginDto,
@@ -35,6 +74,19 @@ export class AuthService {
         passwordRaw: dto.password,
         ipAddress,
         userAgent,
+        correlationId,
+      }),
+    );
+  }
+
+  async registerEmail(dto: RegisterEmailDto, correlationId: string) {
+    return this.commandBus.execute(
+      new StartEmailRegistrationCommand({
+        email: dto.email,
+        passwordRaw: dto.password,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        timezone: dto.timezone,
         correlationId,
       }),
     );

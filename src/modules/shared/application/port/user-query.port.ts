@@ -14,6 +14,9 @@ export interface UserDTO {
   status: string;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
+  onboardingStatus: string;
+  timezone: string;
+  image: string | null;
 }
 
 export abstract class IUserQueryPort {

@@ -4,4 +4,7 @@ export * from './session-id.vo';
 export * from './session-stutus.v0';
 export * from './verification-id.vo';
 export * from './verification-status.v0';
+export * from './google-oauth-state.vo';
 export * from './verification-type.v0';
+export * from './registration-request-id.vo';
+export * from './registration-status.vo';

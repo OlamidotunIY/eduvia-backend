@@ -5,6 +5,7 @@ import { User } from '../../domain/entities';
 import { UserId } from '../../domain/value-objects/user-id.vo';
 import { UserType } from '../../domain/value-objects/user-type.v0';
 import { UserStatus } from '../../domain/value-objects/user-status.v0';
+import { OnboardingStatus } from '../../domain/value-objects/onboarding-status.vo';
 
 @Injectable()
 export class UserMapper implements IMapper<User, PrismaUser> {
@@ -20,6 +21,7 @@ export class UserMapper implements IMapper<User, PrismaUser> {
       emailVerified: record.emailVerified,
       twoFactorEnabled: record.twoFactorEnabled,
       status: record.status as UserStatus,
+      onboardingStatus: record.onboardingStatus as OnboardingStatus,
       timezone: record.timezone,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
@@ -37,6 +39,7 @@ export class UserMapper implements IMapper<User, PrismaUser> {
       emailVerified: entity.emailVerified,
       twoFactorEnabled: entity.twoFactorEnabled,
       status: entity.status as any,
+      onboardingStatus: entity.onboardingStatus as any,
       timezone: entity.timezone,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

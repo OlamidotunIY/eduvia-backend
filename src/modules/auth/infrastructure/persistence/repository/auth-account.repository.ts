@@ -36,4 +36,14 @@ export class PrismaAuthAccountRepository
     if (!record) return null;
     return this.mapper.toDomain(record);
   }
+
+  async findByProviderAccount(
+    providerId: string,
+    accountId: string,
+  ): Promise<AuthAccount | null> {
+    const record = await this.delegate.findFirst({
+      where: { providerId, accountId },
+    });
+    return record ? this.mapper.toDomain(record) : null;
+  }
 }

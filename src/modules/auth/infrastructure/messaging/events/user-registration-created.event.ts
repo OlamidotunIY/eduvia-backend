@@ -1,12 +1,11 @@
-export class UserCreatedEvent {
-  static readonly eventName = 'UserCreatedEvent';
+export class UserRegistrationCreatedEvent {
+  static readonly eventName = 'UserRegistrationCreatedEvent';
 
   constructor(
     public readonly payload: {
+      registrationRequestId: string;
       userId: string;
-      userType: string;
       email: string;
-      passwordHash: string;
     },
     public readonly correlationId: string,
   ) {}

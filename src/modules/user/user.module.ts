@@ -8,7 +8,8 @@ import {
   IUserQueryPort,
 } from '@modules/shared';
 import { UserEventProcessor } from './infrastructure/messaging';
-import { CreateUserHandler } from './application/commands/create-user/create-user.handler';
+import { CreatePendingRegistrationHandler } from './application/commands/create-pending-registration/create-pending-registration.handler';
+import { CompleteUserOnboardingHandler } from './application/commands/complete-user-onboarding/complete-user-onboarding.handler';
 import { MarkEmailVerifiedHandler } from './application/commands';
 import { RegisterStudentHandler } from './application/commands/register-student';
 import { UpdateUserHandler } from './application/commands/update-user';
@@ -36,7 +37,8 @@ import {
 import { UserController, UserService } from './presentation';
 
 const CommandHandlers = [
-  CreateUserHandler,
+  CreatePendingRegistrationHandler,
+  CompleteUserOnboardingHandler,
   MarkEmailVerifiedHandler,
   RegisterStudentHandler,
   UpdateUserHandler,

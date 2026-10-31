@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services';
 import {
   AuthGuard,
@@ -11,6 +11,11 @@ import {
 @Controller('')
 export class MeController {
   constructor(private readonly auth: AuthService) {}
+
+  @Get('me')
+  async getMe(@CurrentUser() currentUser: CurrentUserPayload) {
+    return this.auth.getCurrentUserBootstrap(currentUser.userId);
+  }
 
   @Post('logout')
   async logout(

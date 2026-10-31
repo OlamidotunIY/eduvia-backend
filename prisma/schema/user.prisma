@@ -11,6 +11,7 @@ model User {
   emailVerified       Boolean
   twoFactorEnabled    Boolean?
   status       UserStatus
+  onboardingStatus OnboardingStatus @default(pending)
   timezone    String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -18,10 +19,16 @@ model User {
 }
 
 enum UserType {
+  pending
   student
   teacher
   admin
   parent
+}
+
+enum OnboardingStatus {
+  pending
+  completed
 }
 
 enum UserStatus {
