@@ -19,9 +19,7 @@ export class JwtTokenAdapter implements ITokenPort {
   private readonly preAuthTtl: number;
   private readonly saltRounds: number;
 
-  constructor(
-    private jwtService: JwtService
-  ) {
+  constructor(private jwtService: JwtService) {
     this.secret = process.env['JWT_SECRET']!;
     this.accessTtl = parseInt(process.env['JWT_ACCESS_TTL'] ?? '900', 10);
     this.refreshTtl = parseInt(process.env['JWT_REFRESH_TTL'] ?? '2592000', 10);

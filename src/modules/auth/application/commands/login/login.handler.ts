@@ -14,8 +14,11 @@ import {
   VerificationId,
   VerificationType,
 } from '../../../domain';
-import { IPasswordHashPort, IUserQueryPort, RedisService } from '@modules/shared';
-import crypto from 'node:crypto';
+import {
+  IPasswordHashPort,
+  IUserQueryPort,
+  RedisService,
+} from '@modules/shared';
 import { AuthTokensResult } from './login.result';
 
 @CommandHandler(LoginCommand)
@@ -86,12 +89,11 @@ export class LoginHandler implements ICommandHandler<
     }
 
     const sessionId = SessionId.create();
-    const sessionToken = crypto.randomBytes(32).toString('hex');
     const refreshTokenResult = await this.tokenPort.generateRefreshToken();
     const session = Session.create({
       id: sessionId,
       expiresAt: refreshTokenResult.expiresAt,
-      token: sessionToken,
+      token: refreshTokenResult.hash,
       userId: user.id,
       ipAddress: payload.ipAddress,
       userAgent: payload.userAgent,

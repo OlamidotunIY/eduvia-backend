@@ -8,6 +8,11 @@ export class LogoutDto {
   jti!: string;
 }
 
+export class RefreshTokenDto {
+  sessionId!: string;
+  refreshToken!: string;
+}
+
 export class VerifyOtpDto {
   code!: string;
   email!: string;

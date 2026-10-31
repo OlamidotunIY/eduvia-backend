@@ -76,6 +76,26 @@ export class Session extends AggregateRoot<SessionId> {
     this.touch();
   }
 
+  public rotate(params: {
+    tokenHash: string;
+    expiresAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }): void {
+    if (!params.tokenHash.trim()) {
+      throw new AuthInvariantError('Session token cannot be empty');
+    }
+    if (params.expiresAt <= new Date()) {
+      throw new AuthInvariantError('Session expiration must be in the future');
+    }
+
+    this._token = params.tokenHash;
+    this._expiresAt = params.expiresAt;
+    this._ipAddress = params.ipAddress ?? this._ipAddress;
+    this._userAgent = params.userAgent ?? this._userAgent;
+    this.touch();
+  }
+
   public isExpired(): boolean {
     return new Date() > this._expiresAt;
   }
@@ -83,7 +103,7 @@ export class Session extends AggregateRoot<SessionId> {
   private touch(): void {
     this._updatedAt = new Date();
   }
-  
+
   // Getters
   public get expiresAt(): Date {
     return this._expiresAt;

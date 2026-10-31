@@ -1,4 +1,4 @@
-import { ExceptionType } from '../../../domain';
+import { ExceptionType } from '../../domain';
 
 export class AddAvailabilityExceptionDto {
   date: string;

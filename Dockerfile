@@ -2,25 +2,29 @@
 # Eduvia Backend - Production Dockerfile (Multi-stage Node.js 22 LTS Alpine)
 # ==============================================================================
 
+ARG PNPM_VERSION=11.22.0
+
 # ── Stage 1: Dependencies ─────────────────────────────────────────────────────
 FROM node:22-alpine AS deps
+ARG PNPM_VERSION
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@${PNPM_VERSION}
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # ── Stage 2: Builder ──────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
+ARG PNPM_VERSION
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@${PNPM_VERSION}
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml tsconfig.json nest-cli.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json tsconfig.build.json nest-cli.json prisma7.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 

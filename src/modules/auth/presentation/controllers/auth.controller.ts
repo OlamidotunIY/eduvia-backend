@@ -3,6 +3,7 @@ import { CorrelationId } from '@modules/shared';
 import {
   ChangePasswordDto,
   LoginDto,
+  RefreshTokenDto,
   RequestPasswordResetDto,
   ResendOtpDto,
   VerifyOtpDto,
@@ -21,6 +22,15 @@ export class AuthController {
     @CorrelationId() correlationId: string,
   ) {
     return this.auth.login(dto, ip, userAgent, correlationId);
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Body() dto: RefreshTokenDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    return this.auth.refresh(dto, ip, userAgent);
   }
 
   @Post('verify-otp')

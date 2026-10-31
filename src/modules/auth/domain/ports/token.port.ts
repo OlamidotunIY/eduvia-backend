@@ -44,4 +44,3 @@ export abstract class ITokenPort {
     authAccountId: string;
   }): Promise<GeneratePreAuthTokenResult>;
 }
-

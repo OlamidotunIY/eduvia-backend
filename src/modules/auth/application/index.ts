@@ -9,13 +9,17 @@ export type {
 export { CompleteVerificationHandler } from './commands/complete-verification/complete-verification.handler';
 export { CompleteVerificationCommand } from './commands/complete-verification/complete-verification.command';
 
-
 export { ChangePasswordHandler } from './commands/change-password/change-password.handler';
 export { ChangePasswordCommand } from './commands/change-password/change-password.command';
 
 export { LoginHandler } from './commands/login/login.handler';
 export { LoginCommand } from './commands/login/login.command';
 export type { AuthTokensResult } from './commands/login/login.result';
+
+export { RefreshSessionHandler } from './commands/refresh-session/refresh-session.handler';
+export { RefreshSessionCommand } from './commands/refresh-session/refresh-session.command';
+export type { RefreshSessionPayload } from './commands/refresh-session/refresh-session.command';
+export type { RefreshSessionResult } from './commands/refresh-session/refresh-session.result';
 
 export { RevokeAllSessionsHandler } from './commands/revoke-all-sessions/revoke-all-sessions.handler';
 export { RevokeAllSessionCommand } from './commands/revoke-all-sessions/rekove-all-sessions.command';

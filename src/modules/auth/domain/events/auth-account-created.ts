@@ -1,8 +1,6 @@
 import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 
-class AuthAccountCreatedEvent extends BaseDomainEvent<
-  AuthAccountCreatedEvent.Payload
-> {
+class AuthAccountCreatedEvent extends BaseDomainEvent<AuthAccountCreatedEvent.Payload> {
   constructor(
     aggregateId: string,
     payload: AuthAccountCreatedEvent.Payload,

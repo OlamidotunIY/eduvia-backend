@@ -11,9 +11,7 @@ import {
 import { RequestPasswordResetCommand } from './request-password-reset.command';
 
 @CommandHandler(RequestPasswordResetCommand)
-export class RequestPasswordResetHandler
-  implements ICommandHandler<RequestPasswordResetCommand>
-{
+export class RequestPasswordResetHandler implements ICommandHandler<RequestPasswordResetCommand> {
   constructor(
     private readonly userQueryPort: IUserQueryPort,
     private readonly authAccountRepository: IAuthAccountRepository,

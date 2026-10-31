@@ -90,7 +90,7 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     return new AuthAccount({
       id: params.id,
       accountId: params.email.trim().toLowerCase(),
-      providerId: 'CREDENTIALS',
+      providerId: 'credentials',
       userId: params.userId,
       accessToken: null,
       refreshToken: null,
@@ -157,10 +157,7 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     this.addDomainEvent(
       new AuthEmailVerifiedEvent(
         this.getId(),
-        new AuthEmailVerifiedEvent.Payload(
-          this._userId,
-          email,
-        ),
+        new AuthEmailVerifiedEvent.Payload(this._userId, email),
         correlationId,
       ),
     );

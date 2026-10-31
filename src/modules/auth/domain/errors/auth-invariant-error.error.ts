@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError } from "../../../shared";
+import { BusinessRuleViolationError } from '../../../shared';
 
 class AuthInvariantError extends BusinessRuleViolationError {
   constructor(message: string, details?: unknown) {
