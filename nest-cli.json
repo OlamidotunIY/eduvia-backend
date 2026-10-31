@@ -4,6 +4,17 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "builder": "swc"
+    "builder": "tsc",
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": false,
+          "introspectComments": true,
+          "controllerFileNameSuffix": [".controller.ts"],
+          "dtoFileNameSuffix": [".dto.ts"]
+        }
+      }
+    ]
   }
 }
