@@ -6,6 +6,7 @@ import {
   OrganizationMembershipId,
   OrganizationRole,
 } from '../value-objects';
+import { UserActiveOrganizationChangedEvent } from '../events';
 
 export class OrganizationMembership extends AggregateRoot<OrganizationMembershipId> {
   public readonly orgId: OrganizationId;
@@ -91,6 +92,19 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     }
     this._status = MembershipStatus.SUSPENDED;
     this._updatedAt = new Date();
+  }
+
+  public selectAsActive(correlationId: string): void {
+    if (!this.isActive()) {
+      throw new OrganizationInvariantError('Only an active membership can be selected');
+    }
+    this.addDomainEvent(
+      new UserActiveOrganizationChangedEvent(
+        this.getId(),
+        new UserActiveOrganizationChangedEvent.Payload(this.userId, this.orgId.value),
+        correlationId,
+      ),
+    );
   }
 
   public get role(): OrganizationRole {

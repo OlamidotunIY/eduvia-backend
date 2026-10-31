@@ -19,6 +19,7 @@ import {
   RejectTeacherApplicationHandler,
   SendOrganizationInvitationHandler,
   SuspendMemberHandler,
+  SelectActiveOrganizationHandler,
   UpdateOrganizationPolicyHandler,
   UpdateOrganizationProfileHandler,
   UpdateOrganizationSubjectHandler,
@@ -69,6 +70,7 @@ const commandHandlers = [
   AcceptOrganizationInvitationByTokenHandler,
   ChangeMemberRoleHandler,
   SuspendMemberHandler,
+  SelectActiveOrganizationHandler,
 ];
 
 const queryHandlers = [

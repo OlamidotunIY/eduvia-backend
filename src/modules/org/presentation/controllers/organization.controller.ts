@@ -47,6 +47,20 @@ export class OrganizationController {
   }
 
   @UseGuards(AuthGuard)
+  @Post('active/:organizationId')
+  async selectActiveOrganization(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.organizationService.selectActiveOrganization(
+      currentUser.userId,
+      organizationId,
+      correlationId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
   @Post('invitations/:token/accept')
   async acceptInvitation(
     @CurrentUser() currentUser: CurrentUserPayload,

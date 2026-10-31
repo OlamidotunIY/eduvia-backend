@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreatePendingRegistrationCommand, MarkEmailVerifiedCommand, SuspendUserCommand } from '../../../application/commands';
-import { AccountSuspendedEvent, AuthEmailVerifiedEvent, UserRegistrationRequestedEvent } from '../events';
+import { CreatePendingRegistrationCommand, MarkEmailVerifiedCommand, SetActiveOrganizationCommand, SuspendUserCommand } from '../../../application/commands';
+import { AccountSuspendedEvent, AuthEmailVerifiedEvent, UserActiveOrganizationChangedEvent, UserRegistrationRequestedEvent } from '../events';
 
 @Processor('user-events')
 export class UserEventProcessor extends WorkerHost {
@@ -11,6 +11,11 @@ export class UserEventProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<void> {
+    if (job.name === UserActiveOrganizationChangedEvent.eventName) {
+      const payload = job.data.payload as UserActiveOrganizationChangedEvent['payload'];
+      await this.commandBus.execute(new SetActiveOrganizationCommand(payload));
+      return;
+    }
     if (job.name === UserRegistrationRequestedEvent.eventName) {
       const payload = job.data.payload as UserRegistrationRequestedEvent['payload'];
       await this.commandBus.execute(

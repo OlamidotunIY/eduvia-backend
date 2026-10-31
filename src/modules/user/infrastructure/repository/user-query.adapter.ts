@@ -29,6 +29,7 @@ export class UserQueryAdapter implements IUserQueryPort {
       onboardingStatus: user.onboardingStatus,
       timezone: user.timezone,
       image: user.image,
+      activeOrganizationId: user.activeOrganizationId,
     };
   }
 }

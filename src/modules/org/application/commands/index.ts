@@ -14,3 +14,4 @@ export * from './send-org-invitation';
 export * from './accept-org-invitation';
 export * from './change-member-role';
 export * from './suspend-member';
+export * from './select-active-organization';

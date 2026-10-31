@@ -10,6 +10,7 @@ import {
 import { UserEventProcessor } from './infrastructure/messaging';
 import { CreatePendingRegistrationHandler } from './application/commands/create-pending-registration/create-pending-registration.handler';
 import { CompleteUserOnboardingHandler } from './application/commands/complete-user-onboarding/complete-user-onboarding.handler';
+import { SetActiveOrganizationHandler } from './application/commands/set-active-organization/set-active-organization.handler';
 import { MarkEmailVerifiedHandler } from './application/commands';
 import { RegisterStudentHandler } from './application/commands/register-student';
 import { UpdateUserHandler } from './application/commands/update-user';
@@ -39,6 +40,7 @@ import { UserController, UserService } from './presentation';
 const CommandHandlers = [
   CreatePendingRegistrationHandler,
   CompleteUserOnboardingHandler,
+  SetActiveOrganizationHandler,
   MarkEmailVerifiedHandler,
   RegisterStudentHandler,
   UpdateUserHandler,

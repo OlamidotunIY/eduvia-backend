@@ -20,7 +20,9 @@ export class GetCurrentUserBootstrapHandler implements IQueryHandler<GetCurrentU
       id: item.organization.id, name: item.organization.name, slug: item.organization.slug,
       role: item.membership.role, status: item.organization.status, memberCount: item.memberCount,
     }));
-    const active = organizationDtos[0] ?? null;
+    const active = user.activeOrganizationId
+      ? organizationDtos.find((organization) => organization.id === user.activeOrganizationId) ?? null
+      : null;
     return {
       user: {
         id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName,

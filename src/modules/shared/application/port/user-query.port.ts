@@ -17,6 +17,7 @@ export interface UserDTO {
   onboardingStatus: string;
   timezone: string;
   image: string | null;
+  activeOrganizationId: string | null;
 }
 
 export abstract class IUserQueryPort {

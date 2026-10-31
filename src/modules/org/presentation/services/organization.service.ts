@@ -23,6 +23,7 @@ import {
   RejectTeacherApplicationCommand,
   SendOrganizationInvitationCommand,
   SuspendMemberCommand,
+  SelectActiveOrganizationCommand,
   UpdateOrganizationPolicyCommand,
   UpdateOrganizationProfileCommand,
   UpdateOrganizationSubjectCommand,
@@ -59,6 +60,18 @@ export class OrganizationService {
         correlationId,
       }),
     );
+  }
+
+  async selectActiveOrganization(
+    userId: string,
+    organizationId: string,
+    correlationId: string,
+  ) {
+    return this.commandBus.execute(new SelectActiveOrganizationCommand({
+      userId,
+      organizationId,
+      correlationId,
+    }));
   }
 
   async getOrganizationBySlug(slug: string) {

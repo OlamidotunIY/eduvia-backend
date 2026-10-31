@@ -24,6 +24,7 @@ export class User extends AggregateRoot<UserId> {
     private _twoFactorEnabled: boolean | null,
     private _status: UserStatus,
     private _onboardingStatus: OnboardingStatus,
+    private _activeOrganizationId: string | null,
     private _timezone: string,
     public readonly createdAt: Date,
     private _updatedAt: Date,
@@ -65,6 +66,10 @@ export class User extends AggregateRoot<UserId> {
 
   public get onboardingStatus(): OnboardingStatus {
     return this._onboardingStatus;
+  }
+
+  public get activeOrganizationId(): string | null {
+    return this._activeOrganizationId;
   }
 
   public isOnboardingComplete(): boolean {
@@ -136,6 +141,7 @@ export class User extends AggregateRoot<UserId> {
       false,
       UserStatus.ACTIVE,
       params.onboardingStatus ?? OnboardingStatus.COMPLETED,
+      null,
       params.timezone?.trim() || 'UTC',
       now,
       now,
@@ -172,6 +178,7 @@ export class User extends AggregateRoot<UserId> {
       false,
       UserStatus.ACTIVE,
       OnboardingStatus.PENDING,
+      null,
       params.timezone?.trim() || 'UTC',
       now,
       now,
@@ -257,6 +264,11 @@ export class User extends AggregateRoot<UserId> {
     );
   }
 
+  public setActiveOrganization(organizationId: string): void {
+    this._activeOrganizationId = organizationId;
+    this._updatedAt = new Date();
+  }
+
   public suspend(): void {
     if (this.isSuspended()) {
       throw new UserAlreadySuspendedError();
@@ -296,6 +308,7 @@ export class User extends AggregateRoot<UserId> {
     twoFactorEnabled: boolean | null;
     status: UserStatus;
     onboardingStatus: OnboardingStatus;
+    activeOrganizationId: string | null;
     timezone: string;
     updatedAt: Date;
     createdAt: Date;
@@ -312,6 +325,7 @@ export class User extends AggregateRoot<UserId> {
       params.twoFactorEnabled,
       params.status,
       params.onboardingStatus,
+      params.activeOrganizationId,
       params.timezone,
       params.createdAt,
       params.updatedAt,
