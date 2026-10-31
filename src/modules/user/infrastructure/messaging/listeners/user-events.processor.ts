@@ -1,12 +1,17 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
+import { Optional } from '@nestjs/common';
+import { NotificationsGateway } from '@modules/websocket';
 import { CreatePendingRegistrationCommand, MarkEmailVerifiedCommand, SetActiveOrganizationCommand, SuspendUserCommand } from '../../../application/commands';
 import { AccountSuspendedEvent, AuthEmailVerifiedEvent, UserActiveOrganizationChangedEvent, UserRegistrationRequestedEvent } from '../events';
 
 @Processor('user-events')
 export class UserEventProcessor extends WorkerHost {
-  constructor(private readonly commandBus: CommandBus) {
+  constructor(
+    private readonly commandBus: CommandBus,
+    @Optional() private readonly notificationsGateway?: NotificationsGateway,
+  ) {
     super();
   }
 
@@ -14,6 +19,10 @@ export class UserEventProcessor extends WorkerHost {
     if (job.name === UserActiveOrganizationChangedEvent.eventName) {
       const payload = job.data.payload as UserActiveOrganizationChangedEvent['payload'];
       await this.commandBus.execute(new SetActiveOrganizationCommand(payload));
+      this.notificationsGateway?.notifyActiveOrganizationChanged(
+        payload.userId,
+        payload.organizationId,
+      );
       return;
     }
     if (job.name === UserRegistrationRequestedEvent.eventName) {

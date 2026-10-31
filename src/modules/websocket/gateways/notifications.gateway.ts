@@ -73,4 +73,14 @@ export class NotificationsGateway
       unreadCount: count,
     });
   }
+
+  public notifyActiveOrganizationChanged(
+    userId: string,
+    organizationId: string,
+  ): void {
+    if (!this.server) return;
+    this.server.to(`user:${userId}`).emit('organization:active_changed', {
+      organizationId,
+    });
+  }
 }
