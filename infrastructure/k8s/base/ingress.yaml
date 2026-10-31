@@ -2,8 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: eduvia-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
+  tls:
+  - hosts:
+    - api.eduvia.name.ng
+    secretName: eduvia-api-tls
   rules:
   - host: api.eduvia.name.ng
     http:

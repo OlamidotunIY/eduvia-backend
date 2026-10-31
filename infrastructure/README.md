@@ -93,6 +93,20 @@ infrastructure/
 
 ### Full Deployment Workflow
 
+Before the first deployment, create a Cloudflare Origin Certificate for
+`api.eduvia.name.ng` and save it to the ignored paths
+`infrastructure/tls/api.eduvia.name.ng.pem` and
+`infrastructure/tls/api.eduvia.name.ng.key`. After the VM exists, create or
+update the Kubernetes TLS secret:
+
+```bash
+make configure-tls
+```
+
+Keep Cloudflare SSL/TLS mode set to **Full (strict)**. The ingress accepts HTTPS
+only and the application allows browser credentials only from
+`https://app.eduvia.name.ng`.
+
 ```bash
 # 1. Provision Azure infrastructure and boot the cluster
 make start
@@ -115,8 +129,8 @@ make backup-db
 # 7. Restore local eduvia_backup.sql to remote MySQL
 make restore-db
 
-# 8. Update Cloudflare DNS record to point to the new VM IP
-make update-dns
+# 8. Follow live application logs (Ctrl+C to stop)
+make logs
 
 # 9. Destroy infrastructure ($0 billing) after backing up MySQL
 make stop
