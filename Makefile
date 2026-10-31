@@ -92,9 +92,9 @@ mysql-tunnel:
 	@echo "=> Keep this terminal open; press Ctrl+C to close the tunnel."
 	$(SSH) $(SSH_OPTIONS) -o ExitOnForwardFailure=yes -N -i $(SSH_KEY) -L $(MYSQL_TUNNEL_PORT):$(MYSQL_SERVICE_IP):$(MYSQL_SERVICE_PORT) ubuntu@$(VM_IP)
 
-# Follow application logs from every Eduvia pod. Press Ctrl+C to stop following.
+# Follow application logs from the newest Eduvia pod. Press Ctrl+C to stop following.
 logs:
-	$(SSH) $(SSH_OPTIONS) -t -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl logs -l app=eduvia-app --all-containers=true --prefix=true --tail=200 --follow --max-log-requests=10"
+	$(SSH) $(SSH_OPTIONS) -t -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pods -l app=eduvia-app --sort-by=.metadata.creationTimestamp -o name | tail -n 1) && if [ -z \"$$POD\" ]; then echo 'No Eduvia application pod found.'; exit 1; fi && echo \"Following $$POD\" && kubectl logs \"$$POD\" --all-containers=true --prefix=true --tail=200 --follow"
 
 # Upload the ignored origin certificate and create/update the
 # Kubernetes TLS secret used by the Traefik ingress.
