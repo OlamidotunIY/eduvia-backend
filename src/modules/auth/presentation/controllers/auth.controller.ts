@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Ip, Post, Query, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, Post, Query, Res } from '@nestjs/common';
 import { CorrelationId } from '@modules/shared';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
@@ -27,6 +27,22 @@ export class AuthController {
     @CorrelationId() correlationId: string,
   ) {
     return this.auth.registerEmail(dto, correlationId);
+  }
+
+  @Get('registrations/:registrationRequestId')
+  @ApiOperation({
+    summary: 'Read the asynchronous registration hand-off status',
+    description:
+      'Use the opaque registration request id returned by email registration or the Google sign-up callback. The response exposes no user profile or credential data.',
+  })
+  async getRegistrationStatus(
+    @Param('registrationRequestId') registrationRequestId: string,
+    @Query('continuation') registrationContinuation: string | undefined,
+  ) {
+    return this.auth.getRegistrationStatus(
+      registrationRequestId,
+      registrationContinuation ?? '',
+    );
   }
 
   @Post('login')

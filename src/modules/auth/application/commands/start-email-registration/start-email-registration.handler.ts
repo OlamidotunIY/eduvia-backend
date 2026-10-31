@@ -4,6 +4,8 @@ import { StartEmailRegistrationResult } from './start-email-registration.result'
 import { IRegistrationRequestRepository } from '../../../domain/repository';
 import { IPasswordHashPort, IUserQueryPort } from '@modules/shared';
 import { RegistrationRequest, RegistrationRequestId } from '../../../domain';
+import { RedisService } from '@modules/shared';
+import { randomBytes } from 'node:crypto';
 
 @CommandHandler(StartEmailRegistrationCommand)
 export class StartEmailRegistrationHandler implements ICommandHandler<StartEmailRegistrationCommand, StartEmailRegistrationResult> {
@@ -11,6 +13,7 @@ export class StartEmailRegistrationHandler implements ICommandHandler<StartEmail
     private readonly registrationRequestRepository: IRegistrationRequestRepository,
     private readonly passwordHashPort: IPasswordHashPort,
     private readonly userQueryPort: IUserQueryPort,
+    private readonly redis: RedisService,
   ) {}
 
   async execute(command: StartEmailRegistrationCommand): Promise<StartEmailRegistrationResult> {
@@ -24,8 +27,13 @@ export class StartEmailRegistrationHandler implements ICommandHandler<StartEmail
     const existingRequest = await this.registrationRequestRepository.findByEmail(
       payload.email.trim().toLowerCase(),
     );
+    const registrationContinuation = randomBytes(32).toString('base64url');
     if (existingRequest) {
-      return { registrationRequestId: existingRequest.getId() };
+      await this.saveContinuation(existingRequest.getId(), registrationContinuation);
+      return {
+        registrationRequestId: existingRequest.getId(),
+        registrationContinuation,
+      };
     }
 
     const request = RegistrationRequest.create({
@@ -42,9 +50,23 @@ export class StartEmailRegistrationHandler implements ICommandHandler<StartEmail
       correlationId: payload.correlationId,
     });
     await this.registrationRequestRepository.save(request);
+    await this.saveContinuation(request.getId(), registrationContinuation);
 
     return {
       registrationRequestId: request.getId(),
+      registrationContinuation,
     };
+  }
+
+  private async saveContinuation(
+    registrationRequestId: string,
+    registrationContinuation: string,
+  ): Promise<void> {
+    await this.redis.getClient().set(
+      `auth:registration:continuation:${registrationRequestId}`,
+      registrationContinuation,
+      'EX',
+      30 * 60,
+    );
   }
 }

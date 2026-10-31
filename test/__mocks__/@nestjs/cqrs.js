@@ -8,6 +8,8 @@ class CommandBus {
 
 class Command {}
 
+class Query {}
+
 class QueryBus {
   execute() {
     return Promise.resolve();
@@ -35,4 +37,5 @@ module.exports = {
   EventBus,
   CqrsModule,
   Command,
+  Query,
 };

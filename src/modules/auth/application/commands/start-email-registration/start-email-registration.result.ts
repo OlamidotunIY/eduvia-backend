@@ -9,4 +9,5 @@ export interface StartEmailRegistrationPayload {
 
 export interface StartEmailRegistrationResult {
   registrationRequestId: string;
+  registrationContinuation: string;
 }

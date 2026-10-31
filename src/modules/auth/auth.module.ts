@@ -18,6 +18,7 @@ import {
   ExchangeGoogleOAuthHandler,
   FinalizeRegistrationHandler,
   StartEmailRegistrationHandler,
+  GetRegistrationStatusHandler,
 } from './application';
 import {
   AuthRegistrationEventProcessor,
@@ -73,7 +74,11 @@ const CommandHandlers = [
 
 const EventProcessors = [AuthRegistrationEventProcessor];
 
-const QueryHandlers = [GetSessionHandler, GetCurrentUserBootstrapHandler];
+const QueryHandlers = [
+  GetSessionHandler,
+  GetCurrentUserBootstrapHandler,
+  GetRegistrationStatusHandler,
+];
 
 const Mappers = [AuthAccountMapper, SessionMapper, VerificationMapper, RegistrationRequestMapper];
 

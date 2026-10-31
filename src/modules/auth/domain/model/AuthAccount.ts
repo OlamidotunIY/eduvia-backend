@@ -47,6 +47,36 @@ class AuthAccount extends AggregateRoot<AuthAccountId> {
     this._updatedAt = params.updatedAt;
   }
 
+  public static create(
+    params:
+      | {
+          kind: 'credentials';
+          id: AuthAccountId;
+          userId: string;
+          email: string;
+          passwordHash: string;
+          scope?: string;
+        }
+      | {
+          kind: 'oauth';
+          id: AuthAccountId;
+          accountId: string;
+          providerId: string;
+          userId: string;
+          accessToken?: string;
+          refreshToken?: string;
+          idToken?: string;
+          accessTokenExpiresAt?: Date;
+          refreshTokenExpiresAt?: Date;
+          scope?: string;
+        },
+  ): AuthAccount {
+    if (params.kind === 'credentials') {
+      return this.createCredentialsAccount(params);
+    }
+    return this.createOAuthAccount(params);
+  }
+
   public static createOAuthAccount(params: {
     id: AuthAccountId;
     accountId: string; // The ID from the provider (e.g., Google Sub ID)

@@ -55,7 +55,15 @@ export class CompleteGoogleOAuthHandler implements ICommandHandler<CompleteGoogl
         passwordHash: null, correlationId: state,
       });
       await this.registrationRequestRepository.save(request);
+      const registrationContinuation = randomBytes(32).toString('base64url');
+      await this.redis.getClient().set(
+        `auth:registration:continuation:${request.getId()}`,
+        registrationContinuation,
+        'EX',
+        30 * 60,
+      );
       callback.searchParams.set('registrationRequestId', request.getId());
+      callback.searchParams.set('registrationContinuation', registrationContinuation);
       callback.searchParams.set('registrationStatus', 'pending');
       return { redirectUrl: callback.toString() };
     }
@@ -73,7 +81,7 @@ export class CompleteGoogleOAuthHandler implements ICommandHandler<CompleteGoogl
     const sessionId = SessionId.create();
     const refreshToken = await this.tokenPort.generateRefreshToken();
     await this.sessionRepository.save(Session.create({ id: sessionId, userId: input.userId, token: refreshToken.hash, expiresAt: refreshToken.expiresAt, ipAddress: input.ipAddress, userAgent: input.userAgent }));
-    const accessToken = await this.tokenPort.generateAccessToken({ sub: input.authAccountId, userId: input.userId, userType: input.userType, scope: input.scope, sessionId: sessionId.getId() });
-    return { sessionId: sessionId.getId(), accessToken: accessToken.token, accessTokenExpiresAt: accessToken.expiresAt, refreshToken: refreshToken.raw, refreshTokenExpiresAt: refreshToken.expiresAt };
+    const accessToken = await this.tokenPort.generateAccessToken({ sub: input.authAccountId, userId: input.userId, userType: input.userType, scope: input.scope, sessionId: sessionId.value });
+    return { sessionId: sessionId.value, accessToken: accessToken.token, accessTokenExpiresAt: accessToken.expiresAt, refreshToken: refreshToken.raw, refreshTokenExpiresAt: refreshToken.expiresAt };
   }
 }

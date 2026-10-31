@@ -25,6 +25,7 @@ import {
   ExchangeGoogleOAuthCommand,
   StartEmailRegistrationCommand,
   GetCurrentUserBootstrapQuery,
+  GetRegistrationStatusQuery,
 } from '../../application';
 
 @Injectable()
@@ -36,6 +37,18 @@ export class AuthService {
 
   async getCurrentUserBootstrap(userId: string) {
     return this.queryBus.execute(new GetCurrentUserBootstrapQuery({ userId }));
+  }
+
+  async getRegistrationStatus(
+    registrationRequestId: string,
+    registrationContinuation: string,
+  ) {
+    return this.queryBus.execute(
+      new GetRegistrationStatusQuery({
+        registrationRequestId,
+        registrationContinuation,
+      }),
+    );
   }
 
   async beginGoogle(dto: GoogleAuthorizationDto) {

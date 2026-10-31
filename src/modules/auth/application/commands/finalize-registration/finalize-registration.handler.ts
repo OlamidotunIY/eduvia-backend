@@ -7,13 +7,17 @@ import {
   AuthAccountId,
   IAuthAccountRepository,
   IOtpPort,
+  ISessionRepository,
+  ITokenPort,
   IVerificationRepository,
   RegistrationRequestId,
   Verification,
   VerificationId,
   VerificationType,
+  Session,
+  SessionId,
 } from '../../../domain';
-import { RedisService } from '@modules/shared';
+import { IUserQueryPort, RedisService } from '@modules/shared';
 
 @CommandHandler(FinalizeRegistrationCommand)
 export class FinalizeRegistrationHandler implements ICommandHandler<FinalizeRegistrationCommand, FinalizeRegistrationResult> {
@@ -23,6 +27,9 @@ export class FinalizeRegistrationHandler implements ICommandHandler<FinalizeRegi
     private readonly verificationRepository: IVerificationRepository,
     private readonly otpPort: IOtpPort,
     private readonly redis: RedisService,
+    private readonly sessionRepository: ISessionRepository,
+    private readonly tokenPort: ITokenPort,
+    private readonly userQueryPort: IUserQueryPort,
   ) {}
 
   async execute(command: FinalizeRegistrationCommand): Promise<FinalizeRegistrationResult> {
@@ -36,7 +43,9 @@ export class FinalizeRegistrationHandler implements ICommandHandler<FinalizeRegi
     const existingAccount = await this.authAccountRepository.findByUserId(
       payload.userId,
     );
-    if (existingAccount) return { authAccountId: existingAccount.getId() };
+    if (existingAccount) {
+      return { authAccountId: existingAccount.getId() };
+    }
 
     const authAccount = request.providerId === 'credentials'
       ? AuthAccount.createCredentialsAccount({
@@ -77,6 +86,43 @@ export class FinalizeRegistrationHandler implements ICommandHandler<FinalizeRegi
     request.recordUserCreated(payload.userId);
     request.complete();
     await this.registrationRequestRepository.save(request);
+
+    if (request.providerId === 'google') {
+      const user = await this.userQueryPort.getUserById(payload.userId);
+      if (!user) throw new Error('Registered user not found');
+
+      const sessionId = SessionId.create();
+      const refreshToken = await this.tokenPort.generateRefreshToken();
+      await this.sessionRepository.save(
+        Session.create({
+          id: sessionId,
+          userId: payload.userId,
+          token: refreshToken.hash,
+          expiresAt: refreshToken.expiresAt,
+          ipAddress: undefined,
+          userAgent: undefined,
+        }),
+      );
+      const accessToken = await this.tokenPort.generateAccessToken({
+        sub: authAccount.getId(),
+        userId: payload.userId,
+        userType: user.userType,
+        scope: 'onboarding',
+        sessionId: sessionId.value,
+      });
+      await this.redis.getClient().set(
+        `auth:registration:google-session:${request.getId()}`,
+        JSON.stringify({
+          sessionId: sessionId.value,
+          accessToken: accessToken.token,
+          accessTokenExpiresAt: accessToken.expiresAt,
+          refreshToken: refreshToken.raw,
+          refreshTokenExpiresAt: refreshToken.expiresAt,
+        }),
+        'EX',
+        10 * 60,
+      );
+    }
 
     return {
       authAccountId: authAccount.getId(),

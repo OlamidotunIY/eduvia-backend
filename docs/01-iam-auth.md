@@ -1,5 +1,16 @@
 # 01 — IAM & Auth
 
+## Registration and onboarding contract
+
+Email and Google sign-up both start in `auth`; credentials remain owned by `auth` throughout. A registration request is persisted by Auth, then an outbox event asks User to create the pending identity. User returns only the registration request id and user id to Auth; neither a raw password nor a password hash crosses that boundary.
+
+`POST /auth/register/email` returns `{ registrationRequestId, registrationContinuation }`. Google sign-up redirects to the frontend with the same two values. The client polls `GET /auth/registrations/:registrationRequestId?continuation=...` until `status` is `completed`.
+
+- Credentials registration then returns `nextAction: verify_email`; the OTP is delivered through the `notification-events` worker.
+- Google registration returns a one-time onboarding session in `session`; it is removed from Redis when read.
+- The onboarding token is restricted to `/me`, `/users/me/onboarding`, and logout until a parent or teacher role is selected.
+- Completing teacher onboarding returns `nextStep: teacher_organization_choice`; the teacher may create an organization or apply through the marketplace. Creating an organization or receiving a first approved membership sets `activeOrganizationId` only when the user has not already selected one.
+
 > **Modules:** `src/modules/auth` + `src/modules/user`
 > **Status:** Core flow built (register → OTP verification → login → logout). ParentProfile, StudentProfile and TeacherProfile aggregates exist. TOTP enable/verify flows and a refresh-token endpoint are not built yet.
 >
