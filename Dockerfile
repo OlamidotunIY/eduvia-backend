@@ -24,7 +24,7 @@ WORKDIR /app
 RUN npm install -g pnpm@${PNPM_VERSION}
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json nest-cli.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json nest-cli.json prisma7.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 
