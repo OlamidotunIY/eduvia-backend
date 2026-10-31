@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -39,6 +40,13 @@ export class AuthGuard implements CanActivate {
 
       if (isRevoked || !sessionExists) {
         throw new UnauthorizedException();
+      }
+
+      if (
+        payload.scope === 'onboarding' &&
+        !['/me', '/users/me/onboarding', '/logout'].includes(request.path)
+      ) {
+        throw new ForbiddenException('Complete onboarding before accessing this resource');
       }
 
       request['user'] = payload;
