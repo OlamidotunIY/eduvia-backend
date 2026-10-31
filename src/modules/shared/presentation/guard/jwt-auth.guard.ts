@@ -1,4 +1,3 @@
-
 import {
   CanActivate,
   ExecutionContext,
@@ -7,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { RedisService } from '../../infrastructure';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import { CurrentUserPayload } from '../decorators';
 
 @Injectable()

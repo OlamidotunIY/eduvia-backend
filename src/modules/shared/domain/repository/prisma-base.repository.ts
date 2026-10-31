@@ -1,6 +1,6 @@
 import { OutboxStatus } from '@generated/prisma/enums';
 import { AggregateRoot, DomainEvent } from '..';
-import { PrismaService } from '../../infrastructure';
+import { PrismaService } from '../../infrastructure/prisma.service';
 import { BaseRepository } from './base.repository';
 import { PrismaPromise } from '@generated/prisma/internal/prismaNamespace';
 import { BaseEntityId, OutboxMessageId } from '../value-object';
