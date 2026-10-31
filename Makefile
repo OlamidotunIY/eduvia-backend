@@ -49,7 +49,7 @@ else
 	@echo "=> No Firebase service-account JSON found; using the placeholder Kubernetes secret."
 endif
 	@echo "=> Ensuring Docker Image exists in K3s..."
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q eduvia/app:latest" || $(MAKE) build-image
+	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q eduvia/app:latest" || "$(MAKE)" build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && trap 'rm -f /tmp/.env.production' EXIT && kubectl create secret generic eduvia-secrets --from-env-file=/tmp/.env.production --dry-run=client -o yaml | kubectl apply -f - && kubectl delete secret firebase-secrets --ignore-not-found && if [ -f '/tmp/$(FIREBASE_JSON_NAME)' ]; then kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME); else kubectl create secret generic firebase-secrets --from-literal=placeholder=true; fi"
 	@echo "=> Applying Kubernetes Manifests..."
@@ -75,7 +75,7 @@ prune-runtime-images:
 # 2. Backup the database and completely destroy the infrastructure
 stop:
 	@echo "=> Backing up the database to local machine..."
-	-$(MAKE) backup-db || true
+	-$(MAKE) backup-db
 	@echo "=> Destroying all Azure infrastructure (including disks)..."
 	cd $(TF_DIR) && terraform destroy -auto-approve
 	@echo "=> Environment destroyed. Billing is now $$0."
