@@ -8,9 +8,7 @@ import {
 import { ChangePasswordCommand } from './change-password.command';
 
 @CommandHandler(ChangePasswordCommand)
-export class ChangePasswordHandler
-  implements ICommandHandler<ChangePasswordCommand>
-{
+export class ChangePasswordHandler implements ICommandHandler<ChangePasswordCommand> {
   constructor(
     private readonly userQueryPort: IUserQueryPort,
     private readonly authAccountRepository: IAuthAccountRepository,

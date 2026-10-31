@@ -27,7 +27,9 @@ export class TwoFactor extends AggregateRoot<TwoFactorId> {
     userId: string;
   }): TwoFactor {
     if (!params.secret.trim() || !params.backupCodes.trim()) {
-      throw new AuthInvariantError('2FA secret and backup codes must be provided');
+      throw new AuthInvariantError(
+        '2FA secret and backup codes must be provided',
+      );
     }
     return new TwoFactor(params);
   }
@@ -46,7 +48,13 @@ export class TwoFactor extends AggregateRoot<TwoFactorId> {
   }
 
   // Getters
-  public get secret(): string { return this._secret; }
-  public get backupCodes(): string { return this._backupCodes; }
-  public get userId(): string { return this._userId; }
+  public get secret(): string {
+    return this._secret;
+  }
+  public get backupCodes(): string {
+    return this._backupCodes;
+  }
+  public get userId(): string {
+    return this._userId;
+  }
 }

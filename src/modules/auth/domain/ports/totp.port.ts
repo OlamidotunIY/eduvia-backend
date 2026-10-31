@@ -21,8 +21,5 @@ export abstract class ITotpPort {
    * Verifies a 6-digit TOTP token against a stored secret.
    * Uses a window of ±1 step (30s) to account for clock drift.
    */
-  abstract verify(params: {
-    token: string;
-    secret: string;
-  }): Promise<boolean>;
+  abstract verify(params: { token: string; secret: string }): Promise<boolean>;
 }

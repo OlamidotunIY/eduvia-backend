@@ -6,6 +6,7 @@ import {
   LogoutDto,
   RequestPasswordResetDto,
   ResendOtpDto,
+  RefreshTokenDto,
   VerifyOtpDto,
 } from '../dto/auth.dto';
 import {
@@ -13,6 +14,7 @@ import {
   LoginCommand,
   LogoutCommand,
   RequestPasswordResetCommand,
+  RefreshSessionCommand,
   ResendOtpCommand,
   CompleteVerificationCommand,
 } from '../../application';
@@ -34,6 +36,17 @@ export class AuthService {
         ipAddress,
         userAgent,
         correlationId,
+      }),
+    );
+  }
+
+  async refresh(dto: RefreshTokenDto, ipAddress: string, userAgent: string) {
+    return this.commandBus.execute(
+      new RefreshSessionCommand({
+        sessionId: dto.sessionId,
+        refreshToken: dto.refreshToken,
+        ipAddress,
+        userAgent,
       }),
     );
   }

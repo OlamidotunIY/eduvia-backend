@@ -1,9 +1,6 @@
-import { BaseDomainEvent } from "@modules/shared";
+import { BaseDomainEvent } from '@modules/shared';
 
-
-class AccountSuspendedEvent extends BaseDomainEvent<
-  AccountSuspendedEvent.Payload
-> {
+class AccountSuspendedEvent extends BaseDomainEvent<AccountSuspendedEvent.Payload> {
   constructor(
     aggregateId: string,
     payload: AccountSuspendedEvent.Payload,

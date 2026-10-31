@@ -1,9 +1,7 @@
 import { VerificationType } from '../value-objects/verification-type.v0';
 import { BaseDomainEvent } from '../../../shared/domain/events/domain-event';
 
-class AuthVerificationCreatedEvent extends BaseDomainEvent<
-  AuthVerificationCreatedEvent.Payload
-> {
+class AuthVerificationCreatedEvent extends BaseDomainEvent<AuthVerificationCreatedEvent.Payload> {
   constructor(
     aggregateId: string,
     payload: AuthVerificationCreatedEvent.Payload,

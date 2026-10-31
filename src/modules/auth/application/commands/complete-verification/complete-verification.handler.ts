@@ -10,7 +10,6 @@ import {
   VerificationType,
 } from '../../../domain';
 import { IPasswordHashPort, IUserQueryPort } from '@modules/shared';
-import crypto from 'node:crypto';
 import { CompleteVerificationResult } from './complete-verification.result';
 
 @CommandHandler(CompleteVerificationCommand)
@@ -64,11 +63,10 @@ export class CompleteVerificationHandler implements ICommandHandler<
 
     const refreshTokenResult = await this.tokenPort.generateRefreshToken();
     const sessionId = SessionId.create();
-    const sessionToken = crypto.randomBytes(32).toString('hex');
     const session = Session.create({
       id: sessionId,
       expiresAt: refreshTokenResult.expiresAt,
-      token: sessionToken,
+      token: refreshTokenResult.hash,
       userId: user.id,
       ipAddress: payload.ipAddress,
       userAgent: payload.userAgent,

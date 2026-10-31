@@ -7,6 +7,7 @@ import {
   CreateAuthAccountHandler,
   GetSessionHandler,
   LoginHandler,
+  RefreshSessionHandler,
   LogoutHandler,
   RequestPasswordResetHandler,
   ResendOtpHandler,
@@ -42,6 +43,8 @@ import {
   RedisService,
 } from '@modules/shared';
 import { AuthService } from './presentation';
+import { AuthController } from './presentation/controllers/auth.controller';
+import { MeController } from './presentation/controllers/me.controller';
 
 const CommandHandlers = [
   CreateAuthAccountHandler,
@@ -52,6 +55,7 @@ const CommandHandlers = [
   ResendOtpHandler,
   RequestPasswordResetHandler,
   LoginHandler,
+  RefreshSessionHandler,
 ];
 
 const EventProcessors = [AuthEventProcessor];
@@ -79,6 +83,7 @@ import { BullModule } from '@nestjs/bullmq';
     UserModule,
     BullModule.registerQueue({ name: 'auth-events' }),
   ],
+  controllers: [AuthController, MeController],
   providers: [
     PrismaService,
     RedisService,
@@ -89,6 +94,6 @@ import { BullModule } from '@nestjs/bullmq';
     ...CommandHandlers,
     ...QueryHandlers,
     ...EventProcessors,
-  ]
+  ],
 })
 export class AuthModule {}

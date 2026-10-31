@@ -1,5 +1,13 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { BadRequestError, BusinessRuleViolationError, ConflictError, DomainError, ForbiddenError, NotFoundError } from '../../../domain';
+import {
+  BadRequestError,
+  BusinessRuleViolationError,
+  ConflictError,
+  DomainError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../../domain';
 
 @Catch(DomainError)
 export class DomainExceptionFilter implements ExceptionFilter<DomainError> {
@@ -21,6 +29,10 @@ export class DomainExceptionFilter implements ExceptionFilter<DomainError> {
   }
 
   private getStatusCode(error: DomainError): number {
+    if (error instanceof UnauthorizedError) {
+      return 401;
+    }
+
     if (error instanceof ConflictError) {
       return 409;
     }

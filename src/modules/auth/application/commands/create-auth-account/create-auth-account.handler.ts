@@ -52,7 +52,9 @@ export class CreateAuthAccountHandler implements ICommandHandler<
     const otp = await this.otpPort.generate();
     const rawValueRedisKey = `auth:verification:${payload.correlationId}:otp`;
     const ttlSeconds = 10 * 60;
-    await this.redis.getClient().set(rawValueRedisKey, otp.code, 'EX', ttlSeconds);
+    await this.redis
+      .getClient()
+      .set(rawValueRedisKey, otp.code, 'EX', ttlSeconds);
 
     const verification = Verification.create({
       id: VerificationId.create(),
