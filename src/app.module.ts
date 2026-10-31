@@ -4,7 +4,12 @@ import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BullMqModule, OutboxModule, ElasticsearchModule } from '@modules/shared';
+import {
+  BullMqModule,
+  ElasticsearchModule,
+  OutboxModule,
+  PrismaModule,
+} from '@modules/shared';
 import { UserModule } from '@modules/user';
 import { AuthModule } from '@modules/auth';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -49,6 +54,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       global: true,
     }),
     BullMqModule,
+    PrismaModule,
     OutboxModule,
     ElasticsearchModule,
     UserModule,

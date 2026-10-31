@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IClassroomQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import {
@@ -125,7 +124,6 @@ const repositories = [
   ],
   controllers: [ClassroomController, TeacherAvailabilityController],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     ClassroomService,

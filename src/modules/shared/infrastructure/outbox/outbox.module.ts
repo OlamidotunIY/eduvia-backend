@@ -1,6 +1,5 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { OutboxPublisherService } from './outbox-publisher.service';
 
 @Module({
@@ -16,7 +15,7 @@ import { OutboxPublisherService } from './outbox-publisher.service';
       { name: 'progress-events' },
     ),
   ],
-  providers: [PrismaService, OutboxPublisherService],
+  providers: [OutboxPublisherService],
 })
 class OutboxModule {}
 

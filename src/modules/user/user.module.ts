@@ -6,7 +6,6 @@ import {
   BcryptPasswordHashAdapter,
   IPasswordHashPort,
   IUserQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import { UserEventProcessor } from './infrastructure/messaging';
@@ -50,7 +49,6 @@ const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
   imports: [CqrsModule, BullModule.registerQueue({ name: 'user-events' })],
   controllers: [UserController],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     UserService,

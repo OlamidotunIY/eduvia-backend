@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IOrganizationQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import {
@@ -125,7 +124,6 @@ const portBinding = [
   ],
   controllers: [OrganizationController],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     OrganizationService,

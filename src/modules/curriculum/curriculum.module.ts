@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   ICurriculumQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import { CURRICULUM_COMMAND_HANDLERS } from './application/commands';
@@ -79,7 +78,6 @@ const repositories = [
     StudentCurriculumController,
   ],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     CurriculumService,

@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IProgressQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import { COMMAND_HANDLERS } from './application/commands';
@@ -75,7 +74,6 @@ const repositories = [
   ],
   controllers: [ProgressController],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     ProgressService,

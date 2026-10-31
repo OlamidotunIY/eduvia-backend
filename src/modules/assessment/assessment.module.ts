@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IAssessmentQueryPort,
-  PrismaService,
   RedisService,
 } from '@modules/shared';
 import { COMMAND_HANDLERS } from './application/commands';
@@ -88,7 +87,6 @@ const repositories = [
     MasteryController,
   ],
   providers: [
-    PrismaService,
     RedisService,
     AuthGuard,
     AssessmentService,
