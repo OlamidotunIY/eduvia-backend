@@ -4,10 +4,10 @@
     "paths": {
       "@generated/prisma": ["./src/generated/prisma"],
       "@generated/prisma/*": ["./src/generated/prisma/*"],
-      "@modules/auth": ["./src/modules/auth/index.ts"],
-      "@modules/shared": ["./src/modules/shared/index.ts"],
-      "@modules/user": ["./src/modules/user/index.ts"],
-      "@modules/org": ["./src/modules/org/index.ts"]
+      "@modules/auth": ["./src/modules/auth/index"],
+      "@modules/shared": ["./src/modules/shared/index"],
+      "@modules/user": ["./src/modules/user/index"],
+      "@modules/org": ["./src/modules/org/index"]
     },
     "parser": {
       "syntax": "typescript",
