@@ -56,7 +56,7 @@ endif
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev"
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k eduvia/infrastructure/k8s/base"
 	@echo "=> Waiting for MySQL to boot and accept connections..."
-	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"\$$POD\" ]; then if kubectl exec \$$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
+	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
 	@echo "=> Rolling out the Eduvia application..."
@@ -110,10 +110,10 @@ configure-tls:
 backup-db:
 	@echo "=> Running MySQL Backup via SSH (Kubernetes)..."
 	@echo "=> Connecting to the VM, running mysqldump inside the kubernetes pod, and saving it locally."
-	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec \$$POD -- mysqldump -u root -proot eduvia" > eduvia_backup.sql
+	$(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec $$POD -- mysqldump -u root -proot eduvia" > eduvia_backup.sql
 
 restore-db:
 	@echo "=> Restoring MySQL Backup via SSH (Kubernetes)..."
 	@if not exist eduvia_backup.sql echo "=> No backup file found. Skipping restore."
 	@if exist eduvia_backup.sql echo "=> Sending the local SQL file to the VM and piping it into the MySQL kubernetes pod."
-	@if exist eduvia_backup.sql $(CAT) eduvia_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=\$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec -i \$$POD -- mysql -u root -proot eduvia"
+	@if exist eduvia_backup.sql $(CAT) eduvia_backup.sql | $(SSH) -i $(SSH_KEY) -o StrictHostKeyChecking=no ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}') && kubectl exec -i $$POD -- mysql -u root -proot eduvia"
