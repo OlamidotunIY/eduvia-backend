@@ -52,13 +52,15 @@ endif
 	$(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && trap 'rm -f /tmp/.env.production' EXIT && kubectl create secret generic eduvia-secrets --from-env-file=/tmp/.env.production --dry-run=client -o yaml | kubectl apply -f - && kubectl delete secret firebase-secrets --ignore-not-found && if [ -f '/tmp/$(FIREBASE_JSON_NAME)' ]; then kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME); else kubectl create secret generic firebase-secrets --from-literal=placeholder=true; fi"
-	@echo "=> Applying Kubernetes Manifests..."
+	@echo "=> Preparing MySQL and Redis..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev"
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k eduvia/infrastructure/k8s/base"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -f eduvia/infrastructure/k8s/base/mysql-deployment.yaml -f eduvia/infrastructure/k8s/base/redis-deployment.yaml"
 	@echo "=> Waiting for MySQL to boot and accept connections..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
+	@echo "=> Applying Kubernetes Manifests..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k eduvia/infrastructure/k8s/base"
 	@echo "=> Rolling out the Eduvia application..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout restart deployment/eduvia-app && kubectl rollout status deployment/eduvia-app --timeout=180s"
 	$(MAKE) prune-runtime-images
