@@ -6,7 +6,6 @@ import {
   BcryptPasswordHashAdapter,
   IPasswordHashPort,
   IUserQueryPort,
-  RedisService,
 } from '@modules/shared';
 import { UserEventProcessor } from './infrastructure/messaging';
 import { CreateUserHandler } from './application/commands/create-user/create-user.handler';
@@ -49,7 +48,6 @@ const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
   imports: [CqrsModule, BullModule.registerQueue({ name: 'user-events' })],
   controllers: [UserController],
   providers: [
-    RedisService,
     AuthGuard,
     UserService,
     UserMapper,

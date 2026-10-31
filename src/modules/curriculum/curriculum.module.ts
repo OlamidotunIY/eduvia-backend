@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   ICurriculumQueryPort,
-  RedisService,
 } from '@modules/shared';
 import { CURRICULUM_COMMAND_HANDLERS } from './application/commands';
 import { CURRICULUM_QUERY_HANDLERS } from './application/queries';
@@ -78,7 +77,6 @@ const repositories = [
     StudentCurriculumController,
   ],
   providers: [
-    RedisService,
     AuthGuard,
     CurriculumService,
     ...CURRICULUM_COMMAND_HANDLERS,

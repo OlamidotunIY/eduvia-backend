@@ -9,6 +9,7 @@ import {
   ElasticsearchModule,
   OutboxModule,
   PrismaModule,
+  RedisModule,
 } from '@modules/shared';
 import { UserModule } from '@modules/user';
 import { AuthModule } from '@modules/auth';
@@ -55,6 +56,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     }),
     BullMqModule,
     PrismaModule,
+    RedisModule,
     OutboxModule,
     ElasticsearchModule,
     UserModule,

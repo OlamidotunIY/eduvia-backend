@@ -4,7 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IOrganizationQueryPort,
-  RedisService,
 } from '@modules/shared';
 import {
   AcceptOrganizationInvitationByTokenHandler,
@@ -124,7 +123,6 @@ const portBinding = [
   ],
   controllers: [OrganizationController],
   providers: [
-    RedisService,
     AuthGuard,
     OrganizationService,
     ...Mappers,

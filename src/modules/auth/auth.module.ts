@@ -39,7 +39,6 @@ import {
   AuthGuard,
   BcryptPasswordHashAdapter,
   IPasswordHashPort,
-  RedisService,
 } from '@modules/shared';
 import { AuthService } from './presentation';
 import { AuthController } from './presentation/controllers/auth.controller';
@@ -84,7 +83,6 @@ import { BullModule } from '@nestjs/bullmq';
   ],
   controllers: [AuthController, MeController],
   providers: [
-    RedisService,
     AuthGuard,
     AuthService,
     ...Mappers,
