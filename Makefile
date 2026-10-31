@@ -6,6 +6,8 @@ MYSQL_SERVICE ?= mysql
 MYSQL_SERVICE_PORT ?= 3306
 MYSQL_NAMESPACE ?= default
 DEPLOY_ENV_FILE ?= .env.production
+FIREBASE_JSON := $(firstword $(wildcard infrastructure/Firebase/*.json))
+FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON))
 MYSQL_SERVICE_IP = $(shell $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s kubectl -n $(MYSQL_NAMESPACE) get svc $(MYSQL_SERVICE) -o jsonpath='{.spec.clusterIP}'")
 
 ifeq ($(OS),Windows_NT)
@@ -39,11 +41,13 @@ deploy-stack:
 	@echo "=> Checking if Docker and K3s are installed and ready..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "while ! command -v docker >/dev/null 2>&1; do echo 'Waiting for Docker...'; sleep 5; done; while ! command -v k3s >/dev/null 2>&1; do echo 'Waiting for K3s...'; sleep 5; done; while ! sudo k3s kubectl get node >/dev/null 2>&1; do echo 'Waiting for Kubernetes to be ready...'; sleep 5; done; echo 'Infrastructure is Ready!'"
 	@echo "=> Syncing Secrets to VM..."
-	$(eval FIREBASE_JSON := $(wildcard infrastructure/Firebase/*.json))
-	$(eval FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON)))
 	@echo "=> Syncing $(DEPLOY_ENV_FILE) from the local deployment source..."
 	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(DEPLOY_ENV_FILE) ubuntu@$(VM_IP):/tmp/.env.production
-	@if [ -n "$(FIREBASE_JSON)" ]; then $(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME); fi
+ifneq ($(strip $(FIREBASE_JSON)),)
+	@$(SCP) -O $(SSH_OPTIONS) -i $(SSH_KEY) $(FIREBASE_JSON) ubuntu@$(VM_IP):/tmp/$(FIREBASE_JSON_NAME)
+else
+	@echo "=> No Firebase service-account JSON found; using the placeholder Kubernetes secret."
+endif
 	@echo "=> Ensuring Docker Image exists in K3s..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s ctr images ls | grep -q eduvia/app:latest" || $(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
