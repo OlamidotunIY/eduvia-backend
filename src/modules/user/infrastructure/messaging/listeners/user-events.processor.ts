@@ -4,7 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Optional } from '@nestjs/common';
 import { UserGateway } from '@modules/websocket';
 import { CreatePendingRegistrationCommand, MarkEmailVerifiedCommand, SetActiveOrganizationCommand, SuspendUserCommand } from '../../../application/commands';
-import { AccountSuspendedEvent, AuthEmailVerifiedEvent, UserActiveOrganizationChangedEvent, UserRegistrationRequestedEvent } from '../events';
+import { AccountSuspendedEvent, AuthEmailVerifiedEvent, InitialActiveOrganizationRequestedEvent, UserActiveOrganizationChangedEvent, UserRegistrationRequestedEvent } from '../events';
 
 @Processor('user-events')
 export class UserEventProcessor extends WorkerHost {
@@ -18,11 +18,33 @@ export class UserEventProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<void> {
     if (job.name === UserActiveOrganizationChangedEvent.eventName) {
       const payload = job.data.payload as UserActiveOrganizationChangedEvent['payload'];
-      await this.commandBus.execute(new SetActiveOrganizationCommand(payload));
-      this.userGateway?.activeOrganizationChanged(
-        payload.userId,
-        payload.organizationId,
+      const result = await this.commandBus.execute(new SetActiveOrganizationCommand({
+        ...payload,
+        correlationId: job.data.correlationId,
+      }));
+      if (result.changed) {
+        this.userGateway?.activeOrganizationChanged(
+          payload.userId,
+          payload.organizationId,
+        );
+      }
+      return;
+    }
+    if (job.name === InitialActiveOrganizationRequestedEvent.eventName) {
+      const payload = job.data.payload as InitialActiveOrganizationRequestedEvent['payload'];
+      const result = await this.commandBus.execute(
+        new SetActiveOrganizationCommand({
+          ...payload,
+          correlationId: job.data.correlationId,
+          onlyIfUnset: true,
+        }),
       );
+      if (result.changed) {
+        this.userGateway?.activeOrganizationChanged(
+          payload.userId,
+          payload.organizationId,
+        );
+      }
       return;
     }
     if (job.name === UserRegistrationRequestedEvent.eventName) {

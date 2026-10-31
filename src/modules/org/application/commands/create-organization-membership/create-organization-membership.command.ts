@@ -9,6 +9,7 @@ export class CreateOrganizationMembershipCommand extends Command<CreateOrganizat
       userId: string;
       role: OrganizationRole;
       subjects?: string[];
+      activateForUserIfUnset?: boolean;
       correlationId?: string;
     },
   ) {

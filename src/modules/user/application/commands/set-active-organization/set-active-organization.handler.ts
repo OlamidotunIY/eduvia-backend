@@ -15,11 +15,15 @@ export class SetActiveOrganizationHandler implements ICommandHandler<SetActiveOr
 
     const user = await this.userRepository.findById(UserId.from(payload.userId));
     if (!user) throw new Error('User not found');
+    if (payload.onlyIfUnset && user.activeOrganizationId) {
+      return { id: user.getId(), changed: false };
+    }
     user.setActiveOrganization(payload.organizationId);
     await this.userRepository.save(user);
 
     return {
       id: user.getId(),
+      changed: true,
     };
   }
 }

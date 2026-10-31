@@ -9,3 +9,5 @@ export * from './teacher-application-received.event';
 export * from './teacher-application-rejected.event';
 export * from './org-listed-marketplace.event';
 export * from './user-active-organization-changed-event';
+export * from './teacher-application-outcome-notification-requested-event';
+export * from './initial-active-organization-requested-event';

@@ -100,6 +100,13 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
     return organizations.filter((item): item is UserOrganizationDTO => item !== null);
   }
 
+  async getActiveAdminUserIds(orgId: string): Promise<string[]> {
+    const memberships = await this.membershipRepository.findByOrganizationId(orgId);
+    return memberships
+      .filter((membership) => membership.isActive() && membership.isAdmin())
+      .map((membership) => membership.userId);
+  }
+
   async isOrgActive(id: string): Promise<boolean> {
     try {
       const org = await this.orgRepository.findById(OrganizationId.from(id));

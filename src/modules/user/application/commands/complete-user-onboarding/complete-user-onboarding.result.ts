@@ -1,3 +1,5 @@
+import { UserType } from '../../../domain';
+
 export interface CompleteUserOnboardingPayload {
   userId: string;
   userType: UserType;
@@ -5,9 +7,9 @@ export interface CompleteUserOnboardingPayload {
   lastName: string;
   timezone: string | undefined;
   correlationId: string;
-  correlationId: string;
 }
 
 export interface CompleteUserOnboardingResult {
   id: string;
+  nextStep: 'parent_dashboard' | 'teacher_organization_choice';
 }

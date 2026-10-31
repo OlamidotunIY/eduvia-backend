@@ -27,6 +27,7 @@ export class OrganizationEventProcessor extends WorkerHost {
           orgId: OrganizationId.from(payload.orgId),
           userId: payload.ownerId,
           role: OrganizationRole.OWNER,
+          activateForUserIfUnset: true,
           correlationId: job.data.correlationId,
         }),
       );
@@ -62,6 +63,7 @@ export class OrganizationEventProcessor extends WorkerHost {
           userId: payload.applicantUserId,
           role: OrganizationRole.TEACHER,
           subjects: payload.approvedSubjects,
+          activateForUserIfUnset: true,
           correlationId: job.data.correlationId,
         }),
       );

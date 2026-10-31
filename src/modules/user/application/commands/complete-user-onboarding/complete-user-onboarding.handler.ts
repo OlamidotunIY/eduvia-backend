@@ -29,16 +29,22 @@ export class CompleteUserOnboardingHandler implements ICommandHandler<CompleteUs
     await this.userRepository.save(user);
 
     if (payload.userType === UserType.PARENT) {
-      const existing = await this.parentProfileRepository.findByUserId(user.getId());
-      if (!existing) await this.parentProfileRepository.save(ParentProfile.create({ id: ParentProfileId.create(), userId: user.getId() }));
+      const userId = UserId.from(user.getId());
+      const existing = await this.parentProfileRepository.findByUserId(userId);
+      if (!existing) await this.parentProfileRepository.save(ParentProfile.create({ id: ParentProfileId.create(), userId }));
     }
     if (payload.userType === UserType.TEACHER) {
-      const existing = await this.teacherProfileRepository.findByUserId(user.getId());
-      if (!existing) await this.teacherProfileRepository.save(TeacherProfile.create({ userId: user.getId(), qualification: '', yearOfExperience: 0 }));
+      const userId = UserId.from(user.getId());
+      const existing = await this.teacherProfileRepository.findByUserId(userId);
+      if (!existing) await this.teacherProfileRepository.save(TeacherProfile.create({ userId, qualification: '', yearOfExperience: 0 }));
     }
 
     return {
       id: user.getId(),
+      nextStep:
+        payload.userType === UserType.TEACHER
+          ? 'teacher_organization_choice'
+          : 'parent_dashboard',
     };
   }
 }

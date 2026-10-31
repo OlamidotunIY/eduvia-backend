@@ -22,6 +22,8 @@ export class CreateOrganizationMembershipHandler
       userId: payload.userId,
       role: payload.role,
       subjects: payload.subjects,
+      activateForUserIfUnset: payload.activateForUserIfUnset,
+      correlationId: payload.correlationId,
     });
 
     await this.membershipRepository.save(membership);

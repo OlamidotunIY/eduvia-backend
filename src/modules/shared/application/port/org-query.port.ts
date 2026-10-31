@@ -27,6 +27,7 @@ export abstract class IOrganizationQueryPort {
   abstract getOrganizationBySlug(slug: string): Promise<OrganizationSummaryDTO | null>;
   abstract getMembership(orgId: string, userId: string): Promise<OrganizationMembershipDTO | null>;
   abstract getOrganizationsForUser(userId: string): Promise<UserOrganizationDTO[]>;
+  abstract getActiveAdminUserIds(orgId: string): Promise<string[]>;
   abstract isMember(orgId: string, userId: string): Promise<boolean>;
   abstract isOrgActive(id: string): Promise<boolean>;
 }

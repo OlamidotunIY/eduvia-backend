@@ -7,6 +7,7 @@ import {
   OrganizationRole,
 } from '../value-objects';
 import { UserActiveOrganizationChangedEvent } from '../events';
+import { InitialActiveOrganizationRequestedEvent } from '../events/initial-active-organization-requested-event';
 
 export class OrganizationMembership extends AggregateRoot<OrganizationMembershipId> {
   public readonly orgId: OrganizationId;
@@ -42,10 +43,12 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     userId: string;
     role: OrganizationRole;
     subjects?: string[];
+    activateForUserIfUnset?: boolean;
+    correlationId?: string;
   }): OrganizationMembership {
     const now = new Date();
 
-    return new OrganizationMembership({
+    const membership = new OrganizationMembership({
       id: OrganizationMembershipId.create(),
       orgId: params.orgId,
       userId: params.userId,
@@ -55,6 +58,19 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
       joinedAt: now,
       updatedAt: now,
     });
+    if (params.activateForUserIfUnset && params.correlationId) {
+      membership.addDomainEvent(
+        new InitialActiveOrganizationRequestedEvent(
+          membership.getId(),
+          new InitialActiveOrganizationRequestedEvent.Payload(
+            membership.userId,
+            membership.orgId.value,
+          ),
+          params.correlationId,
+        ),
+      );
+    }
+    return membership;
   }
 
   public static reconstitute(params: {
