@@ -48,7 +48,7 @@ if ($IsAggregateRoot) {
     $fieldDeclarations = ($fields | ForEach-Object {
         $pName = $_.name
         $pType = $_.type
-        $isPub = if ($_.isPublic -eq $true) { "public readonly $pName: $pType;" } else { "private _$pName: $pType;" }
+        $isPub = if ($_.isPublic -eq $true) { "public readonly ${pName}: $pType;" } else { "private _${pName}: $pType;" }
         "  $isPub"
     }) -join "`n"
 
@@ -144,7 +144,7 @@ export { $EntityName };
     $fieldDeclarations = ($fields | ForEach-Object {
         $pName = $_.name
         $pType = $_.type
-        $isPub = if ($_.isPublic -eq $true) { "public readonly $pName: $pType;" } else { "private _$pName: $pType;" }
+        $isPub = if ($_.isPublic -eq $true) { "public readonly ${pName}: $pType;" } else { "private _${pName}: $pType;" }
         "  $isPub"
     }) -join "`n"
 

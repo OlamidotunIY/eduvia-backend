@@ -35,13 +35,13 @@ try { $fieldMappings = $FieldMappingsJson | ConvertFrom-Json } catch { $fieldMap
 $toDomainLines = ($fieldMappings | ForEach-Object {
     $dProp = $_.domain
     $pProp = $_.persistence
-    "      $dProp: record.$pProp,"
+    "      ${dProp}: record.$pProp,"
 }) -join "`n"
 
 $toPersistenceLines = ($fieldMappings | ForEach-Object {
     $dProp = $_.domain
     $pProp = $_.persistence
-    "      $pProp: entity.$dProp,"
+    "      ${pProp}: entity.$dProp,"
 }) -join "`n"
 
 $content = @"

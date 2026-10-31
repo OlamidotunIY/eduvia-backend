@@ -78,7 +78,7 @@ import { $RepositoryInterface } from '../../../domain/repository';
 @QueryHandler($QueryName)
 export class $handlerName implements IQueryHandler<$QueryName, $DtoName> {
   constructor(
-    private readonly $repoVar: $RepositoryInterface,
+    private readonly ${repoVar}: $RepositoryInterface,
   ) {}
 
   async execute(query: $QueryName): Promise<$DtoName> {
