@@ -50,6 +50,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder --chown=eduvia:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=eduvia:nodejs /app/dist ./dist
 COPY --from=builder --chown=eduvia:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=eduvia:nodejs /app/prisma7.config.ts ./prisma7.config.ts
 COPY --from=builder --chown=eduvia:nodejs /app/prisma ./prisma
 
 USER eduvia

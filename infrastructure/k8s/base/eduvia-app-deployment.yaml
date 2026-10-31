@@ -12,6 +12,17 @@ spec:
       labels:
         app: eduvia-app
     spec:
+      initContainers:
+      - name: prisma-migrate
+        image: eduvia/app:latest
+        imagePullPolicy: IfNotPresent
+        command: ["./node_modules/.bin/prisma", "migrate", "deploy", "--config", "prisma7.config.ts"]
+        envFrom:
+        - secretRef:
+            name: eduvia-secrets
+        env:
+        - name: DATABASE_URL
+          value: "mysql://eduvia:eduvia@mysql:3306/eduvia?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
       containers:
       - name: eduvia-app
         image: eduvia/app:latest
