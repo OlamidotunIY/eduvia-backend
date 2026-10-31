@@ -2,6 +2,8 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
 import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
+import { IOrganizationQueryPort, IUserQueryPort, RedisService } from '@modules/shared';
+import { NotificationsGateway } from '@modules/websocket';
 import {
   NotificationType,
   NotificationChannel,
@@ -25,6 +27,11 @@ export class NotificationEventProcessor extends WorkerHost {
     @Optional()
     @Inject(IEmailNotificationPort)
     private readonly emailNotificationPort?: IEmailNotificationPort,
+    @Optional()
+    private readonly notificationsGateway?: NotificationsGateway,
+    private readonly redis?: RedisService,
+    private readonly organizationQueryPort?: IOrganizationQueryPort,
+    private readonly userQueryPort?: IUserQueryPort,
   ) {
     super();
   }
@@ -41,6 +48,55 @@ export class NotificationEventProcessor extends WorkerHost {
     let body = '';
     let channel: NotificationChannel = NotificationChannel.in_app;
     const notificationData: Record<string, any> = { ...payload };
+
+    if (name === 'NotificationCreatedEvent') {
+      this.notificationsGateway?.sendToUser(payload.recipientId, {
+        id: payload.notificationId,
+        type: payload.type,
+        title: payload.title,
+        body: payload.body,
+        channel: payload.channel,
+        data: payload.data,
+      });
+      return;
+    }
+
+    if (name === 'AuthVerificationCreatedEvent') {
+      await this.deliverVerificationEmail(payload);
+      return;
+    }
+
+    if (name === 'TeacherApplicationReceivedEvent') {
+      const recipientIds = await this.organizationQueryPort?.getActiveAdminUserIds(
+        payload.orgId,
+      ) ?? [];
+      await Promise.all(
+        recipientIds.map((recipientId) => this.dispatchNotification({
+          recipientId,
+          type: NotificationType.teacher_application_received,
+          title: 'New teacher application',
+          body: 'A teacher has applied to join your organization.',
+          data: notificationData,
+          channel: NotificationChannel.in_app,
+        })),
+      );
+      return;
+    }
+
+    if (name === 'TeacherApplicationOutcomeNotificationRequestedEvent') {
+      const approved = payload.outcome === 'approved';
+      await this.dispatchNotification({
+        recipientId: payload.applicantUserId,
+        type: NotificationType.teacher_application_result,
+        title: approved ? 'Teacher application approved' : 'Teacher application update',
+        body: approved
+          ? 'Your application was approved. Your organization access is being prepared.'
+          : 'Your application was not approved.',
+        data: notificationData,
+        channel: NotificationChannel.all,
+      });
+      return;
+    }
 
     switch (name) {
       case 'LessonReportSubmittedEvent':
@@ -75,30 +131,6 @@ export class NotificationEventProcessor extends WorkerHost {
         channel = NotificationChannel.all;
         break;
 
-      case 'TeacherApplicationReceivedEvent':
-        recipientId = payload.orgAdminId || payload.orgId;
-        type = NotificationType.teacher_application_received;
-        title = 'New Teacher Application';
-        body = 'A new teacher application has been submitted to your organization.';
-        channel = NotificationChannel.in_app;
-        break;
-
-      case 'TeacherApplicationApprovedEvent':
-        recipientId = payload.teacherId;
-        type = NotificationType.teacher_application_result;
-        title = 'Application Approved';
-        body = 'Congratulations! Your application to join the organization has been approved.';
-        channel = NotificationChannel.all;
-        break;
-
-      case 'TeacherApplicationRejectedEvent':
-        recipientId = payload.teacherId;
-        type = NotificationType.teacher_application_result;
-        title = 'Application Status Update';
-        body = 'Your application to join the organization has been reviewed.';
-        channel = NotificationChannel.email;
-        break;
-
       case 'SubscriptionPaymentFailedEvent':
         recipientId = payload.userId || payload.parentId;
         type = NotificationType.subscription_payment_failed;
@@ -116,31 +148,94 @@ export class NotificationEventProcessor extends WorkerHost {
       return;
     }
 
-    // 1. Create persisted Notification in database
+    await this.dispatchNotification({
+      recipientId,
+      type,
+      title,
+      body,
+      data: notificationData,
+      channel,
+    });
+  }
+
+  private async dispatchNotification(input: {
+    recipientId: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    data: Record<string, any>;
+    channel: NotificationChannel;
+  }): Promise<void> {
     await this.commandBus.execute(
       new CreateNotificationCommand(
-        recipientId,
-        type,
-        title,
-        body,
-        notificationData,
-        channel,
+        input.recipientId,
+        input.type,
+        input.title,
+        input.body,
+        input.data,
+        input.channel,
       ),
     );
 
-    // 2. Dispatch Push Notification if recipient has active device tokens
-    if (this.pushNotificationPort && (channel === NotificationChannel.push || channel === NotificationChannel.all)) {
+    if (this.pushNotificationPort && (input.channel === NotificationChannel.push || input.channel === NotificationChannel.all)) {
       try {
-        const tokens = await this.deviceTokenRepository.findActiveByUserId(recipientId);
+        const tokens = await this.deviceTokenRepository.findActiveByUserId(input.recipientId);
         if (tokens.length > 0) {
           await this.pushNotificationPort.sendPushNotification(
-            tokens.map((t) => t.token),
-            { title, body, data: notificationData },
+            tokens.map((token) => token.token),
+            { title: input.title, body: input.body, data: input.data },
           );
         }
-      } catch (err: any) {
-        this.logger.warn(`Failed to dispatch FCM push notification: ${err.message}`);
+      } catch (error: any) {
+        this.logger.warn(`Failed to dispatch FCM push notification: ${error.message}`);
       }
     }
+
+    if (this.emailNotificationPort && (input.channel === NotificationChannel.email || input.channel === NotificationChannel.all)) {
+      const user = await this.userQueryPort?.getUserById(input.recipientId);
+      if (user) {
+        await this.emailNotificationPort.sendEmail({
+          to: user.email,
+          subject: input.title,
+          template: input.type,
+          context: { ...input.data, title: input.title, body: input.body },
+        });
+      }
+    }
+  }
+
+  private async deliverVerificationEmail(payload: {
+    identifier?: string;
+    verificationType?: string;
+    rawValueRedisKey?: string;
+  }): Promise<void> {
+    if (!payload.identifier || !payload.rawValueRedisKey) {
+      this.logger.warn('Verification event is missing its email delivery details');
+      return;
+    }
+
+    const code = await this.redis?.getClient().get(payload.rawValueRedisKey);
+    if (!code) {
+      this.logger.warn('Verification OTP is unavailable or expired before delivery');
+      return;
+    }
+    if (!this.emailNotificationPort) {
+      throw new Error('Email notification delivery is not configured');
+    }
+
+    const verificationType = payload.verificationType ?? 'email_verification';
+    const subject = verificationType === 'password_reset'
+      ? 'Reset your Eduvia password'
+      : 'Verify your Eduvia email address';
+    const template = verificationType === 'password_reset'
+      ? 'password-reset'
+      : 'email-verification';
+
+    await this.emailNotificationPort.sendEmail({
+      to: payload.identifier,
+      subject,
+      template,
+      context: { code, expiresInMinutes: 10 },
+    });
   }
 }
