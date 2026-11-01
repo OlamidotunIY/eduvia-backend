@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserModule } from '@modules/user';
-import { OrgModule } from '@modules/org';
+import { OrgModule } from '../org/org.module';
 import {
   ChangePasswordHandler,
   CompleteVerificationHandler,
