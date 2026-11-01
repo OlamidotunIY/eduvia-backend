@@ -1,8 +1,8 @@
 import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
-import { RegistrationRequest } from '../../domain/model/RegistrationRequest';
-import { RegistrationRequestId } from '../../domain/value-objects/registration-request-id.vo';
-import { IRegistrationRequestRepository } from '../../domain/repository/registration-request.repository';
+import { RegistrationRequest } from '../../../domain/model/RegistrationRequest';
+import { RegistrationRequestId } from '../../../domain/value-objects/registration-request-id.vo';
+import { IRegistrationRequestRepository } from '../../../domain/repository/registration-request.repository';
 import { RegistrationRequest as PrismaRegistrationRequestRecord } from '@generated/prisma/client';
 import { RegistrationRequestMapper } from '../mappers/registration-request.mapper';
 

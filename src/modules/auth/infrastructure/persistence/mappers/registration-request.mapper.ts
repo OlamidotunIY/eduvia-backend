@@ -1,7 +1,7 @@
 import { IMapper } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
-import { RegistrationRequest } from '../../domain/model/RegistrationRequest';
-import { RegistrationRequestId } from '../../domain/value-objects/registration-request-id.vo';
+import { RegistrationRequest } from '../../../domain/model/RegistrationRequest';
+import { RegistrationRequestId } from '../../../domain/value-objects/registration-request-id.vo';
 import { RegistrationRequest as PrismaRegistrationRequestRecord } from '@generated/prisma/client';
 
 @Injectable()
