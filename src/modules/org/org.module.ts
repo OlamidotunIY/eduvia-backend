@@ -29,6 +29,7 @@ import {
   GetOrganizationMembersHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
+  ListMarketplaceOrganizationsHandler,
 } from './application/queries';
 import { OrganizationInvitationMapper } from './infrastructure/mappers/organization-invitation.mapper';
 import { OrganizationMembershipMapper } from './infrastructure/mappers/organization-membership.mapper';
@@ -37,6 +38,7 @@ import { OrganizationMapper } from './infrastructure/mappers/organization.mapper
 import { TeacherApplicationMapper } from './infrastructure/mappers/teacher-application.mapper';
 import { OrganizationEventProcessor } from './infrastructure/messaging/listeners/org-event.processor';
 import { OrganizationController } from './presentation/controllers/organization.controller';
+import { MarketplaceController } from './presentation/controllers/marketplace.controller';
 import { OrganizationService } from './presentation/services';
 import {
   IOrganizationInvitationRepository,
@@ -78,6 +80,7 @@ const queryHandlers = [
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
   GetOrganizationMembersHandler,
+  ListMarketplaceOrganizationsHandler,
 ];
 
 const EventProcessors = [OrganizationEventProcessor];
@@ -123,7 +126,7 @@ const portBinding = [
     BullModule.registerQueue({ name: 'org-events' }),
     UserModule,
   ],
-  controllers: [OrganizationController],
+  controllers: [OrganizationController, MarketplaceController],
   providers: [
     AuthGuard,
     OrganizationService,

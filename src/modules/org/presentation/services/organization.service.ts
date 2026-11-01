@@ -33,6 +33,7 @@ import {
   GetOrganizationMembersQuery,
   GetOrganizationSubjectsQuery,
   GetTeacherApplicationsQuery,
+  ListMarketplaceOrganizationsQuery,
 } from '../../application/queries';
 
 @Injectable()
@@ -76,6 +77,10 @@ export class OrganizationService {
 
   async getOrganizationBySlug(slug: string) {
     return this.queryBus.execute(new GetOrganizationBySlugQuery(slug));
+  }
+
+  async listMarketplaceOrganizations() {
+    return this.queryBus.execute(new ListMarketplaceOrganizationsQuery());
   }
 
   async updateProfile(
