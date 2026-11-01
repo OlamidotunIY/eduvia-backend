@@ -60,15 +60,15 @@ endif
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
 	@echo "=> Applying Kubernetes Manifests..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k eduvia/infrastructure/k8s/base"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && IMAGE=$$(cat /tmp/eduvia-image) && kubectl apply -k eduvia/infrastructure/k8s/base && kubectl set image deployment/eduvia-app prisma-migrate=$$IMAGE eduvia-app=$$IMAGE"
 	@echo "=> Rolling out the Eduvia application..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout restart deployment/eduvia-app && kubectl rollout status deployment/eduvia-app --timeout=180s"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout status deployment/eduvia-app --timeout=180s"
 	$(MAKE) prune-runtime-images
 	@echo "=> Environment is completely up and running!"
 
 build-image:
-	@echo "=> Building Docker Image and Loading into K3s..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev && sudo docker build -t eduvia/app:latest . && sudo docker save eduvia/app:latest | sudo k3s ctr images import -"
+	@echo "=> Building a commit-tagged Docker Image and loading it into K3s..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev && IMAGE=eduvia/app:$$(git rev-parse --short HEAD) && sudo docker build -t $$IMAGE . && sudo docker save $$IMAGE | sudo k3s ctr images import - && echo $$IMAGE | sudo tee /tmp/eduvia-image >/dev/null && echo \"Built $$IMAGE\""
 
 prune-runtime-images:
 	@echo "=> Pruning unused Docker build cache and K3s images..."
