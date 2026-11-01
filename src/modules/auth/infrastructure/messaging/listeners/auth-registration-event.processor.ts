@@ -3,10 +3,14 @@ import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
 import { FinalizeRegistrationCommand } from '../../../application';
 import { UserRegistrationCreatedEvent } from '../events';
+import { RegistrationGateway } from '../../../presentation/gateways';
 
 @Processor('auth-events')
 export class AuthRegistrationEventProcessor extends WorkerHost {
-  constructor(private readonly commandBus: CommandBus) {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly registrationGateway: RegistrationGateway,
+  ) {
     super();
   }
 
@@ -19,6 +23,7 @@ export class AuthRegistrationEventProcessor extends WorkerHost {
           correlationId: job.data.correlationId,
         }),
       );
+      this.registrationGateway.registrationReady(payload.registrationRequestId);
       return;
     }
   }

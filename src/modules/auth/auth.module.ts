@@ -55,6 +55,7 @@ import {
 import { AuthService } from './presentation';
 import { AuthController } from './presentation/controllers/auth.controller';
 import { MeController } from './presentation/controllers/me.controller';
+import { RegistrationGateway } from './presentation/gateways';
 
 const CommandHandlers = [
   CompleteVerificationHandler,
@@ -108,6 +109,7 @@ import { BullModule } from '@nestjs/bullmq';
   providers: [
     AuthGuard,
     AuthService,
+    RegistrationGateway,
     ...Mappers,
     ...PortBindings,
     ...CommandHandlers,
