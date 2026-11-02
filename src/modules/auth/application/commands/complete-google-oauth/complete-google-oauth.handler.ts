@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { randomBytes } from 'node:crypto';
 import {
@@ -33,15 +39,26 @@ export class CompleteGoogleOAuthHandler implements ICommandHandler<CompleteGoogl
 
   async execute(command: CompleteGoogleOAuthCommand): Promise<CompleteGoogleOAuthResult> {
     const { code, state, ipAddress, userAgent } = command.payload;
-    if (!code || !state) throw new BadRequestException('Missing Google OAuth code or state');
+    if (!state) throw new BadRequestException('Missing Google OAuth state');
     const rawState = await this.redis.getClient().getdel(`auth:google-oauth:state:${state}`);
     if (!rawState) throw new UnauthorizedException('Google OAuth state is invalid or expired');
     const storedState = GoogleOAuthState.deserialize(rawState);
     if (!storedState) throw new UnauthorizedException('Google OAuth state is invalid');
+    const callback = new URL(
+      storedState.returnPath,
+      process.env['FRONTEND_APP_URL'] ?? 'https://app.eduvia.name.ng',
+    );
 
+    if (!code) {
+      return this.errorRedirect(
+        callback,
+        'Google sign-in was cancelled or did not return an authorization code.',
+      );
+    }
+
+    try {
     const identity = await this.googleOAuth.exchangeAuthorizationCode({ code, codeVerifier: storedState.codeVerifier });
     const linkedAccount = await this.authAccountRepository.findByProviderAccount('google', identity.subject);
-    const callback = new URL(storedState.returnPath, process.env['FRONTEND_APP_URL'] ?? 'https://app.eduvia.name.ng');
 
     if (!linkedAccount) {
       const existingUser = await this.userQueryPort.getUserByEmail(identity.email);
@@ -75,6 +92,22 @@ export class CompleteGoogleOAuthHandler implements ICommandHandler<CompleteGoogl
     await this.redis.getClient().set(`auth:google-oauth:exchange:${exchangeCode}`, JSON.stringify(tokens), 'EX', 60);
     callback.searchParams.set('oauthCode', exchangeCode);
     return { redirectUrl: callback.toString() };
+    } catch (error) {
+      return this.errorRedirect(callback, this.publicErrorMessage(error));
+    }
+  }
+
+  private errorRedirect(callback: URL, message: string): CompleteGoogleOAuthResult {
+    callback.searchParams.set('oauthError', message);
+    return { redirectUrl: callback.toString() };
+  }
+
+  private publicErrorMessage(error: unknown): string {
+    if (error instanceof HttpException) {
+      return error.message;
+    }
+
+    return 'We could not complete Google sign-in. Please try again.';
   }
 
   private async issueSession(input: { authAccountId: string; userId: string; userType: string; scope: string; ipAddress: string; userAgent: string }): Promise<AuthTokensResult> {
