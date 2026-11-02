@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule, ObserveInstrument } from './app.module';
-import { DomainExceptionFilter } from './modules/shared/infrastructure/http/filters/domain-exception.filters';
+import { StructuredExceptionFilter } from './modules/shared/infrastructure/http/filters/structured-exception.filter';
 import { SocketIoAdapter } from './modules/websocket/adapters/socket-io.adapter';
 import { Redis } from 'ioredis';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -18,7 +18,7 @@ async function bootstrap() {
     instrument: ObserveInstrument,
   });
 
-  app.useGlobalFilters(new DomainExceptionFilter());
+  app.useGlobalFilters(new StructuredExceptionFilter());
 
   app.enableCors({
     origin: allowedOrigins(),
