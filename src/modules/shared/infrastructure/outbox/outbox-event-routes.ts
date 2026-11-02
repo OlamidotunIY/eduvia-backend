@@ -1,4 +1,5 @@
 const OUTBOX_EVENT_ROUTES = new Map<string, string>([
+  ['UserRegistrationRequestedEvent', 'user-events'],
   ['AuthAccountCreatedEvent', 'user-events'],
   ['AuthEmailVerifiedEvent', 'user-events'],
   ['AuthVerificationCreatedEvent', 'notification-events'],
