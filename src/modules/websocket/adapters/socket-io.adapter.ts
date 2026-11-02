@@ -21,9 +21,11 @@ export class SocketIoAdapter extends IoAdapter {
   }
 
   override createIOServer(port: number, options?: ServerOptions): Server {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-      : '*';
+    const allowedOrigins = (process.env.CORS_ORIGINS ??
+      'https://app.eduvia.name.ng,https://app.eduvia.name.ng:5173')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
 
     const server: Server = super.createIOServer(port, {
       ...options,

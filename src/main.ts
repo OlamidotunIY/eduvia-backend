@@ -7,7 +7,7 @@ import { Redis } from 'ioredis';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 function allowedOrigins(): string[] {
-  return (process.env['CORS_ORIGINS'] ?? 'https://app.eduvia.name.ng')
+  return (process.env['CORS_ORIGINS'] ?? 'https://app.eduvia.name.ng,https://app.eduvia.name.ng:5173')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
