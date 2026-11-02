@@ -2,7 +2,7 @@ export * from './prisma.service';
 export * from './prisma.module';
 export * from './redis';
 export * from './bullmq';
-export * from './http/filters/domain-exception.filters';
+export * from './http/filters/structured-exception.filter';
 export * from './outbox';
 export * from './services';
 export * from './storage';
