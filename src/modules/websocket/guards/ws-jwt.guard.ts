@@ -36,7 +36,11 @@ export class WsJwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const client: Socket = context.switchToWs().getClient();
+    await this.authenticate(client);
+    return true;
+  }
 
+  async authenticate(client: Socket): Promise<WsAuthPayload> {
     const token =
       client.handshake.auth?.token ||
       (typeof client.handshake.headers?.authorization === 'string'
@@ -62,7 +66,7 @@ export class WsJwtGuard implements CanActivate {
         client.join(`org:${payload.orgId}`);
       }
 
-      return true;
+      return payload;
     } catch {
       throw new WsException('Invalid or expired authentication token');
     }

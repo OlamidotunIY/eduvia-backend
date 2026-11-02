@@ -6,6 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { IUserQueryPort } from '@modules/shared';
 import { WsExceptionFilter } from '../filters';
 import { WsJwtGuard } from '../guards';
 
@@ -21,8 +22,26 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(UserGateway.name);
 
-  handleConnection(client: Socket): void {
-    this.logger.log(`Client ${client.id} connected to /user`);
+  constructor(
+    private readonly wsJwtGuard: WsJwtGuard,
+    private readonly userQueryPort: IUserQueryPort,
+  ) {}
+
+  async handleConnection(client: Socket): Promise<void> {
+    try {
+      const auth = await this.wsJwtGuard.authenticate(client);
+      const user = await this.userQueryPort.getUserById(auth.userId);
+
+      if (user?.activeOrganizationId) {
+        client.emit('user:active_organization_changed', {
+          organizationId: user.activeOrganizationId,
+        });
+      }
+
+      this.logger.log(`Client ${client.id} connected to /user`);
+    } catch {
+      client.disconnect(true);
+    }
   }
 
   handleDisconnect(client: Socket): void {

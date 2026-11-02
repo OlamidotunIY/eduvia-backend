@@ -84,8 +84,31 @@ describe('WebSocket Gateways', () => {
   });
 
   describe('UserGateway', () => {
+    it('should authenticate connections and replay the active organization state', async () => {
+      const client = {
+        id: 'socket-123',
+        emit: jest.fn(),
+        disconnect: jest.fn(),
+      } as any;
+      const gateway = new UserGateway(
+        { authenticate: jest.fn().mockResolvedValue({ userId: 'user-123' }) } as any,
+        { getUserById: jest.fn().mockResolvedValue({ activeOrganizationId: 'org-456' }) } as any,
+      );
+
+      await gateway.handleConnection(client);
+
+      expect(client.emit).toHaveBeenCalledWith(
+        'user:active_organization_changed',
+        { organizationId: 'org-456' },
+      );
+      expect(client.disconnect).not.toHaveBeenCalled();
+    });
+
     it('should publish active organization changes to the user room', () => {
-      const gateway = new UserGateway();
+      const gateway = new UserGateway(
+        { authenticate: jest.fn() } as any,
+        { getUserById: jest.fn() } as any,
+      );
       gateway.server = mockServer;
 
       gateway.activeOrganizationChanged('user-123', 'org-456');
