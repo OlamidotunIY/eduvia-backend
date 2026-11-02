@@ -46,10 +46,31 @@ export class StartGoogleOAuthHandler implements ICommandHandler<
   }
 
   private returnPath(value: string | undefined): string {
-    const returnPath = value ?? '/auth/oauth/callback';
-    if (!returnPath.startsWith('/') || returnPath.startsWith('//')) {
-      throw new BadRequestException('OAuth returnPath must be a relative path');
+    const defaultOrigin =
+      process.env['FRONTEND_APP_URL'] ?? 'https://app.eduvia.name.ng';
+    let callback: URL;
+
+    try {
+      callback = new URL(value ?? '/auth/callback', defaultOrigin);
+    } catch {
+      throw new BadRequestException('OAuth returnPath must be a valid URL');
     }
-    return returnPath;
+
+    const allowedOrigins = (process.env['CORS_ORIGINS'] ??
+      'https://app.eduvia.name.ng,https://app.eduvia.name.ng:5173')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
+    if (
+      !allowedOrigins.includes(callback.origin) ||
+      callback.pathname !== '/auth/callback' ||
+      callback.username ||
+      callback.password
+    ) {
+      throw new BadRequestException('OAuth returnPath is not allowed');
+    }
+
+    return callback.toString();
   }
 }
