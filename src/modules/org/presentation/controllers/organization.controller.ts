@@ -84,7 +84,8 @@ export class OrganizationController {
     return this.organizationService.getOrganizationBySlug(slug);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_UPDATE)
   @Patch(':organizationId')
   async updateProfile(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -100,7 +101,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_MARKETPLACE_MANAGE)
   @Post(':organizationId/marketplace/list')
   async listOnMarketplace(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -114,7 +116,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_MARKETPLACE_MANAGE)
   @Delete(':organizationId/marketplace/list')
   async delistFromMarketplace(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -128,7 +131,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_POLICY_UPDATE)
   @Patch(':organizationId/policy')
   async updatePolicy(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -155,7 +159,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.SUBJECTS_CREATE)
   @Post(':organizationId/subjects')
   async createSubject(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -169,7 +174,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.SUBJECTS_UPDATE)
   @Patch(':organizationId/subjects/:subjectId')
   async updateSubject(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -185,7 +191,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_READ)
   @Get(':organizationId/applications')
   async getApplications(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -213,7 +220,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_REVIEW)
   @Post(':organizationId/applications/:id/approve')
   async approveApplication(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -229,7 +237,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_REVIEW)
   @Post(':organizationId/applications/:id/reject')
   async rejectApplication(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -247,7 +256,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_INVITE)
   @Post(':organizationId/invitations')
   async sendInvitation(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -263,7 +273,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_READ)
   @Get(':organizationId/members')
   async getMembers(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -317,7 +328,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_MANAGE)
   @Patch(':organizationId/members/:userId/role')
   async changeMemberRole(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -333,7 +345,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_MANAGE)
   @Delete(':organizationId/members/:userId')
   async suspendMember(
     @CurrentUser() currentUser: CurrentUserPayload,
