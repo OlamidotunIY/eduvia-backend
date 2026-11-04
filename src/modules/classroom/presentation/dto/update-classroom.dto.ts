@@ -3,4 +3,10 @@ export class UpdateClassroomDto {
   lessonDurationMins?: number;
   maxStudents?: number;
   primaryTeacherId?: string;
+  recurrenceDayOfWeek?: number;
+  recurrenceStartTime?: string;
+  recurrenceTimezone?: string;
+  recurrenceIntervalWeeks?: number;
+  recurrenceEffectiveFrom?: string;
+  recurrenceEffectiveUntil?: string | null;
 }

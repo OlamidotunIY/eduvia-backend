@@ -24,6 +24,7 @@ import {
   SetTeacherAvailabilityHandler,
   AddAvailabilityExceptionHandler,
   RemoveAvailabilityExceptionHandler,
+  ReopenClassroomHandler,
 } from './application/commands';
 import {
   GetClassroomByIdHandler,
@@ -32,6 +33,7 @@ import {
   ListLessonsHandler,
   GetTeacherAvailabilityHandler,
   GetAvailableSlotsHandler,
+  GetClassroomStudentsHandler,
 } from './application/queries';
 import {
   ClassroomMapper,
@@ -85,6 +87,7 @@ const commandHandlers = [
   SetTeacherAvailabilityHandler,
   AddAvailabilityExceptionHandler,
   RemoveAvailabilityExceptionHandler,
+  ReopenClassroomHandler,
 ];
 
 const queryHandlers = [
@@ -94,6 +97,7 @@ const queryHandlers = [
   ListLessonsHandler,
   GetTeacherAvailabilityHandler,
   GetAvailableSlotsHandler,
+  GetClassroomStudentsHandler,
 ];
 
 const mappers = [

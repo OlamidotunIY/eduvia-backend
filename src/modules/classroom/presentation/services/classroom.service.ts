@@ -5,6 +5,7 @@ import {
   CreateClassroomResult,
   PauseClassroomCommand,
   CloseClassroomCommand,
+  ReopenClassroomCommand,
   UpdateClassroomCommand,
   EnrollStudentCommand,
   RemoveStudentCommand,
@@ -23,6 +24,8 @@ import {
   ListLessonsQuery,
   ClassroomDto,
   LessonDto,
+  ClassroomStudentDTO,
+  GetClassroomStudentsQuery,
 } from '../../application/queries';
 import {
   CreateClassroomDto,
@@ -81,6 +84,15 @@ export class ClassroomService {
     return this.queryBus.execute(new GetClassroomByIdQuery(classroomId, orgId));
   }
 
+  async getClassroomStudents(
+    orgId: string,
+    classroomId: string,
+  ): Promise<ClassroomStudentDTO[]> {
+    return this.queryBus.execute(
+      new GetClassroomStudentsQuery(classroomId, orgId),
+    );
+  }
+
   async updateClassroom(
     orgId: string,
     classroomId: string,
@@ -95,6 +107,18 @@ export class ClassroomService {
         lessonDurationMins: dto.lessonDurationMins,
         maxStudents: dto.maxStudents,
         primaryTeacherId: dto.primaryTeacherId,
+        recurrenceDayOfWeek: dto.recurrenceDayOfWeek,
+        recurrenceStartTime: dto.recurrenceStartTime,
+        recurrenceTimezone: dto.recurrenceTimezone,
+        recurrenceIntervalWeeks: dto.recurrenceIntervalWeeks,
+        recurrenceEffectiveFrom: dto.recurrenceEffectiveFrom
+          ? new Date(dto.recurrenceEffectiveFrom)
+          : undefined,
+        recurrenceEffectiveUntil: dto.recurrenceEffectiveUntil === undefined
+          ? undefined
+          : dto.recurrenceEffectiveUntil
+            ? new Date(dto.recurrenceEffectiveUntil)
+            : null,
         correlationId,
       }),
     );
@@ -125,6 +149,15 @@ export class ClassroomService {
         orgId,
         correlationId,
       }),
+    );
+  }
+
+  async reopenClassroom(
+    orgId: string,
+    classroomId: string,
+  ): Promise<{ success: boolean }> {
+    return this.commandBus.execute(
+      new ReopenClassroomCommand({ classroomId, orgId }),
     );
   }
 

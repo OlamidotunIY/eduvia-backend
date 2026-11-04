@@ -66,6 +66,18 @@ export class ClassroomController {
     return this.classroomService.getClassroom(organizationId, classroomId);
   }
 
+  @Get('classrooms/:classroomId/students')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_READ)
+  async getClassroomStudents(
+    @Param('organizationId') organizationId: string,
+    @Param('classroomId') classroomId: string,
+  ) {
+    return this.classroomService.getClassroomStudents(
+      organizationId,
+      classroomId,
+    );
+  }
+
   @Patch('classrooms/:classroomId')
   @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
   async updateClassroom(
@@ -108,6 +120,15 @@ export class ClassroomController {
       classroomId,
       correlationId,
     );
+  }
+
+  @Post('classrooms/:classroomId/reopen')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
+  async reopenClassroom(
+    @Param('organizationId') organizationId: string,
+    @Param('classroomId') classroomId: string,
+  ) {
+    return this.classroomService.reopenClassroom(organizationId, classroomId);
   }
 
   @Post('classrooms/:classroomId/students')
