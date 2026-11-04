@@ -33,7 +33,8 @@ export class AssignOrganizationRoleHandler
       throw new OrganizationInvariantError('Caller cannot assign organization roles');
     }
 
-    const [membership, role] = await Promise.all([
+    const [callerMembership, membership, role] = await Promise.all([
+      this.membershipRepository.findByOrgIdAndUserId(payload.orgId, payload.callerUserId),
       this.membershipRepository.findByOrgIdAndUserId(payload.orgId, payload.targetUserId),
       this.roleRepository.findById(OrganizationRoleId.from(payload.roleId)),
     ]);
@@ -42,6 +43,20 @@ export class AssignOrganizationRoleHandler
     }
     if (!role || role.orgId.value !== payload.orgId) {
       throw new OrganizationInvariantError('Organization role was not found');
+    }
+    if (
+      (role.key === OrganizationRoleKey.ORG_OWNER || role.key === OrganizationRoleKey.ORG_ADMIN) &&
+      callerMembership?.role !== OrganizationRole.OWNER
+    ) {
+      throw new OrganizationInvariantError(
+        'Only the organization owner can assign owner or admin roles',
+      );
+    }
+    if (
+      membership.role === OrganizationRole.OWNER &&
+      callerMembership?.role !== OrganizationRole.OWNER
+    ) {
+      throw new OrganizationInvariantError('Only the organization owner can change the owner role');
     }
 
     membership.assignOrganizationRole(

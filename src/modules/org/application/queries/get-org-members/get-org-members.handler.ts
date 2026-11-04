@@ -35,6 +35,7 @@ export class GetOrganizationMembersHandler
       orgId: m.orgId.value,
       userId: m.userId,
       role: m.role,
+      roleId: m.roleId?.value ?? null,
       subjects: m.subjects,
       status: m.status,
       joinedAt: m.joinedAt,
