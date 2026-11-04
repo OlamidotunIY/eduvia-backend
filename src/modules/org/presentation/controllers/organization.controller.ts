@@ -148,6 +148,8 @@ export class OrganizationController {
     );
   }
 
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.SUBJECTS_READ)
   @Get(':organizationId/subjects')
   async getSubjects(
     @Param('organizationId') organizationId: string,
