@@ -1,5 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
+import {
+  ICurriculumQueryPort,
+  IOrganizationAuthorizationQueryPort,
+} from '@modules/shared';
 import { UpdateOrganizationSubjectCommand } from './update-organization-subject.command';
 import { IOrganizationSubjectRepository } from '../../../domain/repository';
 import {
@@ -17,6 +20,7 @@ export class UpdateOrganizationSubjectHandler implements ICommandHandler<
   constructor(
     private readonly orgSubjectRepository: IOrganizationSubjectRepository,
     private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
+    private readonly curriculumQuery: ICurriculumQueryPort,
   ) {}
 
   async execute(command: UpdateOrganizationSubjectCommand): Promise<void> {
@@ -44,8 +48,19 @@ export class UpdateOrganizationSubjectHandler implements ICommandHandler<
     if (payload.name !== undefined) subject.rename(payload.name);
     if (payload.description !== undefined)
       subject.updateDescription(payload.description);
-    if (payload.platformSubjectId !== undefined)
+    if (payload.platformSubjectId !== undefined) {
+      if (payload.platformSubjectId) {
+        const platformSubject = await this.curriculumQuery.getPlatformSubjectById(
+          payload.platformSubjectId,
+        );
+        if (!platformSubject?.isActive) {
+          throw new OrganizationInvariantError(
+            'The selected platform subject is unavailable',
+          );
+        }
+      }
       subject.linkToPlatformSubject(payload.platformSubjectId);
+    }
     if (payload.isActive !== undefined) {
       if (payload.isActive) {
         subject.activate();
