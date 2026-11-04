@@ -21,7 +21,10 @@ export class ClassroomMapper implements IMapper<Classroom, PrismaClassroom> {
       lessonDurationMins: record.lessonDurationMins,
       maxStudents: record.maxStudents,
       recurrence: RecurrencePattern.create({
-        dayOfWeek: record.recurrenceDayOfWeek,
+        daysOfWeek: readRecurrenceDays(
+          record.recurrenceDaysOfWeek,
+          record.recurrenceDayOfWeek,
+        ),
         startTime: record.recurrenceStartTime,
         timezone: record.recurrenceTimezone,
         intervalWeeks: record.recurrenceIntervalWeeks,
@@ -43,6 +46,7 @@ export class ClassroomMapper implements IMapper<Classroom, PrismaClassroom> {
       lessonDurationMins: entity.lessonDurationMins,
       maxStudents: entity.maxStudents,
       recurrenceDayOfWeek: entity.recurrence.dayOfWeek,
+      recurrenceDaysOfWeek: [...entity.recurrence.daysOfWeek],
       recurrenceStartTime: entity.recurrence.startTime,
       recurrenceTimezone: entity.recurrence.timezone,
       recurrenceIntervalWeeks: entity.recurrence.intervalWeeks,
@@ -52,4 +56,11 @@ export class ClassroomMapper implements IMapper<Classroom, PrismaClassroom> {
       updatedAt: entity.updatedAt,
     };
   }
+}
+
+function readRecurrenceDays(value: unknown, fallbackDay: number): number[] {
+  if (Array.isArray(value) && value.every((day) => typeof day === 'number')) {
+    return value;
+  }
+  return [fallbackDay];
 }

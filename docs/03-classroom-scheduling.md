@@ -10,7 +10,7 @@
 
 The Classroom & Scheduling module manages the permanent educational channels between teachers and students, the individual lesson instances that occur within those channels, teacher availability templates, and the full lesson lifecycle state machine.
 
-A **Classroom** is the persistent relationship object — it defines *who teaches whom, what subject, on what recurring schedule*. A **Lesson** is a single occurrence of that teaching relationship — it can be a scheduled occurrence OR a one-off booking.
+A **Classroom** is the persistent relationship object — it defines _who teaches whom, what subject, on what recurring schedule_. A **Lesson** is a single occurrence of that teaching relationship — it can be a scheduled occurrence OR a one-off booking.
 
 ---
 
@@ -39,6 +39,7 @@ Classroom
 ```
 
 **Domain Methods:**
+
 - `Classroom.create(params)` — validates recurrence pattern, emits `ClassroomCreatedEvent`
 - `classroom.pause()` — stops generating new lesson slots; emits `ClassroomPausedEvent`
 - `classroom.reopen()` — resumes lesson generation
@@ -56,7 +57,7 @@ Embedded within Classroom — defines when lessons recur.
 
 ```
 RecurrencePattern
-  dayOfWeek:     0-6 (0 = Sunday)
+  daysOfWeek:    array of 0-6 values (0 = Sunday)
   startTime:     string (HH:mm, in classroom timezone)
   timezone:      string (IANA timezone, e.g. "Europe/London")
   intervalWeeks: int (1 = weekly, 2 = biweekly)
@@ -65,8 +66,9 @@ RecurrencePattern
 ```
 
 **Domain Logic:**
+
 - `RecurrencePattern.nextOccurrence(after: Date)` — computes next lesson datetime from pattern
-- A classroom may have only one active recurrence pattern at a time
+- A classroom may have only one active recurrence pattern at a time; that pattern may contain multiple weekdays with the same start time
 - Changing recurrence never affects already-created lessons — only future lesson generation
 
 ---
@@ -87,6 +89,7 @@ StudentEnrollment
 ```
 
 **Domain Logic:**
+
 - A student can only be enrolled in classrooms within the same org (or orgs they are associated with)
 - A student cannot be enrolled in two classrooms with overlapping lesson times
 - Enrollment status `paused` suspends lesson access without removing historical data
@@ -139,6 +142,7 @@ PENDING -> SCHEDULED -> LIVE -> COMPLETED -> MARKING -> REPORTED -> ARCHIVED
 ```
 
 **Domain Methods:**
+
 - `Lesson.create(params)` — creates in PENDING state; emits `LessonCreatedEvent`
 - `lesson.schedule(confirmedBy)` — PENDING -> SCHEDULED; emits `LessonScheduledEvent` (a `meet-events` consumer creates the meeting)
 - `lesson.attachMeeting(meetingId, videoProvider, meetLink)` — stores the meeting created for this lesson (called by the classroom module's own `meet-events` processor)
@@ -170,6 +174,7 @@ TeacherAvailability
 ```
 
 **Domain Methods:**
+
 - `TeacherAvailability.create(params)` — creates template
 - `availability.addSlot(slot)` — adds a recurring time block
 - `availability.removeSlot(slotId)` — removes a recurring time block
@@ -214,22 +219,22 @@ AvailabilityException
 
 Multi-queue routes assume the planned fan-out `OUTBOX_EVENT_ROUTES` (see [00-ddd-architecture.md](00-ddd-architecture.md)).
 
-| Event | Emitted By | Payload | Consumer Queue |
-|---|---|---|---|
-| `ClassroomCreatedEvent` | Classroom.create | classroomId, orgId, teacherId, subjectId | classroom-events |
-| `ClassroomPausedEvent` | classroom.pause | classroomId, orgId | notification-events |
-| `ClassroomClosedEvent` | classroom.close | classroomId, orgId | notification-events, billing-events |
-| `StudentEnrolledInClassroomEvent` | classroom.addStudent | classroomId, studentId, orgId | notification-events, billing-events |
-| `LessonCreatedEvent` | Lesson.create | lessonId, classroomId, orgId, scheduledAt | classroom-events |
-| `LessonScheduledEvent` | lesson.schedule | lessonId, orgId, scheduledAt, studentIds | notification-events, billing-events, meet-events (create meeting) |
-| `LessonStartedEvent` | lesson.start | lessonId, orgId, meetLink | notification-events, classroom-events (WS broadcast of status + stored link) |
-| `LessonCompletedEvent` | lesson.complete | lessonId, orgId, completedAt | assessment-events, notification-events |
-| `LessonReportedEvent` | lesson.markReported | lessonId, orgId, reportedAt | progress-events |
-| `LessonArchivedEvent` | lesson.archive | lessonId, orgId | (audit) |
-| `LessonCancelledEvent` | lesson.cancel | lessonId, orgId, reason, cancelledBy | notification-events, billing-events, meet-events (delete meeting) |
-| `LessonStudentNoShowEvent` | lesson.markStudentNoShow | lessonId, orgId, noShowAt | notification-events, billing-events |
-| `LessonTeacherNoShowEvent` | lesson.markTeacherNoShow | lessonId, orgId, noShowAt, markedBy | notification-events, billing-events |
-| `CoverTeacherAssignedEvent` | lesson.assignCoverTeacher | lessonId, coverTeacherId | notification-events |
+| Event                             | Emitted By                | Payload                                   | Consumer Queue                                                               |
+| --------------------------------- | ------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------- |
+| `ClassroomCreatedEvent`           | Classroom.create          | classroomId, orgId, teacherId, subjectId  | classroom-events                                                             |
+| `ClassroomPausedEvent`            | classroom.pause           | classroomId, orgId                        | notification-events                                                          |
+| `ClassroomClosedEvent`            | classroom.close           | classroomId, orgId                        | notification-events, billing-events                                          |
+| `StudentEnrolledInClassroomEvent` | classroom.addStudent      | classroomId, studentId, orgId             | notification-events, billing-events                                          |
+| `LessonCreatedEvent`              | Lesson.create             | lessonId, classroomId, orgId, scheduledAt | classroom-events                                                             |
+| `LessonScheduledEvent`            | lesson.schedule           | lessonId, orgId, scheduledAt, studentIds  | notification-events, billing-events, meet-events (create meeting)            |
+| `LessonStartedEvent`              | lesson.start              | lessonId, orgId, meetLink                 | notification-events, classroom-events (WS broadcast of status + stored link) |
+| `LessonCompletedEvent`            | lesson.complete           | lessonId, orgId, completedAt              | assessment-events, notification-events                                       |
+| `LessonReportedEvent`             | lesson.markReported       | lessonId, orgId, reportedAt               | progress-events                                                              |
+| `LessonArchivedEvent`             | lesson.archive            | lessonId, orgId                           | (audit)                                                                      |
+| `LessonCancelledEvent`            | lesson.cancel             | lessonId, orgId, reason, cancelledBy      | notification-events, billing-events, meet-events (delete meeting)            |
+| `LessonStudentNoShowEvent`        | lesson.markStudentNoShow  | lessonId, orgId, noShowAt                 | notification-events, billing-events                                          |
+| `LessonTeacherNoShowEvent`        | lesson.markTeacherNoShow  | lessonId, orgId, noShowAt, markedBy       | notification-events, billing-events                                          |
+| `CoverTeacherAssignedEvent`       | lesson.assignCoverTeacher | lessonId, coverTeacherId                  | notification-events                                                          |
 
 `LessonReportSubmittedEvent` is emitted by the lesson report (see [07-progress-reporting.md](07-progress-reporting.md)) and consumed here via `classroom-events` to trigger `lesson.markReported()`.
 
@@ -237,20 +242,20 @@ Multi-queue routes assume the planned fan-out `OUTBOX_EVENT_ROUTES` (see [00-ddd
 
 ## Domain Logic
 
-| Rule | Enforcement |
-|---|---|
-| A lesson can only be cancelled from PENDING or SCHEDULED states | `lesson.cancel()` — throws `InvalidLessonStateError` for other states |
-| A lesson can only go LIVE from SCHEDULED | `lesson.start()` — throws if status != SCHEDULED |
-| Teacher must have an availability slot covering the lesson time | Checked in scheduling domain service before `lesson.schedule()` |
-| Classroom cannot exceed maxStudents | `classroom.addStudent()` — throws `ClassroomFullError` |
-| A student cannot have two overlapping lessons at the same time | Checked at enrollment + scheduling time (StudentScheduleConflictService) |
-| Cover teacher must be an active member of the same org | Checked in `lesson.assignCoverTeacher()` |
-| Student no-show: only from LIVE, marked by the teacher, after OrganizationPolicy.noShowWaitMinutes elapsed from scheduledAt | `lesson.markStudentNoShow()` — wall-clock check |
-| Teacher no-show: only from SCHEDULED, marked by an OrgAdmin or the student/parent, after OrganizationPolicy.noShowWaitMinutes elapsed from scheduledAt | `lesson.markTeacherNoShow()` — wall-clock check |
-| A meeting is created when the lesson becomes SCHEDULED and deleted when it is cancelled | `meet-events` consumer (classroom module) |
-| Lessons are auto-archived 7 days after REPORTED | Background cron job triggers `lesson.archive()` |
-| Lessons cannot be modified once ARCHIVED | All domain methods throw `LessonArchivedError` if status == ARCHIVED |
-| If `lessonPlanRequired` is true in OrganizationPolicy, teacher must complete LessonPlan before LIVE | `lesson.start()` — checks board plan status |
+| Rule                                                                                                                                                   | Enforcement                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| A lesson can only be cancelled from PENDING or SCHEDULED states                                                                                        | `lesson.cancel()` — throws `InvalidLessonStateError` for other states    |
+| A lesson can only go LIVE from SCHEDULED                                                                                                               | `lesson.start()` — throws if status != SCHEDULED                         |
+| Teacher must have an availability slot covering the lesson time                                                                                        | Checked in scheduling domain service before `lesson.schedule()`          |
+| Classroom cannot exceed maxStudents                                                                                                                    | `classroom.addStudent()` — throws `ClassroomFullError`                   |
+| A student cannot have two overlapping lessons at the same time                                                                                         | Checked at enrollment + scheduling time (StudentScheduleConflictService) |
+| Cover teacher must be an active member of the same org                                                                                                 | Checked in `lesson.assignCoverTeacher()`                                 |
+| Student no-show: only from LIVE, marked by the teacher, after OrganizationPolicy.noShowWaitMinutes elapsed from scheduledAt                            | `lesson.markStudentNoShow()` — wall-clock check                          |
+| Teacher no-show: only from SCHEDULED, marked by an OrgAdmin or the student/parent, after OrganizationPolicy.noShowWaitMinutes elapsed from scheduledAt | `lesson.markTeacherNoShow()` — wall-clock check                          |
+| A meeting is created when the lesson becomes SCHEDULED and deleted when it is cancelled                                                                | `meet-events` consumer (classroom module)                                |
+| Lessons are auto-archived 7 days after REPORTED                                                                                                        | Background cron job triggers `lesson.archive()`                          |
+| Lessons cannot be modified once ARCHIVED                                                                                                               | All domain methods throw `LessonArchivedError` if status == ARCHIVED     |
+| If `lessonPlanRequired` is true in OrganizationPolicy, teacher must complete LessonPlan before LIVE                                                    | `lesson.start()` — checks board plan status                              |
 
 ---
 
@@ -258,51 +263,51 @@ Multi-queue routes assume the planned fan-out `OUTBOX_EVENT_ROUTES` (see [00-ddd
 
 ### Classroom Operations
 
-| Action | Description |
-|---|---|
-| Create classroom | OrgAdmin or teacher creates classroom: sets subject, teacher, students, recurrence |
-| Generate lesson slots | System cron generates Lesson records from RecurrencePattern (4 weeks rolling horizon) |
-| Book one-off lesson | OrgAdmin or parent books a single lesson outside the recurrence pattern |
-| Pause classroom | OrgAdmin pauses — stops future lesson generation; active lessons unaffected |
-| Close classroom | OrgAdmin permanently closes — sends notification to enrolled students/parents |
-| Change primary teacher | OrgAdmin changes classroom teacher; only affects future lessons |
-| Assign cover teacher | OrgAdmin or LeadTeacher assigns cover for a specific lesson |
-| Add student to classroom | OrgAdmin or parent enrollment triggers `classroom.addStudent()` |
-| Remove student from classroom | OrgAdmin removes; preserves historical lesson data |
+| Action                        | Description                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| Create classroom              | OrgAdmin or teacher creates classroom: sets subject, teacher, students, recurrence    |
+| Generate lesson slots         | System cron generates Lesson records from RecurrencePattern (4 weeks rolling horizon) |
+| Book one-off lesson           | OrgAdmin or parent books a single lesson outside the recurrence pattern               |
+| Pause classroom               | OrgAdmin pauses — stops future lesson generation; active lessons unaffected           |
+| Close classroom               | OrgAdmin permanently closes — sends notification to enrolled students/parents         |
+| Change primary teacher        | OrgAdmin changes classroom teacher; only affects future lessons                       |
+| Assign cover teacher          | OrgAdmin or LeadTeacher assigns cover for a specific lesson                           |
+| Add student to classroom      | OrgAdmin or parent enrollment triggers `classroom.addStudent()`                       |
+| Remove student from classroom | OrgAdmin removes; preserves historical lesson data                                    |
 
 ### Lesson Operations
 
-| Action | Description |
-|---|---|
-| Confirm lesson | Lesson goes PENDING -> SCHEDULED on parent/admin confirmation; a meeting is created |
-| Start lesson | Teacher starts board session -> SCHEDULED -> LIVE; the meeting link is delivered to participants |
-| End lesson | Teacher or system ends session -> LIVE -> COMPLETED |
-| Begin marking | Teacher enters marking mode -> COMPLETED -> MARKING |
-| Submit report | Teacher approves AI draft + submits the report; the lesson then moves MARKING -> REPORTED; visible to parent |
-| Cancel lesson | Admin or teacher cancels with reason (meeting deleted); triggers reschedule suggestions if enabled |
-| Mark student no-show | Teacher marks the student absent after the wait period (LIVE -> STUDENT_NO_SHOW) |
-| Mark teacher no-show | OrgAdmin, or the student/parent, marks the teacher absent after the wait period (SCHEDULED -> TEACHER_NO_SHOW) |
-| Accept reschedule suggestion | Parent or teacher selects alternative time slot; creates new PENDING lesson |
+| Action                       | Description                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Confirm lesson               | Lesson goes PENDING -> SCHEDULED on parent/admin confirmation; a meeting is created                            |
+| Start lesson                 | Teacher starts board session -> SCHEDULED -> LIVE; the meeting link is delivered to participants               |
+| End lesson                   | Teacher or system ends session -> LIVE -> COMPLETED                                                            |
+| Begin marking                | Teacher enters marking mode -> COMPLETED -> MARKING                                                            |
+| Submit report                | Teacher approves AI draft + submits the report; the lesson then moves MARKING -> REPORTED; visible to parent   |
+| Cancel lesson                | Admin or teacher cancels with reason (meeting deleted); triggers reschedule suggestions if enabled             |
+| Mark student no-show         | Teacher marks the student absent after the wait period (LIVE -> STUDENT_NO_SHOW)                               |
+| Mark teacher no-show         | OrgAdmin, or the student/parent, marks the teacher absent after the wait period (SCHEDULED -> TEACHER_NO_SHOW) |
+| Accept reschedule suggestion | Parent or teacher selects alternative time slot; creates new PENDING lesson                                    |
 
 ### Scheduling Operations
 
-| Action | Description |
-|---|---|
-| Set teacher availability | Teacher configures recurring weekly slots and exceptions |
-| Block date | Teacher adds exception to block a specific date/range |
-| Add one-off availability | Teacher adds a slot for a date outside their normal template |
-| Check availability | System queries `availability.getAvailableSlots()` for booking UI |
-| Conflict detection | System rejects scheduling if teacher or student has a conflicting lesson |
+| Action                   | Description                                                              |
+| ------------------------ | ------------------------------------------------------------------------ |
+| Set teacher availability | Teacher configures recurring weekly slots and exceptions                 |
+| Block date               | Teacher adds exception to block a specific date/range                    |
+| Add one-off availability | Teacher adds a slot for a date outside their normal template             |
+| Check availability       | System queries `availability.getAvailableSlots()` for booking UI         |
+| Conflict detection       | System rejects scheduling if teacher or student has a conflicting lesson |
 
 ---
 
 ## Repositories
 
-| Repository | Interface | Scope |
-|---|---|---|
-| Classroom | `IClassroomRepository` | Org-scoped |
-| Lesson | `ILessonRepository` | Org-scoped |
-| StudentEnrollment | `IStudentEnrollmentRepository` | Org-scoped |
+| Repository          | Interface                        | Scope      |
+| ------------------- | -------------------------------- | ---------- |
+| Classroom           | `IClassroomRepository`           | Org-scoped |
+| Lesson              | `ILessonRepository`              | Org-scoped |
+| StudentEnrollment   | `IStudentEnrollmentRepository`   | Org-scoped |
 | TeacherAvailability | `ITeacherAvailabilityRepository` | Org-scoped |
 
 `AvailabilitySlot` and `AvailabilityException` have no repositories — they are persisted through `TeacherAvailability`.
@@ -458,40 +463,40 @@ enum ExceptionType {
 
 ## WebSocket Events (Classroom Module)
 
-| Event | Namespace | Room | Payload | Who Receives |
-|---|---|---|---|---|
-| `lesson:status_changed` | /lesson | lesson:{lessonId} | { lessonId, status, updatedAt } | Teacher + enrolled students |
-| `lesson:meet_link_ready` | /lesson | lesson:{lessonId} | { lessonId, meetLink } (sent when the lesson goes LIVE) | Teacher + enrolled students |
-| `lesson:cover_teacher_assigned` | /lesson | lesson:{lessonId} | { lessonId, coverTeacherName } | Students + parents (via notification) |
-| `lesson:cancelled` | /notifications | user:{userId} | { lessonId, classroomName, reason } | Each enrolled student's parent |
-| `lesson:student_no_show` | /notifications | org:{orgId} | { lessonId, studentName } | OrgAdmin |
-| `lesson:teacher_no_show` | /notifications | org:{orgId} | { lessonId, teacherName } | OrgAdmin |
-| `classroom:new_lesson_scheduled` | /notifications | user:{userId} | { classroomId, lessonId, scheduledAt } | Parent + student |
+| Event                            | Namespace      | Room              | Payload                                                 | Who Receives                          |
+| -------------------------------- | -------------- | ----------------- | ------------------------------------------------------- | ------------------------------------- |
+| `lesson:status_changed`          | /lesson        | lesson:{lessonId} | { lessonId, status, updatedAt }                         | Teacher + enrolled students           |
+| `lesson:meet_link_ready`         | /lesson        | lesson:{lessonId} | { lessonId, meetLink } (sent when the lesson goes LIVE) | Teacher + enrolled students           |
+| `lesson:cover_teacher_assigned`  | /lesson        | lesson:{lessonId} | { lessonId, coverTeacherName }                          | Students + parents (via notification) |
+| `lesson:cancelled`               | /notifications | user:{userId}     | { lessonId, classroomName, reason }                     | Each enrolled student's parent        |
+| `lesson:student_no_show`         | /notifications | org:{orgId}       | { lessonId, studentName }                               | OrgAdmin                              |
+| `lesson:teacher_no_show`         | /notifications | org:{orgId}       | { lessonId, teacherName }                               | OrgAdmin                              |
+| `classroom:new_lesson_scheduled` | /notifications | user:{userId}     | { classroomId, lessonId, scheduledAt }                  | Parent + student                      |
 
 ---
 
 ## API Surface
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | /organizations/:organizationId/classrooms | OrgAdmin | Create classroom |
-| GET | /organizations/:organizationId/classrooms | OrgAdmin/Teacher | List org classrooms |
-| GET | /organizations/:organizationId/classrooms/:classroomId | OrgAdmin/Teacher/Student | Get classroom detail |
-| PATCH | /organizations/:organizationId/classrooms/:classroomId | OrgAdmin | Update classroom |
-| POST | /organizations/:organizationId/classrooms/:classroomId/pause | OrgAdmin | Pause classroom |
-| POST | /organizations/:organizationId/classrooms/:classroomId/close | OrgAdmin | Close classroom |
-| POST | /organizations/:organizationId/classrooms/:classroomId/students | OrgAdmin | Add student to classroom |
-| DELETE | /organizations/:organizationId/classrooms/:classroomId/students/:studentId | OrgAdmin | Remove student |
-| GET | /organizations/:organizationId/lessons | OrgAdmin/Teacher | List lessons (filterable) |
-| GET | /organizations/:organizationId/lessons/:lessonId | Teacher/Student/Parent | Get lesson detail |
-| POST | /organizations/:organizationId/lessons/:lessonId/start | Teacher | Start lesson (delivers the meeting link) |
-| POST | /organizations/:organizationId/lessons/:lessonId/complete | Teacher/System | End lesson |
-| POST | /organizations/:organizationId/lessons/:lessonId/cancel | OrgAdmin/Teacher | Cancel lesson |
-| POST | /organizations/:organizationId/lessons/:lessonId/student-no-show | Teacher | Mark student no-show |
-| POST | /organizations/:organizationId/lessons/:lessonId/teacher-no-show | OrgAdmin/Student/Parent | Mark teacher no-show |
-| POST | /organizations/:organizationId/lessons/:lessonId/cover-teacher | OrgAdmin/LeadTeacher | Assign cover teacher |
-| GET | /teachers/:teacherId/availability | OrgAdmin/Teacher | Get availability template |
-| PUT | /teachers/:teacherId/availability | Teacher | Set full availability template |
-| POST | /teachers/:teacherId/availability/exceptions | Teacher | Add exception (block/add slot) |
-| DELETE | /teachers/:teacherId/availability/exceptions/:id | Teacher | Remove exception |
-| GET | /teachers/:teacherId/available-slots | OrgAdmin | Get available slots in date range |
+| Method | Path                                                                       | Auth                     | Description                              |
+| ------ | -------------------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
+| POST   | /organizations/:organizationId/classrooms                                  | OrgAdmin                 | Create classroom                         |
+| GET    | /organizations/:organizationId/classrooms                                  | OrgAdmin/Teacher         | List org classrooms                      |
+| GET    | /organizations/:organizationId/classrooms/:classroomId                     | OrgAdmin/Teacher/Student | Get classroom detail                     |
+| PATCH  | /organizations/:organizationId/classrooms/:classroomId                     | OrgAdmin                 | Update classroom                         |
+| POST   | /organizations/:organizationId/classrooms/:classroomId/pause               | OrgAdmin                 | Pause classroom                          |
+| POST   | /organizations/:organizationId/classrooms/:classroomId/close               | OrgAdmin                 | Close classroom                          |
+| POST   | /organizations/:organizationId/classrooms/:classroomId/students            | OrgAdmin                 | Add student to classroom                 |
+| DELETE | /organizations/:organizationId/classrooms/:classroomId/students/:studentId | OrgAdmin                 | Remove student                           |
+| GET    | /organizations/:organizationId/lessons                                     | OrgAdmin/Teacher         | List lessons (filterable)                |
+| GET    | /organizations/:organizationId/lessons/:lessonId                           | Teacher/Student/Parent   | Get lesson detail                        |
+| POST   | /organizations/:organizationId/lessons/:lessonId/start                     | Teacher                  | Start lesson (delivers the meeting link) |
+| POST   | /organizations/:organizationId/lessons/:lessonId/complete                  | Teacher/System           | End lesson                               |
+| POST   | /organizations/:organizationId/lessons/:lessonId/cancel                    | OrgAdmin/Teacher         | Cancel lesson                            |
+| POST   | /organizations/:organizationId/lessons/:lessonId/student-no-show           | Teacher                  | Mark student no-show                     |
+| POST   | /organizations/:organizationId/lessons/:lessonId/teacher-no-show           | OrgAdmin/Student/Parent  | Mark teacher no-show                     |
+| POST   | /organizations/:organizationId/lessons/:lessonId/cover-teacher             | OrgAdmin/LeadTeacher     | Assign cover teacher                     |
+| GET    | /teachers/:teacherId/availability                                          | OrgAdmin/Teacher         | Get availability template                |
+| PUT    | /teachers/:teacherId/availability                                          | Teacher                  | Set full availability template           |
+| POST   | /teachers/:teacherId/availability/exceptions                               | Teacher                  | Add exception (block/add slot)           |
+| DELETE | /teachers/:teacherId/availability/exceptions/:id                           | Teacher                  | Remove exception                         |
+| GET    | /teachers/:teacherId/available-slots                                       | OrgAdmin                 | Get available slots in date range        |

@@ -57,7 +57,10 @@ export class ClassroomService {
         primaryTeacherId: dto.primaryTeacherId,
         lessonDurationMins: dto.lessonDurationMins,
         maxStudents: dto.maxStudents,
-        recurrenceDayOfWeek: dto.recurrenceDayOfWeek,
+        recurrenceDaysOfWeek: this.resolveRecurrenceDays(
+          dto.recurrenceDaysOfWeek,
+          dto.recurrenceDayOfWeek,
+        ),
         recurrenceStartTime: dto.recurrenceStartTime,
         recurrenceTimezone: dto.recurrenceTimezone,
         recurrenceIntervalWeeks: dto.recurrenceIntervalWeeks,
@@ -107,18 +110,26 @@ export class ClassroomService {
         lessonDurationMins: dto.lessonDurationMins,
         maxStudents: dto.maxStudents,
         primaryTeacherId: dto.primaryTeacherId,
-        recurrenceDayOfWeek: dto.recurrenceDayOfWeek,
+        recurrenceDaysOfWeek:
+          dto.recurrenceDaysOfWeek === undefined &&
+          dto.recurrenceDayOfWeek === undefined
+            ? undefined
+            : this.resolveRecurrenceDays(
+                dto.recurrenceDaysOfWeek,
+                dto.recurrenceDayOfWeek,
+              ),
         recurrenceStartTime: dto.recurrenceStartTime,
         recurrenceTimezone: dto.recurrenceTimezone,
         recurrenceIntervalWeeks: dto.recurrenceIntervalWeeks,
         recurrenceEffectiveFrom: dto.recurrenceEffectiveFrom
           ? new Date(dto.recurrenceEffectiveFrom)
           : undefined,
-        recurrenceEffectiveUntil: dto.recurrenceEffectiveUntil === undefined
-          ? undefined
-          : dto.recurrenceEffectiveUntil
-            ? new Date(dto.recurrenceEffectiveUntil)
-            : null,
+        recurrenceEffectiveUntil:
+          dto.recurrenceEffectiveUntil === undefined
+            ? undefined
+            : dto.recurrenceEffectiveUntil
+              ? new Date(dto.recurrenceEffectiveUntil)
+              : null,
         correlationId,
       }),
     );
@@ -313,5 +324,12 @@ export class ClassroomService {
         correlationId,
       }),
     );
+  }
+
+  private resolveRecurrenceDays(
+    daysOfWeek: number[] | undefined,
+    dayOfWeek: number | undefined,
+  ): number[] {
+    return daysOfWeek ?? (dayOfWeek === undefined ? [] : [dayOfWeek]);
   }
 }

@@ -8,19 +8,27 @@ import {
 } from '../../../domain';
 
 @CommandHandler(UpdateClassroomCommand)
-export class UpdateClassroomHandler
-  implements ICommandHandler<UpdateClassroomCommand, { success: boolean }>
-{
+export class UpdateClassroomHandler implements ICommandHandler<
+  UpdateClassroomCommand,
+  { success: boolean }
+> {
   constructor(private readonly classroomRepository: IClassroomRepository) {}
 
-  async execute(command: UpdateClassroomCommand): Promise<{ success: boolean }> {
+  async execute(
+    command: UpdateClassroomCommand,
+  ): Promise<{ success: boolean }> {
     const { payload } = command;
-    const classroom = await this.classroomRepository.findById(payload.classroomId);
+    const classroom = await this.classroomRepository.findById(
+      payload.classroomId,
+    );
     if (!classroom || classroom.orgId !== payload.orgId) {
       throw new ClassroomNotFoundError();
     }
 
-    if (payload.primaryTeacherId && payload.primaryTeacherId !== classroom.primaryTeacherId) {
+    if (
+      payload.primaryTeacherId &&
+      payload.primaryTeacherId !== classroom.primaryTeacherId
+    ) {
       classroom.changeTeacher(payload.primaryTeacherId, payload.correlationId);
     }
 
@@ -31,7 +39,7 @@ export class UpdateClassroomHandler
     });
 
     const hasRecurrenceUpdate = [
-      payload.recurrenceDayOfWeek,
+      payload.recurrenceDaysOfWeek,
       payload.recurrenceStartTime,
       payload.recurrenceTimezone,
       payload.recurrenceIntervalWeeks,
@@ -40,7 +48,7 @@ export class UpdateClassroomHandler
     ].some((value) => value !== undefined);
     if (hasRecurrenceUpdate) {
       if (
-        payload.recurrenceDayOfWeek === undefined ||
+        payload.recurrenceDaysOfWeek === undefined ||
         payload.recurrenceStartTime === undefined ||
         payload.recurrenceTimezone === undefined ||
         payload.recurrenceIntervalWeeks === undefined ||
@@ -52,7 +60,7 @@ export class UpdateClassroomHandler
       }
       classroom.updateRecurrence(
         RecurrencePattern.create({
-          dayOfWeek: payload.recurrenceDayOfWeek,
+          daysOfWeek: payload.recurrenceDaysOfWeek,
           startTime: payload.recurrenceStartTime,
           timezone: payload.recurrenceTimezone,
           intervalWeeks: payload.recurrenceIntervalWeeks,
