@@ -298,6 +298,16 @@ export class OrganizationController {
 
   @UseGuards(AuthGuard, OrganizationPermissionGuard)
   @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Post(':organizationId/roles/provision')
+  async provisionRoles(
+    @Param('organizationId') organizationId: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.organizationService.provisionRoles(organizationId, correlationId);
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
   @Post(':organizationId/roles')
   async createRole(
     @CurrentUser() currentUser: CurrentUserPayload,

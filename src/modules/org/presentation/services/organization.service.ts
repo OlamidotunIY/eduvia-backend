@@ -24,6 +24,7 @@ import {
   DelistOrganizationFromMarketplaceCommand,
   ListOrganizationOnMarketplaceCommand,
   ReceiveTeacherApplicationCommand,
+  ProvisionDefaultOrganizationRolesCommand,
   RejectTeacherApplicationCommand,
   SendOrganizationInvitationCommand,
   SuspendMemberCommand,
@@ -300,6 +301,12 @@ export class OrganizationService {
   async getRoles(orgId: string, callerUserId: string) {
     return this.queryBus.execute(
       new GetOrganizationRolesQuery(orgId, callerUserId),
+    );
+  }
+
+  async provisionRoles(orgId: string, correlationId: string) {
+    return this.commandBus.execute(
+      new ProvisionDefaultOrganizationRolesCommand({ orgId, correlationId }),
     );
   }
 
