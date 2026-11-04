@@ -33,38 +33,35 @@ export class PrismaSessionRepository
   }
 
   override async findById(id: SessionId | string): Promise<Session | null> {
-    const cached = await this.redis.getClient().get(this.cacheKey(String(id)));
-    if (!cached) {
-      return null;
-    }
-    const data = JSON.parse(cached);
+    const sessionId = String(id);
+    const cache = this.redis.getClient();
+    const cached = await cache.get(this.cacheKey(sessionId));
 
-    return Session.reconstitute({
-      ...data,
-      id: SessionId.from(String(id)),
-      expiresAt: new Date(data.expiresAt),
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-    });
+    if (cached) {
+      try {
+        const data = JSON.parse(cached);
+        return Session.reconstitute({
+          ...data,
+          id: SessionId.from(sessionId),
+          expiresAt: new Date(data.expiresAt),
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt),
+        });
+      } catch {
+        await cache.del(this.cacheKey(sessionId));
+      }
+    }
+
+    const session = await super.findById(sessionId);
+    if (!session) return null;
+
+    await this.cacheSession(session);
+    return session;
   }
 
   override async save(entity: Session): Promise<void> {
     await super.save(entity);
-    const ttlSeconds = Math.max(
-      0,
-      Math.floor((entity.expiresAt.getTime() - Date.now()) / 1000),
-    );
-
-    if (ttlSeconds > 0) {
-      await this.redis
-        .getClient()
-        .set(
-          this.cacheKey(entity.getId()),
-          JSON.stringify(this.toCache(entity)),
-          'EX',
-          ttlSeconds,
-        );
-    }
+    await this.cacheSession(entity);
   }
 
   override async delete(id: SessionId | string): Promise<void> {
@@ -84,6 +81,23 @@ export class PrismaSessionRepository
 
   private cacheKey(sessionId: string): string {
     return `auth:session:${sessionId}`;
+  }
+
+  private async cacheSession(entity: Session): Promise<void> {
+    const ttlSeconds = Math.max(
+      0,
+      Math.floor((entity.expiresAt.getTime() - Date.now()) / 1000),
+    );
+    if (ttlSeconds <= 0) return;
+
+    await this.redis
+      .getClient()
+      .set(
+        this.cacheKey(entity.getId()),
+        JSON.stringify(this.toCache(entity)),
+        'EX',
+        ttlSeconds,
+      );
   }
 
   private toCache(entity: Session) {
