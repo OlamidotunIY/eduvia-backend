@@ -23,6 +23,7 @@
     "postinstall": "prisma skills sync || exit 0",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "seed:platform-catalog": "tsx scripts/seed-platform-catalog.ts",
     "sync:aliases": "node scripts/sync-module-aliases.cjs"
   },
   "dependencies": {
