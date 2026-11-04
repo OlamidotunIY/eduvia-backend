@@ -9,3 +9,6 @@ export * from "./teacher-application-id.v0"
 export * from "./teacher-application-status.v0"
 export * from "./org-invitation.role.v0"
 export * from "./org-invitation-status.v0"
+export * from './organization-role-id.vo';
+export * from './organization-permission.vo';
+export * from './organization-role-key.vo';

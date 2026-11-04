@@ -15,3 +15,4 @@ export * from './accept-org-invitation';
 export * from './change-member-role';
 export * from './suspend-member';
 export * from './select-active-organization';
+export * from './provision-default-organization-roles';

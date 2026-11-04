@@ -21,6 +21,7 @@ export class CreateOrganizationMembershipHandler
       orgId: payload.orgId,
       userId: payload.userId,
       role: payload.role,
+      roleId: payload.roleId,
       subjects: payload.subjects,
       activateForUserIfUnset: payload.activateForUserIfUnset,
       correlationId: payload.correlationId,
