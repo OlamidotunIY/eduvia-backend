@@ -14,3 +14,4 @@ export * from './assign-cover-teacher';
 export * from './set-teacher-availability';
 export * from './add-availability-exception';
 export * from './remove-availability-exception';
+export * from './reopen-classroom';

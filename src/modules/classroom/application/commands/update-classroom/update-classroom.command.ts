@@ -5,6 +5,12 @@ export interface UpdateClassroomPayload {
   lessonDurationMins?: number;
   maxStudents?: number;
   primaryTeacherId?: string;
+  recurrenceDayOfWeek?: number;
+  recurrenceStartTime?: string;
+  recurrenceTimezone?: string;
+  recurrenceIntervalWeeks?: number;
+  recurrenceEffectiveFrom?: Date;
+  recurrenceEffectiveUntil?: Date | null;
   correlationId?: string;
 }
 

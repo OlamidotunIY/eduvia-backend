@@ -1,6 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateClassroomCommand } from './update-classroom.command';
-import { ClassroomNotFoundError, IClassroomRepository } from '../../../domain';
+import {
+  ClassroomInvariantError,
+  ClassroomNotFoundError,
+  IClassroomRepository,
+  RecurrencePattern,
+} from '../../../domain';
 
 @CommandHandler(UpdateClassroomCommand)
 export class UpdateClassroomHandler
@@ -24,6 +29,39 @@ export class UpdateClassroomHandler
       lessonDurationMins: payload.lessonDurationMins,
       maxStudents: payload.maxStudents,
     });
+
+    const hasRecurrenceUpdate = [
+      payload.recurrenceDayOfWeek,
+      payload.recurrenceStartTime,
+      payload.recurrenceTimezone,
+      payload.recurrenceIntervalWeeks,
+      payload.recurrenceEffectiveFrom,
+      payload.recurrenceEffectiveUntil,
+    ].some((value) => value !== undefined);
+    if (hasRecurrenceUpdate) {
+      if (
+        payload.recurrenceDayOfWeek === undefined ||
+        payload.recurrenceStartTime === undefined ||
+        payload.recurrenceTimezone === undefined ||
+        payload.recurrenceIntervalWeeks === undefined ||
+        payload.recurrenceEffectiveFrom === undefined
+      ) {
+        throw new ClassroomInvariantError(
+          'A recurrence update requires a complete recurrence pattern',
+        );
+      }
+      classroom.updateRecurrence(
+        RecurrencePattern.create({
+          dayOfWeek: payload.recurrenceDayOfWeek,
+          startTime: payload.recurrenceStartTime,
+          timezone: payload.recurrenceTimezone,
+          intervalWeeks: payload.recurrenceIntervalWeeks,
+          effectiveFrom: payload.recurrenceEffectiveFrom,
+          effectiveUntil: payload.recurrenceEffectiveUntil,
+        }),
+        payload.correlationId,
+      );
+    }
 
     await this.classroomRepository.save(classroom);
 
