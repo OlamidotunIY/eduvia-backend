@@ -77,7 +77,7 @@ import { $RepositoryInterface } from '../../../domain/repository';
 @CommandHandler($CommandName)
 export class $handlerName implements ICommandHandler<$CommandName, $resultName> {
   constructor(
-    private readonly $repoVar: $RepositoryInterface,
+    private readonly ${repoVar}: $RepositoryInterface,
   ) {}
 
   async execute(command: $CommandName): Promise<$resultName> {

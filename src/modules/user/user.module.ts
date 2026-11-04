@@ -6,11 +6,11 @@ import {
   BcryptPasswordHashAdapter,
   IPasswordHashPort,
   IUserQueryPort,
-  PrismaService,
-  RedisService,
 } from '@modules/shared';
 import { UserEventProcessor } from './infrastructure/messaging';
-import { CreateUserHandler } from './application/commands/create-user/create-user.handler';
+import { CreatePendingRegistrationHandler } from './application/commands/create-pending-registration/create-pending-registration.handler';
+import { CompleteUserOnboardingHandler } from './application/commands/complete-user-onboarding/complete-user-onboarding.handler';
+import { SetActiveOrganizationHandler } from './application/commands/set-active-organization/set-active-organization.handler';
 import { MarkEmailVerifiedHandler } from './application/commands';
 import { RegisterStudentHandler } from './application/commands/register-student';
 import { UpdateUserHandler } from './application/commands/update-user';
@@ -38,7 +38,9 @@ import {
 import { UserController, UserService } from './presentation';
 
 const CommandHandlers = [
-  CreateUserHandler,
+  CreatePendingRegistrationHandler,
+  CompleteUserOnboardingHandler,
+  SetActiveOrganizationHandler,
   MarkEmailVerifiedHandler,
   RegisterStudentHandler,
   UpdateUserHandler,
@@ -50,8 +52,6 @@ const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
   imports: [CqrsModule, BullModule.registerQueue({ name: 'user-events' })],
   controllers: [UserController],
   providers: [
-    PrismaService,
-    RedisService,
     AuthGuard,
     UserService,
     UserMapper,

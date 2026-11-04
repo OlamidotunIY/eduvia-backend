@@ -4,8 +4,6 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IBoardQueryPort,
-  PrismaService,
-  RedisService,
   FirebaseStorageService,
 } from '@modules/shared';
 import {
@@ -127,8 +125,6 @@ const repositories = [
   ],
   controllers: [BoardController],
   providers: [
-    PrismaService,
-    RedisService,
     AuthGuard,
     FirebaseStorageService,
     BoardService,

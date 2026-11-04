@@ -1,13 +1,13 @@
-
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { RedisService } from '../../infrastructure';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import { CurrentUserPayload } from '../decorators';
 
 @Injectable()
@@ -40,6 +40,13 @@ export class AuthGuard implements CanActivate {
 
       if (isRevoked || !sessionExists) {
         throw new UnauthorizedException();
+      }
+
+      if (
+        payload.scope === 'onboarding' &&
+        !['/me', '/users/me/onboarding', '/logout'].includes(request.path)
+      ) {
+        throw new ForbiddenException('Complete onboarding before accessing this resource');
       }
 
       request['user'] = payload;

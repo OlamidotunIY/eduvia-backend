@@ -3,6 +3,7 @@ import { ApplicationStatus, OrganizationId, TeacherApplicationId } from '../valu
 import { TeacherApplicationReceivedEvent } from '../events/teacher-application-received.event';
 import { TeacherApplicationApprovedEvent } from '../events/teacher-application-approved.event';
 import { TeacherApplicationRejectedEvent } from '../events/teacher-application-rejected.event';
+import { TeacherApplicationOutcomeNotificationRequestedEvent } from '../events/teacher-application-outcome-notification-requested-event';
 import { OrganizationInvariantError } from '../errors';
 
 export class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
@@ -127,6 +128,19 @@ export class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
         correlationId,
       ),
     );
+    this.addDomainEvent(
+      new TeacherApplicationOutcomeNotificationRequestedEvent(
+        this.getId(),
+        new TeacherApplicationOutcomeNotificationRequestedEvent.Payload(
+          this.getId(),
+          this.orgId.value,
+          this.applicantUserId,
+          'approved',
+          null,
+        ),
+        correlationId,
+      ),
+    );
   }
 
   public reject(reviewerId: string, reason: string | null, correlationId: string): void {
@@ -146,6 +160,19 @@ export class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
       new TeacherApplicationRejectedEvent(
         this.getId(),
         new TeacherApplicationRejectedEvent.Payload(this.getId(), this.orgId, reason),
+        correlationId,
+      ),
+    );
+    this.addDomainEvent(
+      new TeacherApplicationOutcomeNotificationRequestedEvent(
+        this.getId(),
+        new TeacherApplicationOutcomeNotificationRequestedEvent.Payload(
+          this.getId(),
+          this.orgId.value,
+          this.applicantUserId,
+          'rejected',
+          reason,
+        ),
         correlationId,
       ),
     );

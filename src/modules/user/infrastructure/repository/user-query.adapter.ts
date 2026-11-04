@@ -26,6 +26,10 @@ export class UserQueryAdapter implements IUserQueryPort {
       status: user.status,
       emailVerified: user.emailVerified,
       twoFactorEnabled: Boolean(user.twoFactorEnabled),
+      onboardingStatus: user.onboardingStatus,
+      timezone: user.timezone,
+      image: user.image,
+      activeOrganizationId: user.activeOrganizationId,
     };
   }
 }

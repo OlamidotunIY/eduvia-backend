@@ -1,10 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { UpdateOrganizationSubjectCommand } from './update-organization-subject.command';
 import { IOrganizationSubjectRepository } from '../../../domain/repository';
 import {
   OrganizationInvariantError,
   OrganizationSubjectId,
   SubjectNotFound,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(UpdateOrganizationSubjectCommand)
@@ -14,10 +16,19 @@ export class UpdateOrganizationSubjectHandler implements ICommandHandler<
 > {
   constructor(
     private readonly orgSubjectRepository: IOrganizationSubjectRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(command: UpdateOrganizationSubjectCommand): Promise<void> {
     const { payload } = command;
+
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
+      payload.orgId,
+      payload.callerUserId,
+    );
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.SUBJECTS_UPDATE)) {
+      throw new OrganizationInvariantError('Caller cannot update organization subjects');
+    }
 
     const subject = await this.orgSubjectRepository.findById(
       OrganizationSubjectId.from(payload.subjectId),

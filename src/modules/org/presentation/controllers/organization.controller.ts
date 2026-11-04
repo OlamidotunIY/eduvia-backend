@@ -13,10 +13,13 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
+  OrganizationPermissionGuard,
+  RequireOrganizationPermissions,
   type CurrentUserPayload,
 } from '@modules/shared';
 import {
   ChangeMemberRoleDTO,
+  CreateOrganizationRoleDTO,
   CreateOrganizationDTO,
   CreateSubjectDTO,
   ReceiveTeacherApplicationDTO,
@@ -25,8 +28,10 @@ import {
   UpdateOrganizationDTO,
   UpdatePolicyDTO,
   UpdateSubjectDTO,
+  UpdateOrganizationRoleDTO,
 } from '../dto';
 import { OrganizationService } from '../services';
+import { OrganizationPermission } from '../../domain';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -42,6 +47,20 @@ export class OrganizationController {
     return this.organizationService.createOrganization(
       dto,
       currentUser.userId,
+      correlationId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('active/:organizationId')
+  async selectActiveOrganization(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.organizationService.selectActiveOrganization(
+      currentUser.userId,
+      organizationId,
       correlationId,
     );
   }
@@ -65,7 +84,8 @@ export class OrganizationController {
     return this.organizationService.getOrganizationBySlug(slug);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_UPDATE)
   @Patch(':organizationId')
   async updateProfile(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -81,7 +101,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_MARKETPLACE_MANAGE)
   @Post(':organizationId/marketplace/list')
   async listOnMarketplace(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -95,7 +116,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_MARKETPLACE_MANAGE)
   @Delete(':organizationId/marketplace/list')
   async delistFromMarketplace(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -109,7 +131,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ORGANIZATION_POLICY_UPDATE)
   @Patch(':organizationId/policy')
   async updatePolicy(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -136,7 +159,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.SUBJECTS_CREATE)
   @Post(':organizationId/subjects')
   async createSubject(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -150,7 +174,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.SUBJECTS_UPDATE)
   @Patch(':organizationId/subjects/:subjectId')
   async updateSubject(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -166,7 +191,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_READ)
   @Get(':organizationId/applications')
   async getApplications(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -194,7 +220,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_REVIEW)
   @Post(':organizationId/applications/:id/approve')
   async approveApplication(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -210,7 +237,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_REVIEW)
   @Post(':organizationId/applications/:id/reject')
   async rejectApplication(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -228,7 +256,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_INVITE)
   @Post(':organizationId/invitations')
   async sendInvitation(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -244,7 +273,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_READ)
   @Get(':organizationId/members')
   async getMembers(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -256,7 +286,60 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_READ)
+  @Get(':organizationId/roles')
+  async getRoles(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+  ) {
+    return this.organizationService.getRoles(organizationId, currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Post(':organizationId/roles/provision')
+  async provisionRoles(
+    @Param('organizationId') organizationId: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.organizationService.provisionRoles(organizationId, correlationId);
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Post(':organizationId/roles')
+  async createRole(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @Body() dto: CreateOrganizationRoleDTO,
+  ) {
+    return this.organizationService.createRole(
+      organizationId,
+      currentUser.userId,
+      dto,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Patch(':organizationId/roles/:roleId')
+  async updateRole(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @Param('roleId') roleId: string,
+    @Body() dto: UpdateOrganizationRoleDTO,
+  ) {
+    return this.organizationService.updateRole(
+      organizationId,
+      roleId,
+      currentUser.userId,
+      dto,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_MANAGE)
   @Patch(':organizationId/members/:userId/role')
   async changeMemberRole(
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -272,7 +355,8 @@ export class OrganizationController {
     );
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.MEMBERS_MANAGE)
   @Delete(':organizationId/members/:userId')
   async suspendMember(
     @CurrentUser() currentUser: CurrentUserPayload,

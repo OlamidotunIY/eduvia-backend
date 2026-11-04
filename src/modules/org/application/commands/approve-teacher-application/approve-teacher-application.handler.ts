@@ -1,13 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { ApproveTeacherApplicationCommand } from './approve-teacher-application.command';
 import { ApproveTeacherApplicationResult } from './approve-teacher-application.result';
 import {
-  IOrganizationMembershipRepository,
   ITeacherApplicationRepository,
 } from '../../../domain/repository';
 import {
   OrganizationInvariantError,
   TeacherApplicationId,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(ApproveTeacherApplicationCommand)
@@ -16,7 +17,7 @@ export class ApproveTeacherApplicationHandler
 {
   constructor(
     private readonly teacherApplicationRepository: ITeacherApplicationRepository,
-    private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
@@ -24,13 +25,13 @@ export class ApproveTeacherApplicationHandler
   ): Promise<ApproveTeacherApplicationResult> {
     const { payload } = command;
 
-    const membership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       payload.orgId,
       payload.reviewerUserId,
     );
 
-    if (!membership || !membership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.APPLICATIONS_REVIEW)) {
+      throw new OrganizationInvariantError('Caller cannot review teacher applications');
     }
 
     const application = await this.teacherApplicationRepository.findById(

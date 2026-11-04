@@ -1,23 +1,29 @@
+export class CurriculumNodeRefDto {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  depth?: number;
+  gradeLevel?: string;
+}
+
+export class CurriculumProfileRefDto {
+  name: string;
+  authority?: string;
+}
+
+export class ExistingQuestionStemDto {
+  stem: string;
+}
+
 export class GenerateQuestionsRequestDto {
-  curriculumNode: {
-    id: string;
-    name: string;
-    code: string;
-    description?: string;
-    depth?: number;
-    gradeLevel?: string;
-  };
-
-  curriculumProfile: {
-    name: string;
-    authority?: string;
-  };
-
+  curriculumNode: CurriculumNodeRefDto;
+  curriculumProfile: CurriculumProfileRefDto;
   subject: string;
   questionType: string;
   difficultyLevel: number;
   count: number;
-  existingQuestions?: Array<{ stem: string }>;
+  existingQuestions?: ExistingQuestionStemDto[];
   provider?: string;
   model?: string;
 }

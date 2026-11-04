@@ -34,4 +34,19 @@ export { ResendOtpCommand } from './commands/resend-otp/resend-otp.command';
 export { RequestPasswordResetHandler } from './commands/request-password-reset/request-password-reset.handler';
 export { RequestPasswordResetCommand } from './commands/request-password-reset/request-password-reset.command';
 
+export { StartGoogleOAuthCommand } from './commands/start-google-oauth/start-google-oauth.command';
+export { StartGoogleOAuthHandler } from './commands/start-google-oauth/start-google-oauth.handler';
+export type { StartGoogleOAuthResult } from './commands/start-google-oauth/start-google-oauth.result';
+
+export { CompleteGoogleOAuthCommand } from './commands/complete-google-oauth/complete-google-oauth.command';
+export { CompleteGoogleOAuthHandler } from './commands/complete-google-oauth/complete-google-oauth.handler';
+export type { CompleteGoogleOAuthResult } from './commands/complete-google-oauth/complete-google-oauth.result';
+
+export { ExchangeGoogleOAuthCommand } from './commands/exchange-google-oauth/exchange-google-oauth.command';
+export { ExchangeGoogleOAuthHandler } from './commands/exchange-google-oauth/exchange-google-oauth.handler';
+export type { ExchangeGoogleOAuthResult } from './commands/exchange-google-oauth/exchange-google-oauth.result';
+
+export * from './commands/start-email-registration';
+export * from './commands/finalize-registration';
+
 export * from './queries';

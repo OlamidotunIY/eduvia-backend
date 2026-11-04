@@ -4,9 +4,9 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IAssessmentQueryPort,
-  PrismaService,
-  RedisService,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
+import { OrgModule } from '../org/org.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -76,6 +76,7 @@ const repositories = [
 @Module({
   imports: [
     CqrsModule,
+    OrgModule,
     BullModule.registerQueue(
       { name: 'assessment-events' },
       { name: 'classroom-events' },
@@ -88,9 +89,8 @@ const repositories = [
     MasteryController,
   ],
   providers: [
-    PrismaService,
-    RedisService,
     AuthGuard,
+    OrganizationPermissionGuard,
     AssessmentService,
     ...COMMAND_HANDLERS,
     ...QUERY_HANDLERS,

@@ -13,6 +13,7 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@unique([providerId, accountId])
   @@map("accounts")
 }
 
@@ -66,4 +67,30 @@ enum VerificationStatus {
   verified
   expired
   max_attempts_exceeded
+}
+
+enum RegistrationStatus {
+  pending
+  user_created
+  completed
+  failed
+}
+
+model RegistrationRequest {
+  id        String   @id @default(uuid()) @map("_id")
+  email String
+  firstName String
+  lastName String
+  imageUrl String?
+  emailVerified Boolean
+  timezone String
+  providerId String
+  providerAccountId String?
+  passwordHash String?
+  status RegistrationStatus
+  userId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("registration_requests")
 }

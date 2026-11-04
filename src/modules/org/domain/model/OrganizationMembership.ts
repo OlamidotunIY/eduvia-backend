@@ -5,12 +5,16 @@ import {
   OrganizationId,
   OrganizationMembershipId,
   OrganizationRole,
+  OrganizationRoleId,
 } from '../value-objects';
+import { UserActiveOrganizationChangedEvent } from '../events';
+import { InitialActiveOrganizationRequestedEvent } from '../events/initial-active-organization-requested-event';
 
 export class OrganizationMembership extends AggregateRoot<OrganizationMembershipId> {
   public readonly orgId: OrganizationId;
   public readonly userId: string;
   private _role: OrganizationRole;
+  private _roleId: OrganizationRoleId | null;
   private _subjects: string[];
   private _status: MembershipStatus;
   public readonly joinedAt: Date;
@@ -21,6 +25,7 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     orgId: OrganizationId;
     userId: string;
     role: OrganizationRole;
+    roleId: OrganizationRoleId | null;
     subjects: string[];
     status: MembershipStatus;
     joinedAt: Date;
@@ -30,6 +35,7 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     this.orgId = params.orgId;
     this.userId = params.userId;
     this._role = params.role;
+    this._roleId = params.roleId;
     this._subjects = params.subjects;
     this._status = params.status;
     this.joinedAt = params.joinedAt;
@@ -40,20 +46,37 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     orgId: OrganizationId;
     userId: string;
     role: OrganizationRole;
+    roleId?: OrganizationRoleId | null;
     subjects?: string[];
+    activateForUserIfUnset?: boolean;
+    correlationId?: string;
   }): OrganizationMembership {
     const now = new Date();
 
-    return new OrganizationMembership({
+    const membership = new OrganizationMembership({
       id: OrganizationMembershipId.create(),
       orgId: params.orgId,
       userId: params.userId,
       role: params.role,
+      roleId: params.roleId ?? null,
       subjects: params.subjects ?? [],
       status: MembershipStatus.ACTIVE,
       joinedAt: now,
       updatedAt: now,
     });
+    if (params.activateForUserIfUnset && params.correlationId) {
+      membership.addDomainEvent(
+        new InitialActiveOrganizationRequestedEvent(
+          membership.getId(),
+          new InitialActiveOrganizationRequestedEvent.Payload(
+            membership.userId,
+            membership.orgId.value,
+          ),
+          params.correlationId,
+        ),
+      );
+    }
+    return membership;
   }
 
   public static reconstitute(params: {
@@ -61,6 +84,7 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     orgId: OrganizationId;
     userId: string;
     role: OrganizationRole;
+    roleId: OrganizationRoleId | null;
     subjects: string[];
     status: MembershipStatus;
     joinedAt: Date;
@@ -74,6 +98,18 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
       throw new OrganizationInvariantError('User is not active');
     }
     this._role = newRole;
+    this._updatedAt = new Date();
+  }
+
+  public assignOrganizationRole(
+    roleId: OrganizationRoleId,
+    legacyRole: OrganizationRole = OrganizationRole.TEACHER,
+  ): void {
+    if (!this.isActive()) {
+      throw new OrganizationInvariantError('User is not active');
+    }
+    this._roleId = roleId;
+    this._role = legacyRole;
     this._updatedAt = new Date();
   }
 
@@ -93,8 +129,25 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     this._updatedAt = new Date();
   }
 
+  public selectAsActive(correlationId: string): void {
+    if (!this.isActive()) {
+      throw new OrganizationInvariantError('Only an active membership can be selected');
+    }
+    this.addDomainEvent(
+      new UserActiveOrganizationChangedEvent(
+        this.getId(),
+        new UserActiveOrganizationChangedEvent.Payload(this.userId, this.orgId.value),
+        correlationId,
+      ),
+    );
+  }
+
   public get role(): OrganizationRole {
     return this._role;
+  }
+
+  public get roleId(): OrganizationRoleId | null {
+    return this._roleId;
   }
 
   public get subjects(): string[] {

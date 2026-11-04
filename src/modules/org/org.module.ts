@@ -3,12 +3,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
+  IOrganizationAuthorizationQueryPort,
   IOrganizationQueryPort,
-  PrismaService,
-  RedisService,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
 import {
   AcceptOrganizationInvitationByTokenHandler,
+  AssignOrganizationRoleHandler,
   AcceptOrganizationInvitationHandler,
   ApproveTeacherApplicationHandler,
   ChangeMemberRoleHandler,
@@ -21,6 +22,10 @@ import {
   RejectTeacherApplicationHandler,
   SendOrganizationInvitationHandler,
   SuspendMemberHandler,
+  SelectActiveOrganizationHandler,
+  ProvisionDefaultOrganizationRolesHandler,
+  CreateOrganizationRoleHandler,
+  UpdateOrganizationRoleHandler,
   UpdateOrganizationPolicyHandler,
   UpdateOrganizationProfileHandler,
   UpdateOrganizationSubjectHandler,
@@ -28,16 +33,20 @@ import {
 import {
   GetOrganizationBySlugHandler,
   GetOrganizationMembersHandler,
+  GetOrganizationRolesHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
+  ListMarketplaceOrganizationsHandler,
 } from './application/queries';
 import { OrganizationInvitationMapper } from './infrastructure/mappers/organization-invitation.mapper';
 import { OrganizationMembershipMapper } from './infrastructure/mappers/organization-membership.mapper';
+import { OrganizationRoleMapper } from './infrastructure/mappers/organization-role.mapper';
 import { OrganizationSubjectMapper } from './infrastructure/mappers/organization-subject.mapper';
 import { OrganizationMapper } from './infrastructure/mappers/organization.mapper';
 import { TeacherApplicationMapper } from './infrastructure/mappers/teacher-application.mapper';
 import { OrganizationEventProcessor } from './infrastructure/messaging/listeners/org-event.processor';
 import { OrganizationController } from './presentation/controllers/organization.controller';
+import { MarketplaceController } from './presentation/controllers/marketplace.controller';
 import { OrganizationService } from './presentation/services';
 import {
   IOrganizationInvitationRepository,
@@ -45,13 +54,16 @@ import {
   IOrganizationRepository,
   IOrganizationSubjectRepository,
   ITeacherApplicationRepository,
+  IOrganizationRoleRepository,
 } from './domain/repository';
 import { PrismaOrganizationInvitationRepository } from './infrastructure/repositories/org-invitation-repository.adapter';
 import { PrismaOrganizationMembershipRepository } from './infrastructure/repositories/org-membership-repository.adapter';
 import { PrismaOrganizationSubjectRepository } from './infrastructure/repositories/org-subject-repository.adapter';
 import { PrismaOrganizationRepository } from './infrastructure/repositories/organization-repository.adapter';
 import { PrismaTeacherApplicationRepository } from './infrastructure/repositories/teacher-application-repository.adapter';
+import { PrismaOrganizationRoleRepository } from './infrastructure/repositories/organization-role-repository.adapter';
 import { OrganizationQueryAdapter } from './infrastructure/services/organization-query.adapter';
+import { OrganizationAuthorizationQueryAdapter } from './infrastructure/services/organization-authorization-query.adapter';
 import { UserModule } from '../user/user.module';
 
 const commandHandlers = [
@@ -69,8 +81,13 @@ const commandHandlers = [
   RejectTeacherApplicationHandler,
   SendOrganizationInvitationHandler,
   AcceptOrganizationInvitationByTokenHandler,
+  AssignOrganizationRoleHandler,
   ChangeMemberRoleHandler,
   SuspendMemberHandler,
+  SelectActiveOrganizationHandler,
+  ProvisionDefaultOrganizationRolesHandler,
+  CreateOrganizationRoleHandler,
+  UpdateOrganizationRoleHandler,
 ];
 
 const queryHandlers = [
@@ -78,6 +95,8 @@ const queryHandlers = [
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
   GetOrganizationMembersHandler,
+  GetOrganizationRolesHandler,
+  ListMarketplaceOrganizationsHandler,
 ];
 
 const EventProcessors = [OrganizationEventProcessor];
@@ -85,6 +104,7 @@ const EventProcessors = [OrganizationEventProcessor];
 const Mappers = [
   OrganizationInvitationMapper,
   OrganizationMembershipMapper,
+  OrganizationRoleMapper,
   OrganizationSubjectMapper,
   OrganizationMapper,
   TeacherApplicationMapper,
@@ -112,8 +132,16 @@ const portBinding = [
     useClass: PrismaTeacherApplicationRepository,
   },
   {
+    provide: IOrganizationRoleRepository,
+    useClass: PrismaOrganizationRoleRepository,
+  },
+  {
     provide: IOrganizationQueryPort,
     useClass: OrganizationQueryAdapter,
+  },
+  {
+    provide: IOrganizationAuthorizationQueryPort,
+    useClass: OrganizationAuthorizationQueryAdapter,
   },
 ];
 
@@ -123,11 +151,10 @@ const portBinding = [
     BullModule.registerQueue({ name: 'org-events' }),
     UserModule,
   ],
-  controllers: [OrganizationController],
+  controllers: [OrganizationController, MarketplaceController],
   providers: [
-    PrismaService,
-    RedisService,
     AuthGuard,
+    OrganizationPermissionGuard,
     OrganizationService,
     ...Mappers,
     ...portBinding,
@@ -135,6 +162,6 @@ const portBinding = [
     ...queryHandlers,
     ...EventProcessors,
   ],
-  exports: [IOrganizationQueryPort],
+  exports: [IOrganizationQueryPort, IOrganizationAuthorizationQueryPort],
 })
 export class OrgModule {}

@@ -1,21 +1,27 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
+import { IOrganizationRoleRepository } from '../../../domain/repository';
 import {
   OrganizationCreatedEvent,
   OrganizationInvitationAcceptedEvent,
   TeacherApplicationApprovedEvent,
 } from '../../../domain/events';
 import { CreateOrganizationMembershipCommand } from '../../../application/commands/create-organization-membership';
+import { ProvisionDefaultOrganizationRolesCommand } from '../../../application/commands/provision-default-organization-roles';
 import {
   InvitationRole,
   OrganizationId,
   OrganizationRole,
+  OrganizationRoleKey,
 } from '../../../domain';
 
 @Processor('org-events')
 export class OrganizationEventProcessor extends WorkerHost {
-  constructor(private readonly commandBus: CommandBus) {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly roleRepository: IOrganizationRoleRepository,
+  ) {
     super();
   }
 
@@ -23,10 +29,23 @@ export class OrganizationEventProcessor extends WorkerHost {
     if (job.name === OrganizationCreatedEvent.name) {
       const payload = job.data.payload as OrganizationCreatedEvent.Payload;
       await this.commandBus.execute(
+        new ProvisionDefaultOrganizationRolesCommand({
+          orgId: payload.orgId,
+          correlationId: job.data.correlationId,
+        }),
+      );
+      const ownerRole = await this.roleRepository.findByOrgIdAndKey(
+        payload.orgId,
+        OrganizationRoleKey.ORG_OWNER,
+      );
+      if (!ownerRole) throw new Error('Organization default roles were not provisioned');
+      await this.commandBus.execute(
         new CreateOrganizationMembershipCommand({
           orgId: OrganizationId.from(payload.orgId),
           userId: payload.ownerId,
           role: OrganizationRole.OWNER,
+          roleId: ownerRole.id,
+          activateForUserIfUnset: true,
           correlationId: job.data.correlationId,
         }),
       );
@@ -40,12 +59,21 @@ export class OrganizationEventProcessor extends WorkerHost {
         payload.role === InvitationRole.TEACHING_ASSISTANT
           ? OrganizationRole.TEACHING_ASSISTANT
           : OrganizationRole.TEACHER;
+      const roleKey =
+        role === OrganizationRole.TEACHING_ASSISTANT
+          ? OrganizationRoleKey.TEACHING_ASSISTANT
+          : OrganizationRoleKey.TEACHER;
+      const accessRole = await this.roleRepository.findByOrgIdAndKey(
+        payload.orgId,
+        roleKey,
+      );
 
       await this.commandBus.execute(
         new CreateOrganizationMembershipCommand({
           orgId: OrganizationId.from(payload.orgId),
           userId: payload.acceptedByUserId,
           role,
+          roleId: accessRole?.id,
           subjects: payload.subjects,
           correlationId: job.data.correlationId,
         }),
@@ -56,12 +84,18 @@ export class OrganizationEventProcessor extends WorkerHost {
     if (job.name === TeacherApplicationApprovedEvent.name) {
       const payload = job.data
         .payload as TeacherApplicationApprovedEvent.Payload;
+      const teacherRole = await this.roleRepository.findByOrgIdAndKey(
+        payload.orgId,
+        OrganizationRoleKey.TEACHER,
+      );
       await this.commandBus.execute(
         new CreateOrganizationMembershipCommand({
           orgId: OrganizationId.from(payload.orgId),
           userId: payload.applicantUserId,
           role: OrganizationRole.TEACHER,
+          roleId: teacherRole?.id,
           subjects: payload.approvedSubjects,
+          activateForUserIfUnset: true,
           correlationId: job.data.correlationId,
         }),
       );

@@ -6,6 +6,7 @@ MYSQL_SERVICE ?= mysql
 MYSQL_SERVICE_PORT ?= 3306
 MYSQL_NAMESPACE ?= default
 DEPLOY_ENV_FILE ?= .env.production
+DEPLOY_BRANCH ?= main
 FIREBASE_JSON := $(firstword $(wildcard infrastructure/Firebase/*.json))
 FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON))
 MYSQL_SERVICE_IP = $(shell $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s kubectl -n $(MYSQL_NAMESPACE) get svc $(MYSQL_SERVICE) -o jsonpath='{.spec.clusterIP}'")
@@ -52,21 +53,23 @@ endif
 	$(MAKE) build-image
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && trap 'rm -f /tmp/.env.production' EXIT && kubectl create secret generic eduvia-secrets --from-env-file=/tmp/.env.production --dry-run=client -o yaml | kubectl apply -f - && kubectl delete secret firebase-secrets --ignore-not-found && if [ -f '/tmp/$(FIREBASE_JSON_NAME)' ]; then kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME); else kubectl create secret generic firebase-secrets --from-literal=placeholder=true; fi"
-	@echo "=> Applying Kubernetes Manifests..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev"
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -k eduvia/infrastructure/k8s/base"
+	@echo "=> Preparing MySQL and Redis..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git fetch origin $(DEPLOY_BRANCH) && git checkout $(DEPLOY_BRANCH) && git pull --ff-only origin $(DEPLOY_BRANCH)"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -f eduvia/infrastructure/k8s/base/mysql-deployment.yaml -f eduvia/infrastructure/k8s/base/redis-deployment.yaml"
 	@echo "=> Waiting for MySQL to boot and accept connections..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
 	@echo "=> Restoring Database..."
 	$(MAKE) restore-db
+	@echo "=> Applying Kubernetes Manifests..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && IMAGE=$$(cat /tmp/eduvia-image) && kubectl apply -k eduvia/infrastructure/k8s/base && kubectl set image deployment/eduvia-app prisma-migrate=$$IMAGE eduvia-app=$$IMAGE"
 	@echo "=> Rolling out the Eduvia application..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout restart deployment/eduvia-app && kubectl rollout status deployment/eduvia-app --timeout=180s"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl rollout status deployment/eduvia-app --timeout=180s"
 	$(MAKE) prune-runtime-images
 	@echo "=> Environment is completely up and running!"
 
 build-image:
-	@echo "=> Building Docker Image and Loading into K3s..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev && sudo docker build -t eduvia/app:latest . && sudo docker save eduvia/app:latest | sudo k3s ctr images import -"
+	@echo "=> Building a commit-tagged Docker Image and loading it into K3s..."
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git fetch origin $(DEPLOY_BRANCH) && git checkout $(DEPLOY_BRANCH) && git pull --ff-only origin $(DEPLOY_BRANCH) && IMAGE=eduvia/app:$$(git rev-parse --short HEAD) && sudo docker build -t $$IMAGE . && sudo docker save $$IMAGE | sudo k3s ctr images import - && echo $$IMAGE | sudo tee /tmp/eduvia-image >/dev/null && echo \"Built $$IMAGE\""
 
 prune-runtime-images:
 	@echo "=> Pruning unused Docker build cache and K3s images..."
@@ -92,9 +95,9 @@ mysql-tunnel:
 	@echo "=> Keep this terminal open; press Ctrl+C to close the tunnel."
 	$(SSH) $(SSH_OPTIONS) -o ExitOnForwardFailure=yes -N -i $(SSH_KEY) -L $(MYSQL_TUNNEL_PORT):$(MYSQL_SERVICE_IP):$(MYSQL_SERVICE_PORT) ubuntu@$(VM_IP)
 
-# Follow application logs from every Eduvia pod. Press Ctrl+C to stop following.
+# Follow application logs from the newest Eduvia pod. Press Ctrl+C to stop following.
 logs:
-	$(SSH) $(SSH_OPTIONS) -t -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl logs -l app=eduvia-app --all-containers=true --prefix=true --tail=200 --follow --max-log-requests=10"
+	$(SSH) $(SSH_OPTIONS) -t -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && POD=$$(kubectl get pods -l app=eduvia-app --sort-by=.metadata.creationTimestamp -o name | tail -n 1) && if [ -z \"$$POD\" ]; then echo 'No Eduvia application pod found.'; exit 1; fi && echo \"Following $$POD\" && kubectl logs \"$$POD\" --all-containers=true --prefix=true --tail=200 --follow"
 
 # Upload the ignored origin certificate and create/update the
 # Kubernetes TLS secret used by the Traefik ingress.

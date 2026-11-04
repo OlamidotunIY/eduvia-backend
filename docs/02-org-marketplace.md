@@ -1,5 +1,11 @@
 # 02 — Organization & Marketplace
 
+## Application delivery and initial organization context
+
+Teacher application receipt is routed specifically to the notification worker, which resolves active organization admins and creates in-app notifications. Approval or rejection emits a dedicated application-outcome notification request for the applicant; it is persisted, pushed when a device is registered, emitted through `/notifications`, and sent by transactional email.
+
+An approved application still goes to the org worker to create the membership. That membership emits a separate `InitialActiveOrganizationRequestedEvent` for the user worker. The user worker sets the organization as active only if `activeOrganizationId` is currently unset, then emits the `/user` socket update. This keeps notification delivery and user state updates as separate bounded workflows.
+
 > **Module:** `src/modules/org`
 > **Status:** Partially built — domain entities (Organization, OrganizationPolicy, OrganizationMembership, OrganizationSubject, OrganizationInvitation, TeacherApplication) exist; commands built: create organization, receive teacher application, invitation-accepted handling, update organization subject. Approval/rejection, invitations API, memberships API and marketplace search are still to build.
 > **NestJS Module:** `OrgModule`

@@ -1,7 +1,7 @@
 # 08 — Notifications & Messaging
 
 > **Module:** `src/modules/notifications`
-> **Status:** To build.
+> **Status:** Core persisted notifications, WebSocket delivery, FCM dispatch, transactional email delivery, and domain-event notification processing are built. Conversation/message expansion remains incremental.
 > **NestJS Module:** `NotificationsModule`
 
 ---
@@ -173,6 +173,8 @@ NotificationWorker processes job:
        EmailService.send({ template, to, data })
   6. Mark notification as delivered
 ```
+
+`AuthVerificationCreatedEvent` is an email-only notification workflow: its worker resolves the OTP from the short-lived Redis key and sends it through the configured transactional provider. `TeacherApplicationReceivedEvent` and `TeacherApplicationOutcomeNotificationRequestedEvent` are notification-specific workflows; they do not use the notifications module as a catch-all event relay.
 
 ---
 

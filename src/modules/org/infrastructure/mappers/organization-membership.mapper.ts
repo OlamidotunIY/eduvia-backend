@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationMembership } from '../../domain/entities';
-import { MembershipStatus, OrganizationId, OrganizationMembershipId, OrganizationRole } from '../../domain';
+import { MembershipStatus, OrganizationId, OrganizationMembershipId, OrganizationRole, OrganizationRoleId } from '../../domain';
 import { OrganizationMembership as PrismaOrganizationMembership } from '@generated/prisma/client';
 
 @Injectable()
@@ -11,6 +11,7 @@ export class OrganizationMembershipMapper {
       orgId: OrganizationId.from(record.orgId),
       userId: record.userId,
       role: record.role as OrganizationRole,
+      roleId: record.roleId ? OrganizationRoleId.from(record.roleId) : null,
       subjects: record.subjects,
       status: record.status as MembershipStatus,
       joinedAt: record.joinedAt,
@@ -25,6 +26,7 @@ export class OrganizationMembershipMapper {
       orgId: entity.orgId.value,
       userId: entity.userId,
       role: entity.role as OrganizationRole,
+      roleId: entity.roleId?.value ?? null,
       subjects: entity.subjects,
       status: entity.status as MembershipStatus,
       joinedAt: entity.joinedAt,

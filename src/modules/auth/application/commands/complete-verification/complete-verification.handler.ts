@@ -78,7 +78,7 @@ export class CompleteVerificationHandler implements ICommandHandler<
       sub: authAccount.getId(),
       userId: user.id,
       userType: user.userType,
-      scope: authAccount.scope || 'user',
+      scope: user.onboardingStatus === 'completed' ? 'user' : 'onboarding',
       sessionId: session.getId(),
     });
 

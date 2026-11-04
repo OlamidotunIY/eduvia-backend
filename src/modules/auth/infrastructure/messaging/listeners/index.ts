@@ -1,1 +1,1 @@
-export * from './auth-events.processor';
+export * from './auth-registration-event.processor';

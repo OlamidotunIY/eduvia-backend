@@ -80,3 +80,4 @@ infrastructure/Firebase/*.json
 infrastructure/tls/*.pem
 infrastructure/tls/*.key
 *.sql
+!prisma/schema/migrations/**/migration.sql

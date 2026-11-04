@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { IOrganizationMembershipRepository } from '../../domain/repository';
-import { PrismaService } from '@modules/shared';
+import { PrismaBaseRepository, PrismaService } from '@modules/shared';
 import { OrganizationMembershipMapper } from '../mappers/organization-membership.mapper';
 import { OrganizationMembership } from '../../domain/model';
-import { MembershipStatus, OrganizationId, OrganizationRole } from '../../domain';
+import { OrganizationId, OrganizationMembershipId } from '../../domain';
+import { OrganizationMembership as PrismaOrganizationMembership } from '@generated/prisma/client';
 
 @Injectable()
-export class PrismaOrganizationMembershipRepository implements IOrganizationMembershipRepository {
+export class PrismaOrganizationMembershipRepository
+  extends PrismaBaseRepository<OrganizationMembershipId, OrganizationMembership, PrismaOrganizationMembership>
+  implements IOrganizationMembershipRepository {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly mapper: OrganizationMembershipMapper,
-  ) {}
+    prisma: PrismaService,
+    mapper: OrganizationMembershipMapper,
+  ) { super(prisma, mapper); }
 
   protected get delegate() {
     return this.prisma.organizationMembership;
@@ -50,23 +53,4 @@ export class PrismaOrganizationMembershipRepository implements IOrganizationMemb
     return record ? this.mapper.toDomain(record) : null;
   }
 
-  public async save(membership: OrganizationMembership): Promise<void> {
-    await this.delegate.upsert({
-      where: { id: membership.id.value },
-      create: {
-        id: membership.id.value,
-        orgId: membership.orgId.value,
-        userId: membership.userId,
-        role: membership.role as OrganizationRole,
-        subjects: membership.subjects,
-        status: membership.status as MembershipStatus,
-        joinedAt: membership.joinedAt,
-      },
-      update: {
-        role: membership.role as OrganizationRole,
-        subjects: membership.subjects,
-        status: membership.status as MembershipStatus,
-      },
-    });
-  }
 }

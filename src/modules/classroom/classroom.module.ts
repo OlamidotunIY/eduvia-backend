@@ -4,9 +4,9 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IClassroomQueryPort,
-  PrismaService,
-  RedisService,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
+import { OrgModule } from '../org/org.module';
 import {
   CreateClassroomHandler,
   PauseClassroomHandler,
@@ -119,15 +119,15 @@ const repositories = [
 @Module({
   imports: [
     CqrsModule,
+    OrgModule,
     BullModule.registerQueue({
       name: 'classroom-events',
     }),
   ],
   controllers: [ClassroomController, TeacherAvailabilityController],
   providers: [
-    PrismaService,
-    RedisService,
     AuthGuard,
+    OrganizationPermissionGuard,
     ClassroomService,
     TeacherAvailabilityService,
     ...commandHandlers,

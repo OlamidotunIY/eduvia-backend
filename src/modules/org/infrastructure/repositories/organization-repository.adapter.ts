@@ -4,6 +4,7 @@ import {
   IOrganizationRepository,
   Organization,
   OrganizationId,
+  OrganizationStatus,
 } from '../../domain';
 import { Organization as PrismaOrganization } from '@generated/prisma/client';
 import { OrganizationMapper } from '../mappers/organization.mapper';
@@ -42,6 +43,20 @@ export class PrismaOrganizationRepository
     const records = await this.delegate.findMany({
       where: {
         ownerId,
+      },
+    });
+
+    return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  public async findMarketplaceListings(): Promise<Organization[]> {
+    const records = await this.delegate.findMany({
+      where: {
+        marketplaceListed: true,
+        status: OrganizationStatus.ACTIVE,
+      },
+      orderBy: {
+        name: 'asc',
       },
     });
 

@@ -3,6 +3,14 @@ export class LoginDto {
   password!: string;
 }
 
+export class RegisterEmailDto {
+  email!: string;
+  password!: string;
+  firstName!: string;
+  lastName!: string;
+  timezone?: string;
+}
+
 export class LogoutDto {
   sessionId!: string;
   jti!: string;
@@ -31,3 +39,16 @@ export class ChangePasswordDto {
   code!: string;
   newPassword!: string;
 }
+
+export class GoogleAuthorizationDto {
+  /** Use signup for a first-time Eduvia account, or login for an existing Google-linked account. */
+  intent?: GoogleOAuthIntent;
+  /** Relative frontend path to receive the one-time OAuth handoff code. */
+  returnPath?: string;
+}
+
+export class GoogleTokenExchangeDto {
+  /** The single-use code issued to the frontend after Google authentication. */
+  code!: string;
+}
+import { GoogleOAuthIntent } from '../../domain';

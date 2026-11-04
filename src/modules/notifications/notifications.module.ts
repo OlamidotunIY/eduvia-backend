@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
 import { INotificationsQueryPort } from '@modules/shared';
+import { OrgModule } from '../org/org.module';
+import { UserModule } from '@modules/user';
 
 // Domain Ports & Repositories
 import {
@@ -55,6 +57,8 @@ import {
 @Module({
   imports: [
     CqrsModule,
+    OrgModule,
+    UserModule,
     BullModule.registerQueue({
       name: 'notification-events',
     }),

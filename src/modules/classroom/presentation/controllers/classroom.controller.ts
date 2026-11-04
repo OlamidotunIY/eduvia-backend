@@ -13,6 +13,8 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
+  OrganizationPermissionGuard,
+  RequireOrganizationPermissions,
   type CurrentUserPayload,
 } from '@modules/shared';
 import { ClassroomService } from '../services/classroom.service';
@@ -25,13 +27,15 @@ import {
   AssignCoverTeacherDto,
 } from '../dto';
 import { LessonStatus } from '../../domain';
+import { OrganizationPermission } from '../../../org/domain';
 
 @Controller('organizations/:organizationId')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, OrganizationPermissionGuard)
 export class ClassroomController {
   constructor(private readonly classroomService: ClassroomService) {}
 
   @Post('classrooms')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_CREATE)
   async createClassroom(
     @Param('organizationId') organizationId: string,
     @Body() dto: CreateClassroomDto,
@@ -45,6 +49,7 @@ export class ClassroomController {
   }
 
   @Get('classrooms')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_READ)
   async listClassrooms(
     @Param('organizationId') organizationId: string,
     @Query('teacherId') teacherId?: string,
@@ -53,6 +58,7 @@ export class ClassroomController {
   }
 
   @Get('classrooms/:classroomId')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_READ)
   async getClassroom(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -61,6 +67,7 @@ export class ClassroomController {
   }
 
   @Patch('classrooms/:classroomId')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
   async updateClassroom(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -76,6 +83,7 @@ export class ClassroomController {
   }
 
   @Post('classrooms/:classroomId/pause')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
   async pauseClassroom(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -89,6 +97,7 @@ export class ClassroomController {
   }
 
   @Post('classrooms/:classroomId/close')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
   async closeClassroom(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -102,6 +111,7 @@ export class ClassroomController {
   }
 
   @Post('classrooms/:classroomId/students')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS)
   async addStudent(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -117,6 +127,7 @@ export class ClassroomController {
   }
 
   @Delete('classrooms/:classroomId/students/:studentId')
+  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS)
   async removeStudent(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -132,6 +143,7 @@ export class ClassroomController {
   }
 
   @Post('classrooms/:classroomId/schedule-lesson')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_SCHEDULE)
   async scheduleLesson(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -147,6 +159,7 @@ export class ClassroomController {
   }
 
   @Get('lessons')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_READ)
   async listLessons(
     @Param('organizationId') organizationId: string,
     @Query('status') status?: LessonStatus,
@@ -163,6 +176,7 @@ export class ClassroomController {
   }
 
   @Get('lessons/:lessonId')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_READ)
   async getLesson(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -171,6 +185,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/start')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async startLesson(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -184,6 +199,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/complete')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async completeLesson(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -197,6 +213,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/cancel')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async cancelLesson(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -214,6 +231,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/student-no-show')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async markStudentNoShow(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -227,6 +245,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/teacher-no-show')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async markTeacherNoShow(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,
@@ -242,6 +261,7 @@ export class ClassroomController {
   }
 
   @Post('lessons/:lessonId/cover-teacher')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
   async assignCoverTeacher(
     @Param('organizationId') organizationId: string,
     @Param('lessonId') lessonId: string,

@@ -3,6 +3,7 @@ model OrganizationMembership {
   orgId     String   
   userId    String   
   role      OrganizationRole
+  roleId    String?
   subjects  Json
   status    MembershipStatus
   joinedAt  DateTime
