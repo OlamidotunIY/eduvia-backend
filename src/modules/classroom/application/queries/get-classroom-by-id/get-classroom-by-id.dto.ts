@@ -10,6 +10,7 @@ export interface ClassroomDto {
   lessonDurationMins: number;
   maxStudents: number;
   recurrence: {
+    daysOfWeek: number[];
     dayOfWeek: number;
     startTime: string;
     timezone: string;

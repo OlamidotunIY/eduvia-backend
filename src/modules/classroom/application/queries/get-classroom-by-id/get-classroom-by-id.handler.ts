@@ -4,13 +4,16 @@ import { ClassroomDto } from './get-classroom-by-id.dto';
 import { ClassroomNotFoundError, IClassroomRepository } from '../../../domain';
 
 @QueryHandler(GetClassroomByIdQuery)
-export class GetClassroomByIdHandler
-  implements IQueryHandler<GetClassroomByIdQuery, ClassroomDto>
-{
+export class GetClassroomByIdHandler implements IQueryHandler<
+  GetClassroomByIdQuery,
+  ClassroomDto
+> {
   constructor(private readonly classroomRepository: IClassroomRepository) {}
 
   async execute(query: GetClassroomByIdQuery): Promise<ClassroomDto> {
-    const classroom = await this.classroomRepository.findById(query.classroomId);
+    const classroom = await this.classroomRepository.findById(
+      query.classroomId,
+    );
     if (!classroom || classroom.orgId !== query.orgId) {
       throw new ClassroomNotFoundError();
     }
@@ -25,6 +28,7 @@ export class GetClassroomByIdHandler
       lessonDurationMins: classroom.lessonDurationMins,
       maxStudents: classroom.maxStudents,
       recurrence: {
+        daysOfWeek: [...classroom.recurrence.daysOfWeek],
         dayOfWeek: classroom.recurrence.dayOfWeek,
         startTime: classroom.recurrence.startTime,
         timezone: classroom.recurrence.timezone,

@@ -4,7 +4,9 @@ export class CreateClassroomDto {
   primaryTeacherId: string;
   lessonDurationMins: number;
   maxStudents?: number;
-  recurrenceDayOfWeek: number;
+  recurrenceDaysOfWeek?: number[];
+  /** @deprecated Use recurrenceDaysOfWeek. */
+  recurrenceDayOfWeek?: number;
   recurrenceStartTime: string;
   recurrenceTimezone: string;
   recurrenceIntervalWeeks?: number;

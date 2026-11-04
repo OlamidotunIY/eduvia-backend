@@ -3,6 +3,8 @@ export class UpdateClassroomDto {
   lessonDurationMins?: number;
   maxStudents?: number;
   primaryTeacherId?: string;
+  recurrenceDaysOfWeek?: number[];
+  /** @deprecated Use recurrenceDaysOfWeek. */
   recurrenceDayOfWeek?: number;
   recurrenceStartTime?: string;
   recurrenceTimezone?: string;

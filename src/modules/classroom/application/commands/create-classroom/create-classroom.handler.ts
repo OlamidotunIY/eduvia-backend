@@ -8,16 +8,19 @@ import {
 } from '../../../domain';
 
 @CommandHandler(CreateClassroomCommand)
-export class CreateClassroomHandler
-  implements ICommandHandler<CreateClassroomCommand, CreateClassroomResult>
-{
+export class CreateClassroomHandler implements ICommandHandler<
+  CreateClassroomCommand,
+  CreateClassroomResult
+> {
   constructor(private readonly classroomRepository: IClassroomRepository) {}
 
-  async execute(command: CreateClassroomCommand): Promise<CreateClassroomResult> {
+  async execute(
+    command: CreateClassroomCommand,
+  ): Promise<CreateClassroomResult> {
     const { payload } = command;
 
     const recurrence = RecurrencePattern.create({
-      dayOfWeek: payload.recurrenceDayOfWeek,
+      daysOfWeek: payload.recurrenceDaysOfWeek,
       startTime: payload.recurrenceStartTime,
       timezone: payload.recurrenceTimezone,
       intervalWeeks: payload.recurrenceIntervalWeeks ?? 1,

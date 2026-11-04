@@ -8,6 +8,7 @@ model Classroom {
   lessonDurationMins       Int
   maxStudents              Int             @default(1)
   recurrenceDayOfWeek      Int
+  recurrenceDaysOfWeek     Json?
   recurrenceStartTime      String
   recurrenceTimezone       String
   recurrenceIntervalWeeks  Int             @default(1)
