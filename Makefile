@@ -6,6 +6,7 @@ MYSQL_SERVICE ?= mysql
 MYSQL_SERVICE_PORT ?= 3306
 MYSQL_NAMESPACE ?= default
 DEPLOY_ENV_FILE ?= .env.production
+DEPLOY_BRANCH ?= main
 FIREBASE_JSON := $(firstword $(wildcard infrastructure/Firebase/*.json))
 FIREBASE_JSON_NAME := $(notdir $(FIREBASE_JSON))
 MYSQL_SERVICE_IP = $(shell $(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "sudo k3s kubectl -n $(MYSQL_NAMESPACE) get svc $(MYSQL_SERVICE) -o jsonpath='{.spec.clusterIP}'")
@@ -53,7 +54,7 @@ endif
 	@echo "=> Applying Kubernetes Secrets..."
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && trap 'rm -f /tmp/.env.production' EXIT && kubectl create secret generic eduvia-secrets --from-env-file=/tmp/.env.production --dry-run=client -o yaml | kubectl apply -f - && kubectl delete secret firebase-secrets --ignore-not-found && if [ -f '/tmp/$(FIREBASE_JSON_NAME)' ]; then kubectl create secret generic firebase-secrets --from-file=/tmp/$(FIREBASE_JSON_NAME); else kubectl create secret generic firebase-secrets --from-literal=placeholder=true; fi"
 	@echo "=> Preparing MySQL and Redis..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev"
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git fetch origin $(DEPLOY_BRANCH) && git checkout $(DEPLOY_BRANCH) && git pull --ff-only origin $(DEPLOY_BRANCH)"
 	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -f eduvia/infrastructure/k8s/base/mysql-deployment.yaml -f eduvia/infrastructure/k8s/base/redis-deployment.yaml"
 	@echo "=> Waiting for MySQL to boot and accept connections..."
 	@$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "export KUBECONFIG=/home/ubuntu/.kube/config && while true; do POD=$$(kubectl get pod -l app=mysql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null); if [ -n \"$$POD\" ]; then if kubectl exec $$POD -- mysqladmin ping -u root -proot --silent 2>/dev/null; then break; fi; fi; echo 'Waiting for MySQL container...'; sleep 5; done; echo 'MySQL is fully ready!'"
@@ -68,7 +69,7 @@ endif
 
 build-image:
 	@echo "=> Building a commit-tagged Docker Image and loading it into K3s..."
-	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git checkout dev && git pull origin dev && IMAGE=eduvia/app:$$(git rev-parse --short HEAD) && sudo docker build -t $$IMAGE . && sudo docker save $$IMAGE | sudo k3s ctr images import - && echo $$IMAGE | sudo tee /tmp/eduvia-image >/dev/null && echo \"Built $$IMAGE\""
+	$(SSH) $(SSH_OPTIONS) -i $(SSH_KEY) ubuntu@$(VM_IP) "if [ ! -d 'eduvia' ]; then git clone https://github.com/OlamidotunIY/eduvia-backend.git eduvia; fi && cd eduvia && git fetch origin $(DEPLOY_BRANCH) && git checkout $(DEPLOY_BRANCH) && git pull --ff-only origin $(DEPLOY_BRANCH) && IMAGE=eduvia/app:$$(git rev-parse --short HEAD) && sudo docker build -t $$IMAGE . && sudo docker save $$IMAGE | sudo k3s ctr images import - && echo $$IMAGE | sudo tee /tmp/eduvia-image >/dev/null && echo \"Built $$IMAGE\""
 
 prune-runtime-images:
 	@echo "=> Pruning unused Docker build cache and K3s images..."
