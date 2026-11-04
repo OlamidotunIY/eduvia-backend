@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IMapper } from '@modules/shared';
-import { OrganizationRole } from '../../domain/model';
+import { OrganizationAccessRole } from '../../domain/model';
 import {
   OrganizationId,
   OrganizationPermission,
@@ -21,9 +21,9 @@ type OrganizationRoleRecord = {
 };
 
 @Injectable()
-export class OrganizationRoleMapper implements IMapper<OrganizationRole, OrganizationRoleRecord> {
-  toDomain(record: OrganizationRoleRecord): OrganizationRole {
-    return OrganizationRole.reconstitute({
+export class OrganizationRoleMapper implements IMapper<OrganizationAccessRole, OrganizationRoleRecord> {
+  toDomain(record: OrganizationRoleRecord): OrganizationAccessRole {
+    return OrganizationAccessRole.reconstitute({
       id: OrganizationRoleId.from(record.id),
       orgId: OrganizationId.from(record.orgId),
       key: record.key as OrganizationRoleKey | null,
@@ -36,7 +36,7 @@ export class OrganizationRoleMapper implements IMapper<OrganizationRole, Organiz
     });
   }
 
-  toPersistence(entity: OrganizationRole): Omit<OrganizationRoleRecord, 'id'> {
+  toPersistence(entity: OrganizationAccessRole): Omit<OrganizationRoleRecord, 'id'> {
     return {
       orgId: entity.orgId.value,
       key: entity.key,

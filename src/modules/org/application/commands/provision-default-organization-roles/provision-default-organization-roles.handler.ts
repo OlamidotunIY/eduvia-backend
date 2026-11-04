@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   IOrganizationRoleRepository,
   OrganizationId,
-  OrganizationRole,
+  OrganizationAccessRole,
   OrganizationRoleId,
   ORGANIZATION_ROLE_DEFAULTS,
 } from '../../../domain';
@@ -21,7 +21,7 @@ export class ProvisionDefaultOrganizationRolesHandler
         const existing = await this.roleRepository.findByOrgIdAndKey(orgId, definition.key);
         if (existing) return existing;
 
-        const role = OrganizationRole.create({
+        const role = OrganizationAccessRole.create({
           id: OrganizationRoleId.create(),
           orgId,
           key: definition.key,

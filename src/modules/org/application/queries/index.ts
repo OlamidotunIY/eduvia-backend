@@ -3,3 +3,4 @@ export * from './get-org-subjects';
 export * from './get-teacher-applications';
 export * from './get-org-members';
 export * from './list-marketplace-organizations';
+export * from './get-organization-roles';

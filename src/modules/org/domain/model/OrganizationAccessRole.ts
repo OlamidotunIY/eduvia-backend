@@ -7,7 +7,7 @@ import {
   OrganizationRoleKey,
 } from '../value-objects';
 
-class OrganizationRole extends AggregateRoot<OrganizationRoleId> {
+class OrganizationAccessRole extends AggregateRoot<OrganizationRoleId> {
   public readonly orgId: OrganizationId;
   public readonly key: OrganizationRoleKey | null;
   private _name: string;
@@ -48,9 +48,9 @@ class OrganizationRole extends AggregateRoot<OrganizationRoleId> {
     permissions: OrganizationPermission[];
     isSystem: boolean;
     correlationId: string;
-  }): OrganizationRole {
+  }): OrganizationAccessRole {
     const now = new Date();
-    const entity = new OrganizationRole({
+    const entity = new OrganizationAccessRole({
       ...params,
       createdAt: now,
       updatedAt: now,
@@ -69,8 +69,8 @@ class OrganizationRole extends AggregateRoot<OrganizationRoleId> {
     isSystem: boolean;
     createdAt: Date;
     updatedAt: Date;
-  }): OrganizationRole {
-    return new OrganizationRole(params);
+  }): OrganizationAccessRole {
+    return new OrganizationAccessRole(params);
   }
 
   public get name(): string {
@@ -116,4 +116,4 @@ class OrganizationRole extends AggregateRoot<OrganizationRoleId> {
   }
 }
 
-export { OrganizationRole };
+export { OrganizationAccessRole };

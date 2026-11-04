@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ChangeMemberRoleDTO,
+  CreateOrganizationRoleDTO,
   CreateOrganizationDTO,
   CreateSubjectDTO,
   ReceiveTeacherApplicationDTO,
@@ -10,13 +11,16 @@ import {
   UpdateOrganizationDTO,
   UpdatePolicyDTO,
   UpdateSubjectDTO,
+  UpdateOrganizationRoleDTO,
 } from '../dto';
 import {
   AcceptOrganizationInvitationByTokenCommand,
+  AssignOrganizationRoleCommand,
   ApproveTeacherApplicationCommand,
   ChangeMemberRoleCommand,
   CreateOrganizationCommand,
   CreateOrganizationSubjectCommand,
+  CreateOrganizationRoleCommand,
   DelistOrganizationFromMarketplaceCommand,
   ListOrganizationOnMarketplaceCommand,
   ReceiveTeacherApplicationCommand,
@@ -27,10 +31,12 @@ import {
   UpdateOrganizationPolicyCommand,
   UpdateOrganizationProfileCommand,
   UpdateOrganizationSubjectCommand,
+  UpdateOrganizationRoleCommand,
 } from '../../application/commands';
 import {
   GetOrganizationBySlugQuery,
   GetOrganizationMembersQuery,
+  GetOrganizationRolesQuery,
   GetOrganizationSubjectsQuery,
   GetTeacherApplicationsQuery,
   ListMarketplaceOrganizationsQuery,
@@ -291,12 +297,65 @@ export class OrganizationService {
     );
   }
 
+  async getRoles(orgId: string, callerUserId: string) {
+    return this.queryBus.execute(
+      new GetOrganizationRolesQuery(orgId, callerUserId),
+    );
+  }
+
+  async createRole(
+    orgId: string,
+    callerUserId: string,
+    dto: CreateOrganizationRoleDTO,
+  ) {
+    return this.commandBus.execute(
+      new CreateOrganizationRoleCommand({
+        orgId,
+        callerUserId,
+        name: dto.name,
+        description: dto.description ?? null,
+        permissions: dto.permissions,
+      }),
+    );
+  }
+
+  async updateRole(
+    orgId: string,
+    roleId: string,
+    callerUserId: string,
+    dto: UpdateOrganizationRoleDTO,
+  ) {
+    return this.commandBus.execute(
+      new UpdateOrganizationRoleCommand({
+        orgId,
+        roleId,
+        callerUserId,
+        name: dto.name,
+        description: dto.description ?? null,
+        permissions: dto.permissions,
+      }),
+    );
+  }
+
   async changeMemberRole(
     orgId: string,
     callerUserId: string,
     targetUserId: string,
     dto: ChangeMemberRoleDTO,
   ) {
+    if (dto.roleId) {
+      return this.commandBus.execute(
+        new AssignOrganizationRoleCommand({
+          orgId,
+          callerUserId,
+          targetUserId,
+          roleId: dto.roleId,
+        }),
+      );
+    }
+    if (!dto.role) {
+      throw new Error('A role or roleId is required');
+    }
     return this.commandBus.execute(
       new ChangeMemberRoleCommand({
         orgId,

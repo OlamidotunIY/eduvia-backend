@@ -3,10 +3,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
+  IOrganizationAuthorizationQueryPort,
   IOrganizationQueryPort,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
 import {
   AcceptOrganizationInvitationByTokenHandler,
+  AssignOrganizationRoleHandler,
   AcceptOrganizationInvitationHandler,
   ApproveTeacherApplicationHandler,
   ChangeMemberRoleHandler,
@@ -21,6 +24,8 @@ import {
   SuspendMemberHandler,
   SelectActiveOrganizationHandler,
   ProvisionDefaultOrganizationRolesHandler,
+  CreateOrganizationRoleHandler,
+  UpdateOrganizationRoleHandler,
   UpdateOrganizationPolicyHandler,
   UpdateOrganizationProfileHandler,
   UpdateOrganizationSubjectHandler,
@@ -28,6 +33,7 @@ import {
 import {
   GetOrganizationBySlugHandler,
   GetOrganizationMembersHandler,
+  GetOrganizationRolesHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
   ListMarketplaceOrganizationsHandler,
@@ -57,6 +63,7 @@ import { PrismaOrganizationRepository } from './infrastructure/repositories/orga
 import { PrismaTeacherApplicationRepository } from './infrastructure/repositories/teacher-application-repository.adapter';
 import { PrismaOrganizationRoleRepository } from './infrastructure/repositories/organization-role-repository.adapter';
 import { OrganizationQueryAdapter } from './infrastructure/services/organization-query.adapter';
+import { OrganizationAuthorizationQueryAdapter } from './infrastructure/services/organization-authorization-query.adapter';
 import { UserModule } from '../user/user.module';
 
 const commandHandlers = [
@@ -74,10 +81,13 @@ const commandHandlers = [
   RejectTeacherApplicationHandler,
   SendOrganizationInvitationHandler,
   AcceptOrganizationInvitationByTokenHandler,
+  AssignOrganizationRoleHandler,
   ChangeMemberRoleHandler,
   SuspendMemberHandler,
   SelectActiveOrganizationHandler,
   ProvisionDefaultOrganizationRolesHandler,
+  CreateOrganizationRoleHandler,
+  UpdateOrganizationRoleHandler,
 ];
 
 const queryHandlers = [
@@ -85,6 +95,7 @@ const queryHandlers = [
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
   GetOrganizationMembersHandler,
+  GetOrganizationRolesHandler,
   ListMarketplaceOrganizationsHandler,
 ];
 
@@ -128,6 +139,10 @@ const portBinding = [
     provide: IOrganizationQueryPort,
     useClass: OrganizationQueryAdapter,
   },
+  {
+    provide: IOrganizationAuthorizationQueryPort,
+    useClass: OrganizationAuthorizationQueryAdapter,
+  },
 ];
 
 @Module({
@@ -139,6 +154,7 @@ const portBinding = [
   controllers: [OrganizationController, MarketplaceController],
   providers: [
     AuthGuard,
+    OrganizationPermissionGuard,
     OrganizationService,
     ...Mappers,
     ...portBinding,
@@ -146,6 +162,6 @@ const portBinding = [
     ...queryHandlers,
     ...EventProcessors,
   ],
-  exports: [IOrganizationQueryPort],
+  exports: [IOrganizationQueryPort, IOrganizationAuthorizationQueryPort],
 })
 export class OrgModule {}

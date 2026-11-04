@@ -13,10 +13,13 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
+  OrganizationPermissionGuard,
+  RequireOrganizationPermissions,
   type CurrentUserPayload,
 } from '@modules/shared';
 import {
   ChangeMemberRoleDTO,
+  CreateOrganizationRoleDTO,
   CreateOrganizationDTO,
   CreateSubjectDTO,
   ReceiveTeacherApplicationDTO,
@@ -25,8 +28,10 @@ import {
   UpdateOrganizationDTO,
   UpdatePolicyDTO,
   UpdateSubjectDTO,
+  UpdateOrganizationRoleDTO,
 } from '../dto';
 import { OrganizationService } from '../services';
+import { OrganizationPermission } from '../../domain';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -267,6 +272,48 @@ export class OrganizationController {
     return this.organizationService.getMembers(
       organizationId,
       currentUser.userId,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_READ)
+  @Get(':organizationId/roles')
+  async getRoles(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+  ) {
+    return this.organizationService.getRoles(organizationId, currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Post(':organizationId/roles')
+  async createRole(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @Body() dto: CreateOrganizationRoleDTO,
+  ) {
+    return this.organizationService.createRole(
+      organizationId,
+      currentUser.userId,
+      dto,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_MANAGE)
+  @Patch(':organizationId/roles/:roleId')
+  async updateRole(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @Param('roleId') roleId: string,
+    @Body() dto: UpdateOrganizationRoleDTO,
+  ) {
+    return this.organizationService.updateRole(
+      organizationId,
+      roleId,
+      currentUser.userId,
+      dto,
     );
   }
 

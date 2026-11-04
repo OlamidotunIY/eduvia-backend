@@ -101,11 +101,15 @@ export class OrganizationMembership extends AggregateRoot<OrganizationMembership
     this._updatedAt = new Date();
   }
 
-  public assignOrganizationRole(roleId: OrganizationRoleId): void {
+  public assignOrganizationRole(
+    roleId: OrganizationRoleId,
+    legacyRole: OrganizationRole = OrganizationRole.TEACHER,
+  ): void {
     if (!this.isActive()) {
       throw new OrganizationInvariantError('User is not active');
     }
     this._roleId = roleId;
+    this._role = legacyRole;
     this._updatedAt = new Date();
   }
 

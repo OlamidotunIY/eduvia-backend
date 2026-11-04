@@ -7,3 +7,5 @@ export * from './update-subject.dto';
 export * from './send-invitation.dto';
 export * from './reject-application.dto';
 export * from './change-member-role.dto';
+export * from './create-organization-role.dto';
+export * from './update-organization-role.dto';
