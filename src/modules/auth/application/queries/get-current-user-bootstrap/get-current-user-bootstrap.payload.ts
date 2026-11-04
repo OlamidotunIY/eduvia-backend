@@ -15,7 +15,14 @@ export interface CurrentUserBootstrapDTO {
     timezone: string;
   };
   activeOrganization: {
-    id: string; name: string; slug: string; role: string; memberCount: number;
+    id: string;
+    name: string;
+    slug: string;
+    role: string;
+    roleId: string | null;
+    roleName: string;
+    permissions: string[];
+    memberCount: number;
   } | null;
   organizations: Array<{
     id: string; name: string; slug: string; role: string; status: string; memberCount: number;

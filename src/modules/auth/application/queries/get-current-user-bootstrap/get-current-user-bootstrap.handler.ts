@@ -1,13 +1,18 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GetCurrentUserBootstrapQuery } from './get-current-user-bootstrap.query';
 import { CurrentUserBootstrapDTO } from './get-current-user-bootstrap.payload';
-import { IOrganizationQueryPort, IUserQueryPort } from '@modules/shared';
+import {
+  IOrganizationAuthorizationQueryPort,
+  IOrganizationQueryPort,
+  IUserQueryPort,
+} from '@modules/shared';
 
 @QueryHandler(GetCurrentUserBootstrapQuery)
 export class GetCurrentUserBootstrapHandler implements IQueryHandler<GetCurrentUserBootstrapQuery, CurrentUserBootstrapDTO> {
   constructor(
     private readonly userQueryPort: IUserQueryPort,
     private readonly organizationQueryPort: IOrganizationQueryPort,
+    private readonly organizationAuthorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(query: GetCurrentUserBootstrapQuery): Promise<CurrentUserBootstrapDTO> {
@@ -23,13 +28,25 @@ export class GetCurrentUserBootstrapHandler implements IQueryHandler<GetCurrentU
     const active = user.activeOrganizationId
       ? organizationDtos.find((organization) => organization.id === user.activeOrganizationId) ?? null
       : null;
+    const activeAuthorization = active
+      ? await this.organizationAuthorizationQuery.getEffectiveAuthorization(active.id, user.id)
+      : null;
     return {
       user: {
         id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName,
         image: user.image, userType: user.userType, onboardingStatus: user.onboardingStatus,
         emailVerified: user.emailVerified, timezone: user.timezone,
       },
-      activeOrganization: active && { id: active.id, name: active.name, slug: active.slug, role: active.role, memberCount: active.memberCount },
+      activeOrganization: active && {
+        id: active.id,
+        name: active.name,
+        slug: active.slug,
+        role: active.role,
+        roleId: activeAuthorization?.roleId ?? null,
+        roleName: activeAuthorization?.roleName ?? active.role,
+        permissions: activeAuthorization?.permissions ?? [],
+        memberCount: active.memberCount,
+      },
       organizations: organizationDtos,
     };
   }
