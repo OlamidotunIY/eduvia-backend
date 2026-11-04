@@ -1,8 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { GetOrganizationMembersQuery } from './get-org-members.query';
 import { OrganizationMemberDTO } from './get-org-members.dto';
 import { IOrganizationMembershipRepository } from '../../../domain/repository';
-import { OrganizationInvariantError } from '../../../domain';
+import { OrganizationInvariantError, OrganizationPermission } from '../../../domain';
 
 @QueryHandler(GetOrganizationMembersQuery)
 export class GetOrganizationMembersHandler
@@ -10,18 +11,19 @@ export class GetOrganizationMembersHandler
 {
   constructor(
     private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
     query: GetOrganizationMembersQuery,
   ): Promise<OrganizationMemberDTO[]> {
-    const callerMembership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       query.orgId,
       query.callerUserId,
     );
 
-    if (!callerMembership || !callerMembership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.MEMBERS_READ)) {
+      throw new OrganizationInvariantError('Caller cannot view organization members');
     }
 
     const members = await this.membershipRepository.findByOrganizationId(

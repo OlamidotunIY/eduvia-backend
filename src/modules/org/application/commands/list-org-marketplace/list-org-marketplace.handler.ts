@@ -1,14 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { ListOrganizationOnMarketplaceCommand } from './list-org-marketplace.command';
 import { ListOrganizationOnMarketplaceResult } from './list-org-marketplace.result';
 import {
-  IOrganizationMembershipRepository,
   IOrganizationRepository,
 } from '../../../domain/repository';
 import {
   OrganizationId,
   OrganizationInvariantError,
   OrganizationNotFound,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(ListOrganizationOnMarketplaceCommand)
@@ -17,7 +18,7 @@ export class ListOrganizationOnMarketplaceHandler
 {
   constructor(
     private readonly orgRepository: IOrganizationRepository,
-    private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
@@ -25,13 +26,13 @@ export class ListOrganizationOnMarketplaceHandler
   ): Promise<ListOrganizationOnMarketplaceResult> {
     const { payload } = command;
 
-    const membership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       payload.orgId,
       payload.callerUserId,
     );
 
-    if (!membership || !membership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.ORGANIZATION_MARKETPLACE_MANAGE)) {
+      throw new OrganizationInvariantError('Caller cannot manage organization marketplace listing');
     }
 
     const org = await this.orgRepository.findById(

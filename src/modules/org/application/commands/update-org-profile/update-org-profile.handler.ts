@@ -1,14 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { UpdateOrganizationProfileCommand } from './update-org-profile.command';
 import { UpdateOrganizationProfileResult } from './update-org-profile.result';
 import {
-  IOrganizationMembershipRepository,
   IOrganizationRepository,
 } from '../../../domain/repository';
 import {
   OrganizationId,
   OrganizationInvariantError,
   OrganizationNotFound,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(UpdateOrganizationProfileCommand)
@@ -17,7 +18,7 @@ export class UpdateOrganizationProfileHandler
 {
   constructor(
     private readonly orgRepository: IOrganizationRepository,
-    private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
@@ -25,13 +26,13 @@ export class UpdateOrganizationProfileHandler
   ): Promise<UpdateOrganizationProfileResult> {
     const { payload } = command;
 
-    const membership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       payload.orgId,
       payload.callerUserId,
     );
 
-    if (!membership || !membership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.ORGANIZATION_UPDATE)) {
+      throw new OrganizationInvariantError('Caller cannot update this organization');
     }
 
     const org = await this.orgRepository.findById(

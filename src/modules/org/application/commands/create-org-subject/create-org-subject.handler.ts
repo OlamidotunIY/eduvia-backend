@@ -1,14 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { CreateOrganizationSubjectCommand } from './create-org-subject.command';
 import { CreateOrganizationSubjectResult } from './create-org-subject.result';
 import {
-  IOrganizationMembershipRepository,
   IOrganizationSubjectRepository,
 } from '../../../domain/repository';
 import {
   OrganizationId,
   OrganizationInvariantError,
   OrganizationSubject,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(CreateOrganizationSubjectCommand)
@@ -17,7 +18,7 @@ export class CreateOrganizationSubjectHandler
 {
   constructor(
     private readonly orgSubjectRepository: IOrganizationSubjectRepository,
-    private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
@@ -25,13 +26,13 @@ export class CreateOrganizationSubjectHandler
   ): Promise<CreateOrganizationSubjectResult> {
     const { payload } = command;
 
-    const membership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       payload.orgId,
       payload.callerUserId,
     );
 
-    if (!membership || !membership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.SUBJECTS_CREATE)) {
+      throw new OrganizationInvariantError('Caller cannot create organization subjects');
     }
 
     const subject = OrganizationSubject.create({

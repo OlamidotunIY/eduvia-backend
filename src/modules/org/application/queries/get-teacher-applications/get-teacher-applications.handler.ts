@@ -1,11 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { GetTeacherApplicationsQuery } from './get-teacher-applications.query';
 import { TeacherApplicationDTO } from './get-teacher-applications.dto';
 import {
-  IOrganizationMembershipRepository,
   ITeacherApplicationRepository,
 } from '../../../domain/repository';
-import { OrganizationInvariantError } from '../../../domain';
+import { OrganizationInvariantError, OrganizationPermission } from '../../../domain';
 
 @QueryHandler(GetTeacherApplicationsQuery)
 export class GetTeacherApplicationsHandler
@@ -13,19 +13,19 @@ export class GetTeacherApplicationsHandler
 {
   constructor(
     private readonly teacherApplicationRepository: ITeacherApplicationRepository,
-    private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(
     query: GetTeacherApplicationsQuery,
   ): Promise<TeacherApplicationDTO[]> {
-    const membership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       query.orgId,
       query.callerUserId,
     );
 
-    if (!membership || !membership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.APPLICATIONS_READ)) {
+      throw new OrganizationInvariantError('Caller cannot view teacher applications');
     }
 
     const applications = await this.teacherApplicationRepository.findByOrganizationId(

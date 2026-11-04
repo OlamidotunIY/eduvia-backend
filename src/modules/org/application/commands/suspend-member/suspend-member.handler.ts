@@ -1,10 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IOrganizationAuthorizationQueryPort } from '@modules/shared';
 import { SuspendMemberCommand } from './suspend-member.command';
 import { SuspendMemberResult } from './suspend-member.result';
 import { IOrganizationMembershipRepository } from '../../../domain/repository';
 import {
   OrganizationInvariantError,
   OrganizationRole,
+  OrganizationPermission,
 } from '../../../domain';
 
 @CommandHandler(SuspendMemberCommand)
@@ -13,6 +15,7 @@ export class SuspendMemberHandler
 {
   constructor(
     private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly authorizationQuery: IOrganizationAuthorizationQueryPort,
   ) {}
 
   async execute(command: SuspendMemberCommand): Promise<SuspendMemberResult> {
@@ -22,13 +25,13 @@ export class SuspendMemberHandler
       throw new OrganizationInvariantError('Cannot suspend yourself');
     }
 
-    const callerMembership = await this.membershipRepository.findByOrgIdAndUserId(
+    const authorization = await this.authorizationQuery.getEffectiveAuthorization(
       payload.orgId,
       payload.callerUserId,
     );
 
-    if (!callerMembership || !callerMembership.isAdmin()) {
-      throw new OrganizationInvariantError('Caller must be an active org admin');
+    if (!authorization?.isActive || !authorization.permissions.includes(OrganizationPermission.MEMBERS_MANAGE)) {
+      throw new OrganizationInvariantError('Caller cannot suspend organization members');
     }
 
     const targetMembership = await this.membershipRepository.findByOrgIdAndUserId(
