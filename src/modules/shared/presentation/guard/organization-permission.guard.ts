@@ -24,7 +24,11 @@ export class OrganizationPermissionGuard implements CanActivate {
     if (!permissions?.length) return true;
 
     const request = context.switchToHttp().getRequest();
-    const organizationId = request.params.organizationId as string | undefined;
+    const organizationId =
+      (request.params.organizationId as string | undefined) ??
+      (request.params.orgId as string | undefined) ??
+      (request.query.orgId as string | undefined) ??
+      (request.body?.orgId as string | undefined);
     const currentUser = request.user as CurrentUserPayload | undefined;
     if (!organizationId || !currentUser?.userId) {
       throw new ForbiddenException('Organization context is required');

@@ -11,17 +11,21 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
+  OrganizationPermissionGuard,
+  RequireOrganizationPermissions,
   type CurrentUserPayload,
 } from '@modules/shared';
 import { AssessmentService } from '../services/assessment.service';
 import { CreateAssessmentDto, ApplyTeacherMarkDto } from '../dto';
+import { OrganizationPermission } from '../../../org/domain';
 
 @Controller('orgs/:orgId/assessments')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, OrganizationPermissionGuard)
 export class AssessmentController {
   constructor(private readonly assessmentService: AssessmentService) {}
 
   @Post()
+  @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_CREATE)
   async createAssessment(
     @Param('orgId') orgId: string,
     @Body() dto: CreateAssessmentDto,
@@ -31,6 +35,7 @@ export class AssessmentController {
   }
 
   @Get()
+  @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_READ)
   async listAssessments(
     @Param('orgId') orgId: string,
     @Query('skip') skip?: number,
@@ -47,6 +52,7 @@ export class AssessmentController {
   }
 
   @Get(':id')
+  @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_READ)
   async getAssessment(
     @Param('orgId') orgId: string,
     @Param('id') id: string,
@@ -55,6 +61,7 @@ export class AssessmentController {
   }
 
   @Post(':id/items/:itemId/mark')
+  @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_MARK)
   async applyTeacherMark(
     @Param('id') id: string,
     @Param('itemId') itemId: string,
@@ -72,6 +79,7 @@ export class AssessmentController {
   }
 
   @Post(':id/finalize')
+  @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_FINALIZE)
   async finalizeAssessment(
     @Param('id') id: string,
     @Body('curriculumNodeId') curriculumNodeId: string | null,

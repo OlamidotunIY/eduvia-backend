@@ -4,7 +4,9 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IProgressQueryPort,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
+import { OrgModule } from '../org/org.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -64,6 +66,7 @@ const repositories = [
 @Module({
   imports: [
     CqrsModule,
+    OrgModule,
     BullModule.registerQueue(
       { name: 'progress-events' },
       { name: 'classroom-events' },
@@ -74,6 +77,7 @@ const repositories = [
   controllers: [ProgressController],
   providers: [
     AuthGuard,
+    OrganizationPermissionGuard,
     ProgressService,
     ...COMMAND_HANDLERS,
     ...QUERY_HANDLERS,

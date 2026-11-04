@@ -12,6 +12,8 @@ import {
   AuthGuard,
   CorrelationId,
   CurrentUser,
+  OrganizationPermissionGuard,
+  RequireOrganizationPermissions,
   type CurrentUserPayload,
 } from '@modules/shared';
 import { ProgressService } from '../services/progress.service';
@@ -22,13 +24,15 @@ import {
   AddReportCommentDto,
 } from '../dto';
 import { CommentAuthorRole } from '../../domain';
+import { OrganizationPermission } from '../../../org/domain';
 
 @Controller()
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, OrganizationPermissionGuard)
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
   @Get('orgs/:orgId/lessons/:lessonId/report')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_READ)
   async getLessonReportByLesson(
     @Param('orgId') orgId: string,
     @Param('lessonId') lessonId: string,
@@ -39,6 +43,7 @@ export class ProgressController {
   }
 
   @Get('orgs/:orgId/reports/:reportId')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_READ)
   async getLessonReport(
     @Param('orgId') orgId: string,
     @Param('reportId') reportId: string,
@@ -49,6 +54,7 @@ export class ProgressController {
   }
 
   @Post('orgs/:orgId/reports')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_CREATE)
   async createReport(
     @Param('orgId') orgId: string,
     @Body() dto: CreateLessonReportDto,
@@ -58,6 +64,7 @@ export class ProgressController {
   }
 
   @Patch('orgs/:orgId/reports/:reportId')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_UPDATE)
   async updateReport(
     @Param('orgId') orgId: string,
     @Param('reportId') reportId: string,
@@ -67,6 +74,7 @@ export class ProgressController {
   }
 
   @Post('orgs/:orgId/reports/:reportId/approve-ai')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_APPROVE_AI)
   async approveAiSummary(
     @Param('orgId') orgId: string,
     @Param('reportId') reportId: string,
@@ -76,6 +84,7 @@ export class ProgressController {
   }
 
   @Post('orgs/:orgId/reports/:reportId/submit')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_SUBMIT)
   async submitReport(
     @Param('orgId') orgId: string,
     @Param('reportId') reportId: string,
@@ -85,6 +94,7 @@ export class ProgressController {
   }
 
   @Post('orgs/:orgId/reports/:reportId/comments')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_UPDATE)
   async addComment(
     @Param('orgId') orgId: string,
     @Param('reportId') reportId: string,
@@ -139,6 +149,7 @@ export class ProgressController {
   }
 
   @Get('orgs/:orgId/analytics')
+  @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
   async getOrgAnalytics(
     @Param('orgId') orgId: string,
     @Query('date') dateStr?: string,
@@ -148,11 +159,13 @@ export class ProgressController {
   }
 
   @Get('orgs/:orgId/analytics/churn-risk')
+  @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
   async getStudentChurnRisk(@Param('orgId') orgId: string) {
     return this.progressService.getStudentChurnRisk(orgId);
   }
 
   @Get('orgs/:orgId/analytics/teacher-performance')
+  @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
   async getTeacherPerformance(@Param('orgId') orgId: string) {
     return this.progressService.getTeacherPerformance(orgId);
   }

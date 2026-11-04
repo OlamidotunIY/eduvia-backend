@@ -4,7 +4,9 @@ import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   IAssessmentQueryPort,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
+import { OrgModule } from '../org/org.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -74,6 +76,7 @@ const repositories = [
 @Module({
   imports: [
     CqrsModule,
+    OrgModule,
     BullModule.registerQueue(
       { name: 'assessment-events' },
       { name: 'classroom-events' },
@@ -87,6 +90,7 @@ const repositories = [
   ],
   providers: [
     AuthGuard,
+    OrganizationPermissionGuard,
     AssessmentService,
     ...COMMAND_HANDLERS,
     ...QUERY_HANDLERS,
