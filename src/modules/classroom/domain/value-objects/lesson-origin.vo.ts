@@ -1,0 +1,4 @@
+export enum LessonOrigin {
+  RECURRING_GENERATION = 'RECURRING_GENERATION',
+  ONE_OFF = 'ONE_OFF',
+}

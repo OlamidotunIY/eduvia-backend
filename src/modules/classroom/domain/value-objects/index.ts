@@ -11,3 +11,4 @@ export * from './video-provider.vo';
 export * from './no-show-type.vo';
 export * from './exception-type.vo';
 export * from './recurrence-pattern.vo';
+export * from './lesson-origin.vo';
