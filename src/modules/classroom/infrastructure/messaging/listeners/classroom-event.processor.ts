@@ -2,9 +2,14 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { CommandBus } from '@nestjs/cqrs';
 import { Logger, Optional } from '@nestjs/common';
-import { ILessonRepository, VideoProvider } from '../../../domain';
+import {
+  IClassroomRepository,
+  ILessonRepository,
+  VideoProvider,
+} from '../../../domain';
 import { VideoProviderFactory } from '../../video';
 import { LessonGateway } from '@modules/websocket';
+import { ClassroomLessonMaterializer } from '../../../application/services/classroom-lesson-materializer.service';
 
 @Processor('classroom-events')
 export class ClassroomEventProcessor extends WorkerHost {
@@ -12,7 +17,9 @@ export class ClassroomEventProcessor extends WorkerHost {
 
   constructor(
     private readonly commandBus: CommandBus,
+    private readonly classroomRepository: IClassroomRepository,
     private readonly lessonRepository: ILessonRepository,
+    private readonly materializer: ClassroomLessonMaterializer,
     private readonly videoFactory: VideoProviderFactory,
     @Optional() private readonly lessonGateway?: LessonGateway,
   ) {
@@ -20,6 +27,31 @@ export class ClassroomEventProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<void> {
+    if (job.name === 'ClassroomCreatedEvent') {
+      const payload = job.data.payload;
+      const classroom = await this.classroomRepository.findById(
+        payload.classroomId,
+      );
+      if (classroom) {
+        await this.materializer.materializeClassroom(classroom, {
+          horizonWeeks: 8,
+        });
+      }
+      return;
+    }
+
+    if (job.name === 'ClassroomRecurrenceUpdatedEvent') {
+      const payload = job.data.payload;
+      const classroom = await this.classroomRepository.findById(
+        payload.classroomId,
+      );
+      if (classroom) {
+        await this.materializer.reconcileClassroomRecurrence(classroom, {
+          horizonWeeks: 8,
+        });
+      }
+      return;
+    }
     if (job.name === 'LessonReportSubmittedEvent') {
       const payload = job.data.payload;
       const lesson = await this.lessonRepository.findById(payload.lessonId);

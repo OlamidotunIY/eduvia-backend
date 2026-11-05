@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@modules/shared';
+import { AggregateRoot } from '@modules/shared/domain';
 import { TeacherAvailabilityId } from '../value-objects/teacher-availability-id.vo';
 import { AvailabilitySlot } from '../entities/availability-slot.entity';
 import { AvailabilityException } from '../entities/availability-exception.entity';

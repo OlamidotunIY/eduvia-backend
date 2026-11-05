@@ -1,4 +1,4 @@
-import { BaseDomainEvent } from '@modules/shared';
+import { BaseDomainEvent } from '@modules/shared/domain';
 
 class LessonScheduledEvent extends BaseDomainEvent<LessonScheduledEvent.Payload> {
   constructor(

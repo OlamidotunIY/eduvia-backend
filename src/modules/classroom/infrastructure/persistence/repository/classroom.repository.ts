@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import {
   Classroom,
   ClassroomId,
+  ClassroomStatus,
   IClassroomRepository,
 } from '../../../domain';
 import { Classroom as PrismaClassroom } from '@generated/prisma/client';
@@ -34,6 +35,13 @@ export class PrismaClassroomRepository
   public async findByTeacherId(orgId: string, teacherId: string): Promise<Classroom[]> {
     const records = await this.delegate.findMany({
       where: { orgId, primaryTeacherId: teacherId },
+    });
+    return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  public async findActive(): Promise<Classroom[]> {
+    const records = await this.delegate.findMany({
+      where: { status: ClassroomStatus.ACTIVE },
     });
     return records.map((record) => this.mapper.toDomain(record));
   }

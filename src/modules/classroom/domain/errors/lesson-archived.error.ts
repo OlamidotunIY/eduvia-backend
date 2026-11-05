@@ -1,4 +1,4 @@
-import { ConflictError } from '@modules/shared';
+import { ConflictError } from '@modules/shared/domain';
 
 export class LessonArchivedError extends ConflictError {
   constructor(details?: unknown) {

@@ -37,6 +37,7 @@ export class GetLessonByIdHandler
       reportedAt: lesson.reportedAt,
       archivedAt: lesson.archivedAt,
       isRecurring: lesson.isRecurring,
+      origin: lesson.origin,
       createdAt: lesson.createdAt,
       updatedAt: lesson.updatedAt,
     };

@@ -6,13 +6,17 @@ import {
   IClassroomRepository,
   RecurrencePattern,
 } from '../../../domain';
+import { ClassroomLessonMaterializer } from '../../services/classroom-lesson-materializer.service';
 
 @CommandHandler(CreateClassroomCommand)
 export class CreateClassroomHandler implements ICommandHandler<
   CreateClassroomCommand,
   CreateClassroomResult
 > {
-  constructor(private readonly classroomRepository: IClassroomRepository) {}
+  constructor(
+    private readonly classroomRepository: IClassroomRepository,
+    private readonly materializer: ClassroomLessonMaterializer,
+  ) {}
 
   async execute(
     command: CreateClassroomCommand,
@@ -40,6 +44,11 @@ export class CreateClassroomHandler implements ICommandHandler<
     });
 
     await this.classroomRepository.save(classroom);
+
+    // Materialize eight-week horizon of occurrences synchronously on creation
+    await this.materializer.materializeClassroom(classroom, {
+      horizonWeeks: 8,
+    });
 
     return {
       id: classroom.id.value,

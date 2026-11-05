@@ -23,6 +23,7 @@ import {
   UpdateClassroomDto,
   AddStudentDto,
   ScheduleLessonDto,
+  RescheduleLessonDto,
   CancelLessonDto,
   AssignCoverTeacherDto,
 } from '../dto';
@@ -97,10 +98,14 @@ export class ClassroomController {
   async listClassroomLessons(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
   ) {
     return this.classroomService.listClassroomLessons(
       organizationId,
       classroomId,
+      fromDate,
+      toDate,
     );
   }
 
@@ -233,6 +238,22 @@ export class ClassroomController {
     @Param('lessonId') lessonId: string,
   ) {
     return this.classroomService.getLesson(organizationId, lessonId);
+  }
+
+  @Patch('lessons/:lessonId/reschedule')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_MANAGE)
+  async rescheduleLesson(
+    @Param('organizationId') organizationId: string,
+    @Param('lessonId') lessonId: string,
+    @Body() dto: RescheduleLessonDto,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.classroomService.rescheduleLesson(
+      organizationId,
+      lessonId,
+      dto,
+      correlationId,
+    );
   }
 
   @Post('lessons/:lessonId/start')

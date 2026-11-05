@@ -6,6 +6,7 @@ import {
   LessonStatus,
   VideoProvider,
   NoShowType,
+  LessonOrigin,
 } from '../../../domain';
 import { Lesson as PrismaLesson } from '@generated/prisma/client';
 
@@ -34,6 +35,7 @@ export class LessonMapper implements IMapper<Lesson, PrismaLesson> {
       reportedAt: record.reportedAt,
       archivedAt: record.archivedAt,
       isRecurring: record.isRecurring,
+      origin: record.origin as LessonOrigin,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     });
@@ -61,6 +63,7 @@ export class LessonMapper implements IMapper<Lesson, PrismaLesson> {
       reportedAt: entity.reportedAt,
       archivedAt: entity.archivedAt,
       isRecurring: entity.isRecurring,
+      origin: entity.origin,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

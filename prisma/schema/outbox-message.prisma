@@ -21,4 +21,5 @@ model OutboxMessage {
 enum OutboxStatus {
   PENDING
   PROCESSED
+  FAILED
 }

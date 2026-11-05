@@ -5,6 +5,7 @@ export * from './update-classroom';
 export * from './enroll-student';
 export * from './remove-student';
 export * from './schedule-lesson';
+export * from './reschedule-lesson';
 export * from './start-lesson';
 export * from './complete-lesson';
 export * from './cancel-lesson';

@@ -10,6 +10,7 @@ import {
   EnrollStudentCommand,
   RemoveStudentCommand,
   ScheduleLessonCommand,
+  RescheduleLessonCommand,
   StartLessonCommand,
   CompleteLessonCommand,
   CancelLessonCommand,
@@ -35,6 +36,7 @@ import {
   UpdateClassroomDto,
   AddStudentDto,
   ScheduleLessonDto,
+  RescheduleLessonDto,
   CancelLessonDto,
   AssignCoverTeacherDto,
 } from '../dto';
@@ -226,9 +228,16 @@ export class ClassroomService {
   async listClassroomLessons(
     orgId: string,
     classroomId: string,
+    fromDate?: string,
+    toDate?: string,
   ): Promise<LessonDto[]> {
     return this.queryBus.execute(
-      new ListClassroomLessonsQuery(classroomId, orgId),
+      new ListClassroomLessonsQuery(
+        classroomId,
+        orgId,
+        fromDate ? new Date(fromDate) : undefined,
+        toDate ? new Date(toDate) : undefined,
+      ),
     );
   }
 
@@ -250,6 +259,23 @@ export class ClassroomService {
         durationMins: dto.durationMins,
         teacherId: dto.teacherId,
         isRecurring: dto.isRecurring,
+        correlationId,
+      }),
+    );
+  }
+
+  async rescheduleLesson(
+    orgId: string,
+    lessonId: string,
+    dto: RescheduleLessonDto,
+    correlationId?: string,
+  ): Promise<{ success: boolean }> {
+    return this.commandBus.execute(
+      new RescheduleLessonCommand({
+        lessonId,
+        orgId,
+        scheduledAt: new Date(dto.scheduledAt),
+        durationMins: dto.durationMins,
         correlationId,
       }),
     );

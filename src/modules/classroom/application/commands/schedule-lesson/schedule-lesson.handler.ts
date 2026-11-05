@@ -6,6 +6,7 @@ import {
   ILessonRepository,
   ITeacherAvailabilityRepository,
   Lesson,
+  LessonOrigin,
   ScheduleConflictError,
   TeacherUnavailableError,
 } from '../../../domain';
@@ -54,7 +55,8 @@ export class ScheduleLessonHandler
       teacherId,
       scheduledAt: payload.scheduledAt,
       durationMins,
-      isRecurring: payload.isRecurring ?? true,
+      isRecurring: payload.isRecurring ?? false,
+      origin: LessonOrigin.ONE_OFF,
       correlationId: payload.correlationId,
     });
 

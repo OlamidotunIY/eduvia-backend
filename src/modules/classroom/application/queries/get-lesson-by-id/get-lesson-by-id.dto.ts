@@ -1,4 +1,4 @@
-import { LessonStatus, NoShowType, VideoProvider } from '../../../domain';
+import { LessonOrigin, LessonStatus, NoShowType, VideoProvider } from '../../../domain';
 
 export interface LessonDto {
   id: string;
@@ -22,6 +22,7 @@ export interface LessonDto {
   reportedAt: Date | null;
   archivedAt: Date | null;
   isRecurring: boolean;
+  origin: LessonOrigin;
   createdAt: Date;
   updatedAt: Date;
 }

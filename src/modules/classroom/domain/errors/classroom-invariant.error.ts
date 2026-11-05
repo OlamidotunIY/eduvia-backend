@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError } from '@modules/shared';
+import { BusinessRuleViolationError } from '@modules/shared/domain';
 
 export class ClassroomInvariantError extends BusinessRuleViolationError {
   constructor(message = 'Classroom invariant violated', details?: unknown) {

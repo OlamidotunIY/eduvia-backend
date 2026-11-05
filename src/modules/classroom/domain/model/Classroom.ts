@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@modules/shared';
+import { AggregateRoot } from '@modules/shared/domain';
 import { ClassroomId } from '../value-objects/classroom-id.vo';
 import { ClassroomStatus } from '../value-objects/classroom-status.vo';
 import { RecurrencePattern } from '../value-objects/recurrence-pattern.vo';

@@ -1,10 +1,12 @@
-import { AggregateRoot } from '@modules/shared';
+import { AggregateRoot } from '@modules/shared/domain';
 import { LessonId } from '../value-objects/lesson-id.vo';
 import { LessonStatus } from '../value-objects/lesson-status.vo';
 import { VideoProvider } from '../value-objects/video-provider.vo';
 import { NoShowType } from '../value-objects/no-show-type.vo';
+import { LessonOrigin } from '../value-objects/lesson-origin.vo';
 import { LessonCreatedEvent } from '../events/lesson-created.event';
 import { LessonScheduledEvent } from '../events/lesson-scheduled.event';
+import { LessonRescheduledEvent } from '../events/lesson-rescheduled.event';
 import { LessonStartedEvent } from '../events/lesson-started.event';
 import { LessonCompletedEvent } from '../events/lesson-completed.event';
 import { LessonReportedEvent } from '../events/lesson-reported.event';
@@ -25,6 +27,7 @@ export interface LessonCreateProps {
   scheduledAt: Date;
   durationMins: number;
   isRecurring?: boolean;
+  origin?: LessonOrigin;
   correlationId?: string;
 }
 
@@ -50,6 +53,7 @@ export interface LessonReconstituteProps {
   reportedAt: Date | null;
   archivedAt: Date | null;
   isRecurring: boolean;
+  origin: LessonOrigin;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +79,7 @@ export class Lesson extends AggregateRoot<LessonId> {
   private _reportedAt: Date | null;
   private _archivedAt: Date | null;
   public readonly isRecurring: boolean;
+  public readonly origin: LessonOrigin;
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
@@ -100,6 +105,7 @@ export class Lesson extends AggregateRoot<LessonId> {
     this._reportedAt = props.reportedAt;
     this._archivedAt = props.archivedAt;
     this.isRecurring = props.isRecurring;
+    this.origin = props.origin;
     this.createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
   }
@@ -115,6 +121,14 @@ export class Lesson extends AggregateRoot<LessonId> {
 
     const id = props.id ?? LessonId.create();
     const now = new Date();
+    const origin =
+      props.origin ??
+      (props.isRecurring === false
+        ? LessonOrigin.ONE_OFF
+        : LessonOrigin.RECURRING_GENERATION);
+    const isRecurring =
+      props.isRecurring ?? (origin === LessonOrigin.RECURRING_GENERATION);
+
     const lesson = new Lesson({
       id,
       orgId: props.orgId,
@@ -136,7 +150,8 @@ export class Lesson extends AggregateRoot<LessonId> {
       markedAt: null,
       reportedAt: null,
       archivedAt: null,
-      isRecurring: props.isRecurring ?? true,
+      isRecurring,
+      origin,
       createdAt: now,
       updatedAt: now,
     });
@@ -186,6 +201,63 @@ export class Lesson extends AggregateRoot<LessonId> {
           activeTeacher,
         ),
         correlationId ?? this.id.value,
+      ),
+    );
+  }
+
+  public reschedule(params: {
+    scheduledAt: Date;
+    durationMins?: number;
+    correlationId?: string;
+  }): void {
+    this.ensureNotArchived();
+    if (
+      this._status !== LessonStatus.PENDING &&
+      this._status !== LessonStatus.SCHEDULED
+    ) {
+      throw new InvalidLessonStateError(
+        `Only PENDING or SCHEDULED lessons can be rescheduled. Current status: ${this._status}`,
+      );
+    }
+
+    if (!params.scheduledAt) {
+      throw new ClassroomInvariantError('Scheduled date is required');
+    }
+
+    const durationMins = params.durationMins ?? this._durationMins;
+    if (durationMins <= 0) {
+      throw new ClassroomInvariantError(
+        'Duration must be greater than 0 minutes',
+      );
+    }
+
+    const hasTimeChange =
+      this._scheduledAt.getTime() !== params.scheduledAt.getTime();
+    const hasDurationChange = this._durationMins !== durationMins;
+
+    if (!hasTimeChange && !hasDurationChange) {
+      return;
+    }
+
+    const previousScheduledAt = this._scheduledAt;
+    this._scheduledAt = params.scheduledAt;
+    this._durationMins = durationMins;
+    this.touch();
+
+    const activeTeacher = this._coverTeacherId ?? this.teacherId;
+    this.addDomainEvent(
+      new LessonRescheduledEvent(
+        this.id.value,
+        new LessonRescheduledEvent.Payload(
+          this.id.value,
+          this.classroomId,
+          this.orgId,
+          previousScheduledAt,
+          this._scheduledAt,
+          this._durationMins,
+          activeTeacher,
+        ),
+        params.correlationId ?? this.id.value,
       ),
     );
   }

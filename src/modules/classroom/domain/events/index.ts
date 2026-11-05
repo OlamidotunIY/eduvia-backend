@@ -15,3 +15,4 @@ export * from './lesson-cancelled.event';
 export * from './lesson-student-no-show.event';
 export * from './lesson-teacher-no-show.event';
 export * from './cover-teacher-assigned.event';
+export * from './lesson-rescheduled.event';

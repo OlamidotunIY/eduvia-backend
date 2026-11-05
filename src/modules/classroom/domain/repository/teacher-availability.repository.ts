@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { TeacherAvailabilityId } from '../value-objects/teacher-availability-id.vo';
 import { TeacherAvailability } from '../model/TeacherAvailability';
 
