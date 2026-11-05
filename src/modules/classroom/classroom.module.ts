@@ -36,6 +36,7 @@ import {
   GetTeacherAvailabilityHandler,
   GetAvailableSlotsHandler,
   GetClassroomStudentsHandler,
+  ListClassroomLearnerCandidatesHandler,
 } from './application/queries';
 import {
   ClassroomMapper,
@@ -101,6 +102,7 @@ const queryHandlers = [
   GetTeacherAvailabilityHandler,
   GetAvailableSlotsHandler,
   GetClassroomStudentsHandler,
+  ListClassroomLearnerCandidatesHandler,
 ];
 
 const mappers = [
