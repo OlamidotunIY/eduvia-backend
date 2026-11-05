@@ -1,4 +1,4 @@
-import { BaseEntityId } from '@modules/shared';
+import { BaseEntityId } from '@modules/shared/domain';
 
 class TeacherAvailabilityId extends BaseEntityId {
   private constructor(value: string) {

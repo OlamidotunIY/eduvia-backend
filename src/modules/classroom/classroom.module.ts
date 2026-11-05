@@ -16,6 +16,7 @@ import {
   EnrollStudentHandler,
   RemoveStudentHandler,
   ScheduleLessonHandler,
+  RescheduleLessonHandler,
   StartLessonHandler,
   CompleteLessonHandler,
   CancelLessonHandler,
@@ -59,6 +60,8 @@ import {
 import { ClassroomEventProcessor } from './infrastructure/messaging/listeners';
 import { ClassroomQueryAdapter } from './infrastructure/services/classroom-query.adapter';
 import { LessonArchiveScheduler } from './infrastructure/messaging/scheduler/lesson-archive.scheduler';
+import { ClassroomMaterializerScheduler } from './infrastructure/messaging/scheduler/classroom-materializer.scheduler';
+import { ClassroomLessonMaterializer } from './application/services/classroom-lesson-materializer.service';
 import {
   ClassroomController,
   TeacherAvailabilityController,
@@ -81,6 +84,7 @@ const commandHandlers = [
   EnrollStudentHandler,
   RemoveStudentHandler,
   ScheduleLessonHandler,
+  RescheduleLessonHandler,
   StartLessonHandler,
   CompleteLessonHandler,
   CancelLessonHandler,
@@ -145,6 +149,8 @@ const repositories = [
     ...mappers,
     ...repositories,
     ClassroomEventProcessor,
+    ClassroomLessonMaterializer,
+    ClassroomMaterializerScheduler,
     LessonArchiveScheduler,
     ZoomAdapter,
     GoogleMeetAdapter,
@@ -162,6 +168,7 @@ const repositories = [
     IClassroomQueryPort,
     ClassroomService,
     TeacherAvailabilityService,
+    ClassroomLessonMaterializer,
     VideoProviderFactory,
   ],
 })

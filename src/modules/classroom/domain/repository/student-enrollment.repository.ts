@@ -1,4 +1,4 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { StudentEnrollmentId } from '../value-objects/student-enrollment-id.vo';
 import { StudentEnrollment } from '../model/StudentEnrollment';
 

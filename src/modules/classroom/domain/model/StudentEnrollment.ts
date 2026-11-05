@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@modules/shared';
+import { AggregateRoot } from '@modules/shared/domain';
 import { StudentEnrollmentId } from '../value-objects/student-enrollment-id.vo';
 import { EnrollmentStatus } from '../value-objects/enrollment-status.vo';
 import { StudentEnrolledInClassroomEvent } from '../events/student-enrolled.event';
