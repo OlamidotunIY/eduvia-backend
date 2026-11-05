@@ -6,4 +6,11 @@ export interface ClassroomStudentDTO {
   status: string;
   enrolledAt: Date;
   removedAt: Date | null;
+  learner: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image: string | null;
+  } | null;
 }
