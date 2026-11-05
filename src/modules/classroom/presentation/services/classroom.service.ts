@@ -22,6 +22,7 @@ import {
   ListClassroomsQuery,
   GetLessonByIdQuery,
   ListLessonsQuery,
+  ListClassroomLessonsQuery,
   ClassroomDto,
   LessonDto,
   ClassroomStudentDTO,
@@ -209,6 +210,15 @@ export class ClassroomService {
     filters?: LessonFilters,
   ): Promise<LessonDto[]> {
     return this.queryBus.execute(new ListLessonsQuery(orgId, filters));
+  }
+
+  async listClassroomLessons(
+    orgId: string,
+    classroomId: string,
+  ): Promise<LessonDto[]> {
+    return this.queryBus.execute(
+      new ListClassroomLessonsQuery(classroomId, orgId),
+    );
   }
 
   async getLesson(orgId: string, lessonId: string): Promise<LessonDto> {

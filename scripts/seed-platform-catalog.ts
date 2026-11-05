@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { PrismaClient } from '../src/generated/prisma/client';
+import mariadb from 'mariadb';
 import { v7 as uuidv7 } from 'uuid';
+import { inspect } from 'node:util';
 
 /**
  * Seeds the small, neutral platform catalog needed while the platform-admin
@@ -116,58 +116,63 @@ const curricula = [
   ],
 ] as const;
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error(
-    'DATABASE_URL must be set before seeding the platform catalog.',
-  );
+const url = process.env.DATABASE_URL;
+
+if (!url) {
+  throw new Error('DATABASE_URL is missing');
 }
 
-const prisma = new PrismaClient({
-  adapter: new PrismaMariaDb(connectionString),
-});
+const parsed = new URL(url);
+
+const connectionOptions = {
+  host: parsed.hostname,
+  port: Number(parsed.port || 3306),
+  user: decodeURIComponent(parsed.username),
+  password: decodeURIComponent(parsed.password),
+  database: decodeURIComponent(parsed.pathname.slice(1)),
+  connectionLimit: 5,
+  connectTimeout: 5000,
+  acquireTimeout: 15000,
+  allowPublicKeyRetrieval: true,
+};
 
 async function main(): Promise<void> {
-  for (const [shortCode, name, description] of platformSubjects) {
-    await prisma.platformSubject.upsert({
-      where: { shortCode },
-      create: { id: uuidv7(), shortCode, name, description, isActive: true },
-      update: { name, description, isActive: true },
-    });
-  }
+  const connection = await mariadb.createConnection(connectionOptions);
 
-  for (const [
-    shortCode,
-    name,
-    countryCode,
-    authority,
-    description,
-  ] of curricula) {
-    await prisma.curriculumProfile.upsert({
-      where: { shortCode },
-      create: {
-        id: uuidv7(),
-        shortCode,
-        name,
-        countryCode,
-        authority,
-        description,
-        isActive: true,
-      },
-      update: { name, countryCode, authority, description, isActive: true },
-    });
-  }
+  try {
+    for (const [shortCode, name, description] of platformSubjects) {
+      await connection.query(
+        `INSERT INTO platform_subjects (id, shortCode, name, description, isActive, createdAt)
+         VALUES (?, ?, ?, ?, true, NOW())
+         ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description), isActive = true`,
+        [uuidv7(), shortCode, name, description],
+      );
+    }
 
-  console.log(
-    `Platform catalog is ready: ${platformSubjects.length} subjects and ${curricula.length} curriculum profiles.`,
-  );
+    for (const [
+      shortCode,
+      name,
+      countryCode,
+      authority,
+      description,
+    ] of curricula) {
+      await connection.query(
+        `INSERT INTO curriculum_profiles (id, shortCode, name, countryCode, authority, description, isActive, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, true, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE name = VALUES(name), countryCode = VALUES(countryCode), authority = VALUES(authority), description = VALUES(description), isActive = true, updatedAt = NOW()`,
+        [uuidv7(), shortCode, name, countryCode, authority, description],
+      );
+    }
+
+    console.log(
+      `Platform catalog is ready: ${platformSubjects.length} subjects and ${curricula.length} curriculum profiles.`,
+    );
+  } finally {
+    await connection.end();
+  }
 }
 
-main()
-  .catch((error: unknown) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((error: unknown) => {
+  console.error(inspect(error, { depth: 10, colors: true }));
+  process.exitCode = 1;
+});

@@ -78,6 +78,18 @@ export class ClassroomController {
     );
   }
 
+  @Get('classrooms/:classroomId/lessons')
+  @RequireOrganizationPermissions(OrganizationPermission.LESSONS_READ)
+  async listClassroomLessons(
+    @Param('organizationId') organizationId: string,
+    @Param('classroomId') classroomId: string,
+  ) {
+    return this.classroomService.listClassroomLessons(
+      organizationId,
+      classroomId,
+    );
+  }
+
   @Patch('classrooms/:classroomId')
   @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_UPDATE)
   async updateClassroom(
