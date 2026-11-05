@@ -7,6 +7,7 @@ import {
   OrganizationPermissionGuard,
 } from '@modules/shared';
 import { OrgModule } from '../org/org.module';
+import { UserModule } from '../user/user.module';
 import {
   CreateClassroomHandler,
   PauseClassroomHandler,
@@ -126,6 +127,7 @@ const repositories = [
   imports: [
     CqrsModule,
     OrgModule,
+    UserModule,
     BullModule.registerQueue({
       name: 'classroom-events',
     }),
