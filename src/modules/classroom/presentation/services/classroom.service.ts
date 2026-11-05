@@ -27,6 +27,8 @@ import {
   LessonDto,
   ClassroomStudentDTO,
   GetClassroomStudentsQuery,
+  ListClassroomLearnerCandidatesQuery,
+  ClassroomLearnerCandidateDTO,
 } from '../../application/queries';
 import {
   CreateClassroomDto,
@@ -94,6 +96,15 @@ export class ClassroomService {
   ): Promise<ClassroomStudentDTO[]> {
     return this.queryBus.execute(
       new GetClassroomStudentsQuery(classroomId, orgId),
+    );
+  }
+
+  async listLearnerCandidates(
+    orgId: string,
+    classroomId: string,
+  ): Promise<ClassroomLearnerCandidateDTO[]> {
+    return this.queryBus.execute(
+      new ListClassroomLearnerCandidatesQuery(classroomId, orgId),
     );
   }
 

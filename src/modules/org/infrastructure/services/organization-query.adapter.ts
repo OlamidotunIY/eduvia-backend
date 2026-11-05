@@ -18,7 +18,9 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
     private readonly membershipRepository: IOrganizationMembershipRepository,
   ) {}
 
-  async getOrganizationById(id: string): Promise<OrganizationSummaryDTO | null> {
+  async getOrganizationById(
+    id: string,
+  ): Promise<OrganizationSummaryDTO | null> {
     try {
       const org = await this.orgRepository.findById(OrganizationId.from(id));
       if (!org) return null;
@@ -35,7 +37,9 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
     }
   }
 
-  async getOrganizationBySlug(slug: string): Promise<OrganizationSummaryDTO | null> {
+  async getOrganizationBySlug(
+    slug: string,
+  ): Promise<OrganizationSummaryDTO | null> {
     const org = await this.orgRepository.findBySlug(slug);
     if (!org) return null;
     return {
@@ -75,35 +79,60 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
     return membership !== null && membership.isActive();
   }
 
-  async getOrganizationsForUser(userId: string): Promise<UserOrganizationDTO[]> {
+  async getOrganizationsForUser(
+    userId: string,
+  ): Promise<UserOrganizationDTO[]> {
     const memberships = await this.membershipRepository.findByUserId(userId);
-    const activeMemberships = memberships.filter((membership) => membership.isActive());
-    const organizations = await Promise.all(activeMemberships.map(async (membership) => {
-      const [organization, organizationMembers] = await Promise.all([
-        this.orgRepository.findById(membership.orgId),
-        this.membershipRepository.findByOrganizationId(membership.orgId),
-      ]);
-      if (!organization) return null;
-      return {
-        organization: {
-          id: organization.getId(), ownerId: organization.ownerId, name: organization.name,
-          slug: organization.slug, status: organization.status,
-          marketplaceListed: organization.marketplaceListed,
-        },
-        membership: {
-          id: membership.id.value, orgId: membership.orgId.value, userId: membership.userId,
-          role: membership.role, status: membership.status, subjects: membership.subjects,
-        },
-        memberCount: organizationMembers.filter((member) => member.isActive()).length,
-      };
-    }));
-    return organizations.filter((item): item is UserOrganizationDTO => item !== null);
+    const activeMemberships = memberships.filter((membership) =>
+      membership.isActive(),
+    );
+    const organizations = await Promise.all(
+      activeMemberships.map(async (membership) => {
+        const [organization, organizationMembers] = await Promise.all([
+          this.orgRepository.findById(membership.orgId),
+          this.membershipRepository.findByOrganizationId(membership.orgId),
+        ]);
+        if (!organization) return null;
+        return {
+          organization: {
+            id: organization.getId(),
+            ownerId: organization.ownerId,
+            name: organization.name,
+            slug: organization.slug,
+            status: organization.status,
+            marketplaceListed: organization.marketplaceListed,
+          },
+          membership: {
+            id: membership.id.value,
+            orgId: membership.orgId.value,
+            userId: membership.userId,
+            role: membership.role,
+            status: membership.status,
+            subjects: membership.subjects,
+          },
+          memberCount: organizationMembers.filter((member) => member.isActive())
+            .length,
+        };
+      }),
+    );
+    return organizations.filter(
+      (item): item is UserOrganizationDTO => item !== null,
+    );
   }
 
   async getActiveAdminUserIds(orgId: string): Promise<string[]> {
-    const memberships = await this.membershipRepository.findByOrganizationId(orgId);
+    const memberships =
+      await this.membershipRepository.findByOrganizationId(orgId);
     return memberships
       .filter((membership) => membership.isActive() && membership.isAdmin())
+      .map((membership) => membership.userId);
+  }
+
+  async getActiveMemberUserIds(orgId: string): Promise<string[]> {
+    const memberships =
+      await this.membershipRepository.findByOrganizationId(orgId);
+    return memberships
+      .filter((membership) => membership.isActive())
       .map((membership) => membership.userId);
   }
 

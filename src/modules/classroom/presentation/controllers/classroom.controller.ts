@@ -78,6 +78,20 @@ export class ClassroomController {
     );
   }
 
+  @Get('classrooms/:classroomId/learner-candidates')
+  @RequireOrganizationPermissions(
+    OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS,
+  )
+  async listLearnerCandidates(
+    @Param('organizationId') organizationId: string,
+    @Param('classroomId') classroomId: string,
+  ) {
+    return this.classroomService.listLearnerCandidates(
+      organizationId,
+      classroomId,
+    );
+  }
+
   @Get('classrooms/:classroomId/lessons')
   @RequireOrganizationPermissions(OrganizationPermission.LESSONS_READ)
   async listClassroomLessons(
@@ -144,7 +158,9 @@ export class ClassroomController {
   }
 
   @Post('classrooms/:classroomId/students')
-  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS)
+  @RequireOrganizationPermissions(
+    OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS,
+  )
   async addStudent(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,
@@ -160,7 +176,9 @@ export class ClassroomController {
   }
 
   @Delete('classrooms/:classroomId/students/:studentId')
-  @RequireOrganizationPermissions(OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS)
+  @RequireOrganizationPermissions(
+    OrganizationPermission.CLASSROOMS_MANAGE_STUDENTS,
+  )
   async removeStudent(
     @Param('organizationId') organizationId: string,
     @Param('classroomId') classroomId: string,

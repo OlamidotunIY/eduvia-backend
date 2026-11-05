@@ -6,3 +6,4 @@ export * from './list-classroom-lessons';
 export * from './get-teacher-availability';
 export * from './get-available-slots';
 export * from './get-classroom-students';
+export * from './list-classroom-learner-candidates';
