@@ -6,13 +6,17 @@ import {
   IClassroomRepository,
   RecurrencePattern,
 } from '../../../domain';
+import { ClassroomLessonMaterializer } from '../../services/classroom-lesson-materializer.service';
 
 @CommandHandler(UpdateClassroomCommand)
 export class UpdateClassroomHandler implements ICommandHandler<
   UpdateClassroomCommand,
   { success: boolean }
 > {
-  constructor(private readonly classroomRepository: IClassroomRepository) {}
+  constructor(
+    private readonly classroomRepository: IClassroomRepository,
+    private readonly materializer: ClassroomLessonMaterializer,
+  ) {}
 
   async execute(
     command: UpdateClassroomCommand,
@@ -46,6 +50,7 @@ export class UpdateClassroomHandler implements ICommandHandler<
       payload.recurrenceEffectiveFrom,
       payload.recurrenceEffectiveUntil,
     ].some((value) => value !== undefined);
+
     if (hasRecurrenceUpdate) {
       if (
         payload.recurrenceDaysOfWeek === undefined ||
@@ -72,6 +77,13 @@ export class UpdateClassroomHandler implements ICommandHandler<
     }
 
     await this.classroomRepository.save(classroom);
+
+    // Reconcile future occurrences if recurrence pattern changed
+    if (hasRecurrenceUpdate) {
+      await this.materializer.reconcileClassroomRecurrence(classroom, {
+        horizonWeeks: 8,
+      });
+    }
 
     return { success: true };
   }

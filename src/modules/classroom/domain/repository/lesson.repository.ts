@@ -1,7 +1,7 @@
-import { BaseRepository } from '@modules/shared';
+import { BaseRepository } from '@modules/shared/domain';
 import { LessonId } from '../value-objects/lesson-id.vo';
 import { LessonStatus } from '../value-objects/lesson-status.vo';
-import { Lesson } from '../model/Lesson';
+import { Lesson } from '../model/lesson';
 
 export interface LessonFilters {
   status?: LessonStatus;
@@ -11,7 +11,11 @@ export interface LessonFilters {
 }
 
 export abstract class ILessonRepository extends BaseRepository<Lesson, LessonId> {
-  public abstract findByClassroomId(orgId: string, classroomId: string): Promise<Lesson[]>;
+  public abstract findByClassroomId(
+    orgId: string,
+    classroomId: string,
+    dateRange?: { fromDate?: Date; toDate?: Date },
+  ): Promise<Lesson[]>;
   public abstract findByOrgId(orgId: string, filters?: LessonFilters): Promise<Lesson[]>;
   public abstract findConflictingLessons(
     orgId: string,

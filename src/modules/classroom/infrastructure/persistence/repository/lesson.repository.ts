@@ -29,9 +29,17 @@ export class PrismaLessonRepository
   public async findByClassroomId(
     orgId: string,
     classroomId: string,
+    dateRange?: { fromDate?: Date; toDate?: Date },
   ): Promise<Lesson[]> {
+    const where: any = { orgId, classroomId };
+    if (dateRange?.fromDate || dateRange?.toDate) {
+      where.scheduledAt = {};
+      if (dateRange.fromDate) where.scheduledAt.gte = dateRange.fromDate;
+      if (dateRange.toDate) where.scheduledAt.lte = dateRange.toDate;
+    }
+
     const records = await this.delegate.findMany({
-      where: { orgId, classroomId },
+      where,
       orderBy: { scheduledAt: 'asc' },
     });
     return records.map((record) => this.mapper.toDomain(record));
