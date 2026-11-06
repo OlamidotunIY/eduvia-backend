@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { IClassroomRepository } from '../../../domain';
 import { ClassroomLessonMaterializer } from '../../../application/services/classroom-lesson-materializer.service';
 
 @Injectable()
-export class ClassroomMaterializerScheduler {
+export class ClassroomMaterializerScheduler implements OnApplicationBootstrap {
   private readonly logger = new Logger(ClassroomMaterializerScheduler.name);
   private isRunning = false;
 
@@ -12,6 +12,10 @@ export class ClassroomMaterializerScheduler {
     private readonly classroomRepository: IClassroomRepository,
     private readonly materializer: ClassroomLessonMaterializer,
   ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    await this.fillActiveClassroomHorizons();
+  }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async fillActiveClassroomHorizons(): Promise<void> {
