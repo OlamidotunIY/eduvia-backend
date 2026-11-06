@@ -28,7 +28,17 @@ export class ClassroomLessonMaterializer {
       now.getTime() + horizonWeeks * 7 * 24 * 60 * 60 * 1000,
     );
 
-    const startLimit = options?.fromDate ?? classroom.recurrence.effectiveFrom;
+    // A rolling horizon must never backfill already elapsed occurrences. This is
+    // particularly important for classrooms that existed before materialization
+    // was introduced: their effective date can be far in the past.
+    const requestedStart = options?.fromDate ?? classroom.recurrence.effectiveFrom;
+    const startLimit = new Date(
+      Math.max(
+        now.getTime(),
+        requestedStart.getTime(),
+        classroom.recurrence.effectiveFrom.getTime(),
+      ),
+    );
 
     const targetDates = calculateRecurringOccurrences({
       daysOfWeek: classroom.recurrence.daysOfWeek,
