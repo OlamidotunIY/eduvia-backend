@@ -101,6 +101,39 @@ describe('ClassroomLessonMaterializer', () => {
     expect(mockRepo.lessons.length).toBe(initialLessonCount);
   });
 
+  it('should not backfill elapsed occurrences for an existing classroom', async () => {
+    const effectiveFrom = new Date();
+    effectiveFrom.setDate(effectiveFrom.getDate() - 21);
+    effectiveFrom.setHours(0, 0, 0, 0);
+
+    const recurrence = RecurrencePattern.create({
+      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+      startTime: '09:00',
+      timezone: 'UTC',
+      intervalWeeks: 1,
+      effectiveFrom,
+    });
+
+    const classroom = Classroom.create({
+      orgId,
+      name: 'Existing classroom',
+      subjectId,
+      primaryTeacherId,
+      lessonDurationMins: 60,
+      recurrence,
+    });
+
+    const materializationStartedAt = new Date();
+    await materializer.materializeClassroom(classroom, { horizonWeeks: 8 });
+
+    expect(mockRepo.lessons.length).toBeGreaterThan(0);
+    expect(
+      mockRepo.lessons.every(
+        (lesson) => lesson.scheduledAt >= materializationStartedAt,
+      ),
+    ).toBe(true);
+  });
+
   it('should reconcile future occurrences when recurrence is updated', async () => {
     const nextMonday = new Date();
     nextMonday.setDate(nextMonday.getDate() + 7);
