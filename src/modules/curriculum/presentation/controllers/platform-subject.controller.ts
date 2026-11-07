@@ -9,13 +9,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@modules/shared';
 import { CurriculumService } from '../services/curriculum.service';
+import { CurriculumEditorGuard } from '../guards';
 import {
   CreatePlatformSubjectDto,
   CreateSubjectCurriculumMappingDto,
 } from '../dto';
 
 @Controller('platform-subjects')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, CurriculumEditorGuard)
 export class PlatformSubjectController {
   constructor(private readonly curriculumService: CurriculumService) {}
 

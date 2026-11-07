@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard, CorrelationId } from '@modules/shared';
 import { CurriculumService } from '../services/curriculum.service';
+import { CurriculumEditorGuard } from '../guards';
 import { CurriculumTreeSeederService } from '../../infrastructure/seeding/curriculum-tree-seeder.service';
 import {
   CreateCurriculumProfileDto,
@@ -18,7 +19,7 @@ import {
 } from '../dto';
 
 @Controller('curricula')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, CurriculumEditorGuard)
 export class CurriculumController {
   constructor(
     private readonly curriculumService: CurriculumService,
