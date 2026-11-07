@@ -8,6 +8,7 @@ export abstract class IStudentEnrollmentRepository extends BaseRepository<
 > {
   public abstract findByClassroomId(classroomId: string): Promise<StudentEnrollment[]>;
   public abstract findByStudentId(studentId: string): Promise<StudentEnrollment[]>;
+  public abstract findByOrganizationId(orgId: string): Promise<StudentEnrollment[]>;
   public abstract findByClassroomAndStudent(
     classroomId: string,
     studentId: string,

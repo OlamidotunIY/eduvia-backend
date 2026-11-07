@@ -3,12 +3,14 @@ import {
   IOrganizationQueryPort,
   OrganizationMembershipDTO,
   OrganizationSummaryDTO,
+  SharedOrganizationSubjectDTO,
   UserOrganizationDTO,
 } from '@modules/shared';
 import { OrganizationId } from '../../domain/value-objects';
 import {
   IOrganizationMembershipRepository,
   IOrganizationRepository,
+  IOrganizationSubjectRepository,
 } from '../../domain/repository';
 
 @Injectable()
@@ -16,6 +18,7 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
   constructor(
     private readonly orgRepository: IOrganizationRepository,
     private readonly membershipRepository: IOrganizationMembershipRepository,
+    private readonly orgSubjectRepository: IOrganizationSubjectRepository,
   ) {}
 
   async getOrganizationById(
@@ -30,6 +33,7 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
         name: org.name,
         slug: org.slug,
         status: org.status,
+        country: org.country,
         marketplaceListed: org.marketplaceListed,
       };
     } catch {
@@ -48,6 +52,7 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
       name: org.name,
       slug: org.slug,
       status: org.status,
+      country: org.country,
       marketplaceListed: org.marketplaceListed,
     };
   }
@@ -100,6 +105,7 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
             name: organization.name,
             slug: organization.slug,
             status: organization.status,
+            country: organization.country,
             marketplaceListed: organization.marketplaceListed,
           },
           membership: {
@@ -143,5 +149,25 @@ export class OrganizationQueryAdapter implements IOrganizationQueryPort {
     } catch {
       return false;
     }
+  }
+
+  async getOrganizationSubjects(
+    orgId: string,
+    activeOnly = true,
+  ): Promise<SharedOrganizationSubjectDTO[]> {
+    const subjects = activeOnly
+      ? await this.orgSubjectRepository.findActiveSubjectsByOrganizationId(
+          orgId,
+        )
+      : await this.orgSubjectRepository.findByOrganizationId(orgId);
+
+    return subjects.map((s) => ({
+      id: s.getId(),
+      orgId: s.orgId.toString(),
+      name: s.name,
+      platformSubjectId: s.platformSubjectId,
+      description: s.description,
+      isActive: s.isActive,
+    }));
   }
 }

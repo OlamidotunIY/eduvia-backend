@@ -2,7 +2,6 @@ export enum UserType {
   TEACHER = 'teacher',
   STUDENT = 'student',
   PARENT = 'parent',
-  
 }
 
 export interface UserDTO {
@@ -23,4 +22,5 @@ export interface UserDTO {
 export abstract class IUserQueryPort {
   abstract getUserByEmail(email: string): Promise<UserDTO | null>;
   abstract getUserById(id: string): Promise<UserDTO | null>;
+  abstract getStudentCountryCodes(studentIds: string[]): Promise<string[]>;
 }

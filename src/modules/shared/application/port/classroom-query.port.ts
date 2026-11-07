@@ -28,4 +28,5 @@ export abstract class IClassroomQueryPort {
   public abstract getLessonById(id: string): Promise<SharedLessonDto | null>;
   public abstract isStudentEnrolled(classroomId: string, studentId: string): Promise<boolean>;
   public abstract getStudentClassrooms(studentId: string): Promise<SharedClassroomDto[]>;
+  public abstract getEnrolledStudentIds(orgId: string): Promise<string[]>;
 }

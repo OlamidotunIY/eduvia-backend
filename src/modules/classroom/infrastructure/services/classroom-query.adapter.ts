@@ -81,4 +81,10 @@ export class ClassroomQueryAdapter implements IClassroomQueryPort {
     }
     return classrooms;
   }
+
+  async getEnrolledStudentIds(orgId: string): Promise<string[]> {
+    const enrollments =
+      await this.enrollmentRepository.findByOrganizationId(orgId);
+    return Array.from(new Set(enrollments.map((e) => e.studentId)));
+  }
 }
