@@ -2,12 +2,30 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ListAssessmentsQuery } from './list-assessments.query';
 import { ListAssessmentsDto } from './list-assessments.dto';
 import { IAssessmentRepository } from '../../../domain';
+import { IQuestionRepository } from '../../../domain';
+import {
+  IBoardQueryPort,
+  IClassroomQueryPort,
+  IUserQueryPort,
+} from '@modules/shared';
+import { Inject } from '@nestjs/common';
+import { AssessmentDetailPresenter } from '../assessment-detail.presenter';
 
 @QueryHandler(ListAssessmentsQuery)
 export class ListAssessmentsHandler
   implements IQueryHandler<ListAssessmentsQuery, ListAssessmentsDto>
 {
-  constructor(private readonly assessmentRepository: IAssessmentRepository) {}
+  constructor(
+    private readonly assessmentRepository: IAssessmentRepository,
+    @Inject(IQuestionRepository)
+    private readonly questionRepository: IQuestionRepository,
+    @Inject(IBoardQueryPort)
+    private readonly boardQueryPort: IBoardQueryPort,
+    @Inject(IClassroomQueryPort)
+    private readonly classroomQueryPort: IClassroomQueryPort,
+    @Inject(IUserQueryPort)
+    private readonly userQueryPort: IUserQueryPort,
+  ) {}
 
   async execute(query: ListAssessmentsQuery): Promise<ListAssessmentsDto> {
     const assessments = await this.assessmentRepository.findByOrgId(
@@ -17,37 +35,22 @@ export class ListAssessmentsHandler
     );
 
     return {
-      items: assessments.map((assessment) => ({
-        id: assessment.id.unpack(),
-        orgId: assessment.orgId,
-        lessonId: assessment.lessonId,
-        boardId: assessment.boardId,
-        studentId: assessment.studentId,
-        status: assessment.status,
-        totalMaxMarks: assessment.totalMaxMarks,
-        totalMarksAwarded: assessment.totalMarksAwarded,
-        scorePercent: assessment.scorePercent,
-        autoMarkedCount: assessment.autoMarkedCount,
-        teacherMarkedCount: assessment.teacherMarkedCount,
-        pendingMarkCount: assessment.pendingMarkCount,
-        markingItems: assessment.markingItems.map((item) => ({
-          id: item.id.unpack(),
-          assessmentId: item.assessmentId,
-          boardQuestionId: item.boardQuestionId,
-          studentResponseId: item.studentResponseId,
-          questionType: item.questionType,
-          maxMarks: item.maxMarks,
-          autoMarked: item.autoMarked,
-          marksAwarded: item.marksAwarded,
-          feedback: item.feedback,
-          markedBy: item.markedBy,
-          markedAt: item.markedAt,
-          status: item.status,
-        })),
-        createdAt: assessment.createdAt,
-        updatedAt: assessment.updatedAt,
-      })),
-      total: assessments.length,
+      items: await Promise.all(
+        assessments.map((assessment) =>
+          new AssessmentDetailPresenter(
+            this.questionRepository,
+            this.boardQueryPort,
+            this.classroomQueryPort,
+            this.userQueryPort,
+          ).present(assessment),
+        ),
+      ),
+      total: await this.assessmentRepository.countByOrgId(
+        query.orgId,
+        query.filter,
+      ),
+      skip: query.pagination?.skip ?? 0,
+      take: query.pagination?.take ?? null,
     };
   }
 }

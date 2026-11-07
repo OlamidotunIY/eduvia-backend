@@ -24,6 +24,9 @@ export class ApplyTeacherMarkHandler
     if (!assessment) {
       throw new AssessmentNotFoundError(payload.assessmentId);
     }
+    if (assessment.orgId !== payload.orgId) {
+      throw new AssessmentNotFoundError(payload.assessmentId);
+    }
 
     assessment.applyTeacherMark(
       payload.markingItemId,

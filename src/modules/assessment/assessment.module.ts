@@ -7,6 +7,9 @@ import {
   OrganizationPermissionGuard,
 } from '@modules/shared';
 import { OrgModule } from '../org/org.module';
+import { BoardModule } from '../board/board.module';
+import { ClassroomModule } from '../classroom/classroom.module';
+import { UserModule } from '../user/user.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -32,6 +35,7 @@ import {
 import {
   AssessmentEventProcessor,
   AssessmentFinalizedProcessor,
+  AssessmentSubmissionProcessor,
 } from './infrastructure/messaging/listeners';
 import { AssessmentQueryAdapter } from './infrastructure/services/assessment-query.adapter';
 import {
@@ -77,6 +81,9 @@ const repositories = [
   imports: [
     CqrsModule,
     OrgModule,
+    BoardModule,
+    ClassroomModule,
+    UserModule,
     BullModule.registerQueue(
       { name: 'assessment-events' },
       { name: 'classroom-events' },
@@ -98,6 +105,7 @@ const repositories = [
     ...repositories,
     AssessmentEventProcessor,
     AssessmentFinalizedProcessor,
+    AssessmentSubmissionProcessor,
     {
       provide: IAssessmentQueryPort,
       useClass: AssessmentQueryAdapter,

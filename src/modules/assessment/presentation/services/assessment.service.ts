@@ -16,7 +16,9 @@ import {
   GetAssessmentByIdQuery,
   ListAssessmentsQuery,
   GetStudentMasteryQuery,
+  GetAssessmentSummaryQuery,
 } from '../../application/queries';
+import { AssessmentFilter } from '../../domain';
 import {
   CreateQuestionDto,
   UpdateQuestionDto,
@@ -119,7 +121,6 @@ export class AssessmentService {
         lessonId: dto.lessonId,
         boardId: dto.boardId,
         studentId: dto.studentId,
-        items: dto.items,
         correlationId,
       }),
     );
@@ -127,9 +128,18 @@ export class AssessmentService {
 
   async listAssessments(
     orgId: string,
+    filter?: AssessmentFilter,
     pagination?: { skip?: number; take?: number },
   ) {
-    return this.queryBus.execute(new ListAssessmentsQuery(orgId, undefined, pagination));
+    return this.queryBus.execute(
+      new ListAssessmentsQuery(orgId, filter, pagination),
+    );
+  }
+
+  async getAssessmentSummary(orgId: string, filter?: AssessmentFilter) {
+    return this.queryBus.execute(
+      new GetAssessmentSummaryQuery({ orgId, filter }),
+    );
   }
 
   async getAssessment(id: string, orgId?: string) {
@@ -137,6 +147,7 @@ export class AssessmentService {
   }
 
   async applyTeacherMark(
+    orgId: string,
     assessmentId: string,
     markingItemId: string,
     dto: ApplyTeacherMarkDto,
@@ -145,6 +156,7 @@ export class AssessmentService {
   ) {
     return this.commandBus.execute(
       new ApplyTeacherMarkCommand({
+        orgId,
         assessmentId,
         markingItemId,
         marksAwarded: dto.marksAwarded,
@@ -156,12 +168,14 @@ export class AssessmentService {
   }
 
   async finalizeAssessment(
+    orgId: string,
     assessmentId: string,
     curriculumNodeId?: string | null,
     correlationId?: string,
   ) {
     return this.commandBus.execute(
       new FinalizeAssessmentCommand({
+        orgId,
         assessmentId,
         curriculumNodeId,
         correlationId,

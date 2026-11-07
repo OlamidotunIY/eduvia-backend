@@ -1,4 +1,5 @@
 export interface ApplyTeacherMarkPayload {
+  orgId: string;
   assessmentId: string;
   markingItemId: string;
   marksAwarded: number;

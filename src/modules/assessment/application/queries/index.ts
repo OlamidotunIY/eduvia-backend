@@ -3,6 +3,7 @@ import { SearchQuestionsHandler } from './search-questions/search-questions.hand
 import { GetAssessmentByIdHandler } from './get-assessment-by-id/get-assessment-by-id.handler';
 import { ListAssessmentsHandler } from './list-assessments/list-assessments.handler';
 import { GetStudentMasteryHandler } from './get-student-mastery/get-student-mastery.handler';
+import { GetAssessmentSummaryHandler } from './get-assessment-summary/get-assessment-summary.handler';
 
 export * from './get-question-by-id/get-question-by-id.query';
 export * from './get-question-by-id/get-question-by-id.dto';
@@ -30,4 +31,6 @@ export const QUERY_HANDLERS = [
   GetAssessmentByIdHandler,
   ListAssessmentsHandler,
   GetStudentMasteryHandler,
+  GetAssessmentSummaryHandler,
 ];
+export * from './get-assessment-summary';

@@ -44,7 +44,7 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['BoardSectionUpdatedEvent', 'board-events'],
   ['BoardSectionRemovedEvent', 'board-events'],
   ['LessonPlanCompletedEvent', 'classroom-events'],
-  ['StudentResponseSubmittedEvent', 'board-events'],
+  ['StudentResponseSubmittedEvent', 'assessment-events'],
   ['TeacherMarkSubmittedEvent', 'board-events'],
   ['QuestionCreatedEvent', 'search-events'],
   ['QuestionPublishedEvent', 'search-events'],

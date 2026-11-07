@@ -275,6 +275,10 @@ export class Assessment extends AggregateRoot<AssessmentId> {
     curriculumNodeId?: string | null,
     correlationId = 'system',
   ): void {
+    if (this._status === AssessmentStatus.fully_marked) {
+      throw new AssessmentAlreadyFinalizedError(this.id.value);
+    }
+
     if (this._pendingMarkCount > 0) {
       throw new BusinessRuleViolationError(
         `Cannot finalize assessment with ${this._pendingMarkCount} pending marking items.`,

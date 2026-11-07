@@ -25,6 +25,9 @@ export class FinalizeAssessmentHandler
     if (!assessment) {
       throw new AssessmentNotFoundError(payload.assessmentId);
     }
+    if (assessment.orgId !== payload.orgId) {
+      throw new AssessmentNotFoundError(payload.assessmentId);
+    }
 
     assessment.finalizeMarking(payload.curriculumNodeId, correlationId);
     await this.assessmentRepository.save(assessment);

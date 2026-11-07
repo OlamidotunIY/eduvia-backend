@@ -8,6 +8,16 @@ export interface AssessmentFilter {
   boardId?: string;
   studentId?: string;
   status?: AssessmentStatus;
+  createdFrom?: Date;
+  createdTo?: Date;
+}
+
+export interface AssessmentSummary {
+  total: number;
+  pendingMarking: number;
+  partiallyMarked: number;
+  fullyMarked: number;
+  averageScorePercent: number | null;
 }
 
 export abstract class IAssessmentRepository extends BaseRepository<Assessment, AssessmentId> {
@@ -26,4 +36,14 @@ export abstract class IAssessmentRepository extends BaseRepository<Assessment, A
     studentId: string,
     pagination?: { skip?: number; take?: number },
   ): Promise<Assessment[]>;
+
+  public abstract countByOrgId(
+    orgId: string,
+    filter?: AssessmentFilter,
+  ): Promise<number>;
+
+  public abstract getSummaryByOrgId(
+    orgId: string,
+    filter?: AssessmentFilter,
+  ): Promise<AssessmentSummary>;
 }
