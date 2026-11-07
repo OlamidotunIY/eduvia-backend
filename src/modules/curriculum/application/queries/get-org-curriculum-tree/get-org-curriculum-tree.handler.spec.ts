@@ -139,7 +139,7 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
     expect(subjectNames).not.toContain('French');
   });
 
-  it('returns entire tree when preview is true regardless of offered subjects', async () => {
+  it('does not allow an organization to bypass its subject scope with preview', async () => {
     mockProfileRepo.findById.mockResolvedValue({
       id: CurriculumProfileId.from(curriculumId),
       name: 'England National Curriculum',
@@ -181,13 +181,7 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
       new GetOrganizationCurriculumTreeQuery('org-1', curriculumId, true),
     );
 
-    expect(tree).toHaveLength(1);
-    expect(tree[0].name).toBe('Key Stage 3');
-    expect(tree[0].code).toBe('KS3');
-    expect(tree[0].path).toBe('/' + ks3Id + '/');
-    expect(tree[0].children).toHaveLength(1);
-    expect(tree[0].children[0].name).toBe('Mathematics');
-    expect(tree[0].children[0].code).toBe('MAT-KS3');
+    expect(tree).toEqual([]);
   });
 
   it('returns empty tree if organization offers no mapped subjects', async () => {
