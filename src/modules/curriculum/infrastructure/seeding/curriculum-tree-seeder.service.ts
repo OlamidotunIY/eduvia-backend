@@ -3,7 +3,7 @@ import { PrismaService } from '@modules/shared';
 import { v7 as uuidv7 } from 'uuid';
 import { officialMathematicsCatalog } from './official-mathematics-catalog.seed.data';
 
-const OFFICIAL_MATHEMATICS_SEED_KEY = 'official-mathematics-catalog-v1';
+const OFFICIAL_MATHEMATICS_SEED_KEY = 'official-mathematics-catalog-v2';
 
 /** Runs in the application pod after the migration init-container completes. */
 @Injectable()
