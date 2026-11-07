@@ -8,7 +8,6 @@ import {
   DuplicateStudentResponseError,
   StudentResponse,
   ResponseType,
-  AutoMarkResult,
 } from '../../../domain';
 
 @CommandHandler(SubmitStudentResponseCommand)
@@ -39,13 +38,6 @@ export class SubmitStudentResponseHandler
       });
     }
 
-    let autoMarkResult: AutoMarkResult | null = null;
-    // Auto-mark MCQ if options are shown and choice is provided
-    if (payload.responseType === ResponseType.mcq_choice && question.showOptions && payload.selectedOption) {
-      // In MCQ, full marks for answered choice when auto-marked
-      autoMarkResult = AutoMarkResult.create(true, question.maxMarks);
-    }
-
     const response = StudentResponse.create({
       boardQuestionId: question.id.unpack(),
       studentId: payload.studentId,
@@ -53,7 +45,6 @@ export class SubmitStudentResponseHandler
       textContent: payload.textContent,
       imageUrl: payload.imageUrl,
       selectedOption: payload.selectedOption,
-      autoMarkResult,
     });
     response.recordSubmission(
       question.boardId,
@@ -69,8 +60,8 @@ export class SubmitStudentResponseHandler
       boardQuestionId: question.id.unpack(),
       studentId: response.studentId,
       submittedAt: response.submittedAt,
-      autoMarked: autoMarkResult !== null,
-      marksAwarded: autoMarkResult ? autoMarkResult.marksAwarded : null,
+      autoMarked: false,
+      marksAwarded: null,
     };
   }
 }
