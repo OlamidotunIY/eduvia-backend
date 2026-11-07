@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IUserQueryPort, PrismaService, UserDTO } from '@modules/shared';
+import {
+  IUserQueryPort,
+  PrismaService,
+  StudentCurriculumContextDto,
+  UserDTO,
+} from '@modules/shared';
 import { User, IUserRepository } from '../../domain';
 
 @Injectable()
@@ -29,6 +34,16 @@ export class UserQueryAdapter implements IUserQueryPort {
       distinct: ['countryCode'],
     });
     return profiles.map((p) => p.countryCode).filter(Boolean);
+  }
+
+  async getStudentCurriculumContexts(
+    studentIds: string[],
+  ): Promise<StudentCurriculumContextDto[]> {
+    if (!studentIds.length) return [];
+    return this.prisma.studentProfile.findMany({
+      where: { id: { in: studentIds } },
+      select: { id: true, countryCode: true, gradeLevel: true },
+    });
   }
 
   private toDTO(user: User): UserDTO {

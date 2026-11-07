@@ -42,10 +42,7 @@ export class GetOrganizationCurriculumTreeHandler
         .filter((id): id is string => Boolean(id)),
     );
 
-    const isPreview = query.preview === true;
-
-    // If org has no mapped platform subjects and preview is not requested, return empty tree
-    if (!isPreview && offeredPlatformSubjectIds.size === 0) {
+    if (offeredPlatformSubjectIds.size === 0) {
       return [];
     }
 
@@ -55,59 +52,19 @@ export class GetOrganizationCurriculumTreeHandler
       return [];
     }
 
-    if (isPreview) {
-      const rawMap = new Map<string, (typeof nodes)[0]>();
-      const childrenMap = new Map<string, string[]>();
-      const rootIds: string[] = [];
-
-      for (const node of nodes) {
-        rawMap.set(node.id.unpack(), node);
-        const parentId = node.parentNodeId?.unpack() ?? null;
-        if (!parentId) {
-          rootIds.push(node.id.unpack());
-        } else {
-          const siblings = childrenMap.get(parentId) ?? [];
-          siblings.push(node.id.unpack());
-          childrenMap.set(parentId, siblings);
-        }
-      }
-
-      const buildSubtree = (nodeId: string): OrganizationCurriculumTreeNodeDto => {
-        const node = rawMap.get(nodeId)!;
-        const childIds = childrenMap.get(nodeId) ?? [];
-        return {
-          id: node.id.unpack(),
-          curriculumId: node.curriculumId.unpack(),
-          parentNodeId: node.parentNodeId ? node.parentNodeId.unpack() : null,
-          nodeType: node.nodeType,
-          name: node.name,
-          code: node.code ?? null,
-          description: node.description,
-          gradeLevel: node.gradeLevel,
-          depth: node.depth,
-          path: node.path.value,
-          isLeaf: node.isLeaf,
-          isActive: node.isActive,
-          children: childIds.map(buildSubtree),
-        };
-      };
-
-      return rootIds.map(buildSubtree);
-    }
-
-    // 2. Fetch mappings for this curriculum
+    // 2. Fetch mapped discipline roots for this curriculum.
     const mappings = await this.mappingRepository.findByCurriculumId(
       query.curriculumId,
     );
-    const allowedSubjectNodeIds = new Set<string>();
+    const allowedDisciplineNodeIds = new Set<string>();
 
     for (const mapping of mappings) {
       if (offeredPlatformSubjectIds.has(mapping.platformSubjectId.unpack())) {
-        allowedSubjectNodeIds.add(mapping.subjectNodeId.unpack());
+        allowedDisciplineNodeIds.add(mapping.subjectNodeId.unpack());
       }
     }
 
-    if (allowedSubjectNodeIds.size === 0) {
+    if (allowedDisciplineNodeIds.size === 0) {
       return [];
     }
 
@@ -117,49 +74,18 @@ export class GetOrganizationCurriculumTreeHandler
       rawMap.set(node.id.unpack(), node);
     }
 
-    // Helper: find subject ancestor ID for a node
-    const getSubjectAncestorId = (nodeId: string): string | null => {
-      let current = rawMap.get(nodeId);
-      while (current) {
-        if (current.nodeType === 'subject') {
-          return current.id.unpack();
-        }
-        if (!current.parentNodeId) break;
-        current = rawMap.get(current.parentNodeId.unpack());
-      }
-      return null;
-    };
-
-    // Helper: check if a node or any of its descendants belongs to allowed subjects
+    // A mapped discipline and all descendants are visible. Its ancestors remain
+    // visible as breadcrumbs, so the organization tree never becomes hollow.
     const isNodeAllowed = (nodeId: string): boolean => {
       const node = rawMap.get(nodeId);
       if (!node) return false;
-
-      // Subject level
-      if (node.nodeType === 'subject') {
-        return allowedSubjectNodeIds.has(node.id.unpack());
-      }
-
-      // Descendants of subject (strand, topic, learning_objective)
-      if (node.depth > 1) {
-        const subjectId = getSubjectAncestorId(nodeId);
-        return subjectId !== null && allowedSubjectNodeIds.has(subjectId);
-      }
-
-      // Ancestors of subject (e.g. keystage / depth 0)
-      // Check if ANY child subject of this keystage is allowed
-      for (const child of nodes) {
-        if (
-          child.parentNodeId &&
-          child.parentNodeId.unpack() === nodeId &&
-          child.nodeType === 'subject' &&
-          allowedSubjectNodeIds.has(child.id.unpack())
-        ) {
-          return true;
-        }
-      }
-
-      return false;
+      const id = node.id.unpack();
+      return Array.from(allowedDisciplineNodeIds).some(
+        (rootId) =>
+          id === rootId ||
+          node.path.value.includes(`/${rootId}/`) ||
+          rawMap.get(rootId)?.path.value.includes(`/${id}/`),
+      );
     };
 
     // 4. Build DTO map for allowed nodes
