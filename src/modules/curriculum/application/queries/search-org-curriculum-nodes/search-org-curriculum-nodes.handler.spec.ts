@@ -2,7 +2,6 @@ import { SearchOrganizationCurriculumNodesHandler } from './search-org-curriculu
 import { SearchOrganizationCurriculumNodesQuery } from './search-org-curriculum-nodes.query';
 import {
   CurriculumProfileId,
-  PlatformSubjectId,
   CurriculumNodeId,
   NodePath,
 } from '../../../domain';
@@ -44,8 +43,8 @@ describe('SearchOrganizationCurriculumNodesHandler', () => {
 
     mockMappingRepo.findByCurriculumId.mockResolvedValue([
       {
-        platformSubjectId: PlatformSubjectId.from('018e0000-0000-7000-8000-000000000100'),
-        subjectNodeId: CurriculumNodeId.from(mathsSubjectId),
+        platformSubjectId: '018e0000-0000-7000-8000-000000000100',
+        subjectNodeId: mathsSubjectId,
       },
     ]);
 

@@ -65,8 +65,8 @@ export class GetOrganizationCurriculumTreeHandler
     const allowedDisciplineNodeIds = new Set<string>();
 
     for (const mapping of mappings) {
-      if (offeredPlatformSubjectIds.has(mapping.platformSubjectId.unpack())) {
-        allowedDisciplineNodeIds.add(mapping.subjectNodeId.unpack());
+      if (offeredPlatformSubjectIds.has(mapping.platformSubjectId)) {
+        allowedDisciplineNodeIds.add(mapping.subjectNodeId);
       }
     }
 

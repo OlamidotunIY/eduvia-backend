@@ -52,8 +52,8 @@ export class SearchOrganizationCurriculumNodesHandler
         query.curriculumId,
       );
       for (const m of mappings) {
-        if (offeredPlatformSubjectIds.has(m.platformSubjectId.unpack())) {
-          allowedSubjectNodeIds.add(m.subjectNodeId.unpack());
+        if (offeredPlatformSubjectIds.has(m.platformSubjectId)) {
+          allowedSubjectNodeIds.add(m.subjectNodeId);
         }
       }
     } else {
@@ -63,7 +63,7 @@ export class SearchOrganizationCurriculumNodesHandler
           platformSubjectId,
         );
         for (const m of mappings) {
-          allowedSubjectNodeIds.add(m.subjectNodeId.unpack());
+          allowedSubjectNodeIds.add(m.subjectNodeId);
         }
       }
     }

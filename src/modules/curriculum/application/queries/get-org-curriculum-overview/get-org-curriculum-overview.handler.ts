@@ -136,7 +136,7 @@ export class GetOrganizationCurriculumOverviewHandler
         profile.id.unpack(),
       );
       const mappedOfferedSubjectCount = mappings.filter((m) =>
-        offeredPlatformSubjectIds.has(m.platformSubjectId.unpack()),
+        offeredPlatformSubjectIds.has(m.platformSubjectId),
       ).length;
 
       if (mappedOfferedSubjectCount === 0) {

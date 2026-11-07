@@ -2,8 +2,6 @@ import { GetOrganizationCurriculumOverviewHandler } from './get-org-curriculum-o
 import { GetOrganizationCurriculumOverviewQuery } from './get-org-curriculum-overview.query';
 import {
   CurriculumProfileId,
-  PlatformSubjectId,
-  CurriculumNodeId,
 } from '../../../domain';
 
 describe('GetOrganizationCurriculumOverviewHandler', () => {
@@ -75,8 +73,8 @@ describe('GetOrganizationCurriculumOverviewHandler', () => {
 
     mockMappingRepo.findByCurriculumId.mockResolvedValue([
       {
-        platformSubjectId: PlatformSubjectId.from('018e0000-0000-7000-8000-000000000010'),
-        subjectNodeId: CurriculumNodeId.from('018e0000-0000-7000-8000-000000000100'),
+        platformSubjectId: '018e0000-0000-7000-8000-000000000010',
+        subjectNodeId: '018e0000-0000-7000-8000-000000000100',
       },
     ]);
 
