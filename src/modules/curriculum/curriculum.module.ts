@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BullModule } from '@nestjs/bullmq';
 import {
   AuthGuard,
   ICurriculumQueryPort,
+  OrganizationPermissionGuard,
 } from '@modules/shared';
 import { CURRICULUM_COMMAND_HANDLERS } from './application/commands';
 import { CURRICULUM_QUERY_HANDLERS } from './application/queries';
@@ -30,10 +31,14 @@ import { CurriculumQueryAdapter } from './infrastructure/services/curriculum-que
 import {
   CurriculumController,
   CurriculumNodeController,
+  OrganizationCurriculumController,
   PlatformSubjectController,
   StudentCurriculumController,
 } from './presentation/controllers';
 import { CurriculumService } from './presentation/services';
+import { OrgModule } from '../org/org.module';
+import { ClassroomModule } from '../classroom/classroom.module';
+import { UserModule } from '../user/user.module';
 
 const mappers = [
   CurriculumProfileMapper,
@@ -65,19 +70,25 @@ const repositories = [
   },
 ];
 
+@Global()
 @Module({
   imports: [
     CqrsModule,
     BullModule.registerQueue({ name: 'search-events' }),
+    OrgModule,
+    ClassroomModule,
+    UserModule,
   ],
   controllers: [
     CurriculumController,
     CurriculumNodeController,
+    OrganizationCurriculumController,
     PlatformSubjectController,
     StudentCurriculumController,
   ],
   providers: [
     AuthGuard,
+    OrganizationPermissionGuard,
     CurriculumService,
     ...CURRICULUM_COMMAND_HANDLERS,
     ...CURRICULUM_QUERY_HANDLERS,

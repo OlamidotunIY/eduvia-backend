@@ -5,6 +5,7 @@ import { CurriculumProfile } from '../model';
 export abstract class ICurriculumProfileRepository extends BaseRepository<CurriculumProfile, CurriculumProfileId> {
   public abstract findByShortCode(shortCode: string): Promise<CurriculumProfile | null>;
   public abstract findByCountryCode(countryCode: string): Promise<CurriculumProfile[]>;
+  public abstract findByCountryCodes(countryCodes: string[]): Promise<CurriculumProfile[]>;
   public abstract findActive(): Promise<CurriculumProfile[]>;
   public abstract findAll(): Promise<CurriculumProfile[]>;
 }

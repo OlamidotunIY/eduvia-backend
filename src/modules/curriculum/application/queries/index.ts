@@ -6,6 +6,9 @@ export * from './get-curriculum-node-by-id';
 export * from './search-curriculum-nodes';
 export * from './list-platform-subjects';
 export * from './resolve-student-curriculum';
+export * from './get-org-curriculum-overview';
+export * from './get-org-curriculum-tree';
+export * from './search-org-curriculum-nodes';
 
 import { ListCurriculaHandler } from './list-curricula';
 import { GetCurriculumByIdHandler } from './get-curriculum-by-id';
@@ -15,6 +18,9 @@ import { GetCurriculumNodeByIdHandler } from './get-curriculum-node-by-id';
 import { SearchCurriculumNodesHandler } from './search-curriculum-nodes';
 import { ListPlatformSubjectsHandler } from './list-platform-subjects';
 import { ResolveStudentCurriculumHandler } from './resolve-student-curriculum';
+import { GetOrganizationCurriculumOverviewHandler } from './get-org-curriculum-overview';
+import { GetOrganizationCurriculumTreeHandler } from './get-org-curriculum-tree';
+import { SearchOrganizationCurriculumNodesHandler } from './search-org-curriculum-nodes';
 
 export const CURRICULUM_QUERY_HANDLERS = [
   ListCurriculaHandler,
@@ -25,4 +31,7 @@ export const CURRICULUM_QUERY_HANDLERS = [
   SearchCurriculumNodesHandler,
   ListPlatformSubjectsHandler,
   ResolveStudentCurriculumHandler,
+  GetOrganizationCurriculumOverviewHandler,
+  GetOrganizationCurriculumTreeHandler,
+  SearchOrganizationCurriculumNodesHandler,
 ];

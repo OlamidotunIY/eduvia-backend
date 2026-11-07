@@ -28,6 +28,9 @@ import {
   SearchCurriculumNodesQuery,
   ListPlatformSubjectsQuery,
   ResolveStudentCurriculumQuery,
+  GetOrganizationCurriculumOverviewQuery,
+  GetOrganizationCurriculumTreeQuery,
+  SearchOrganizationCurriculumNodesQuery,
 } from '../../application/queries';
 
 @Injectable()
@@ -159,5 +162,35 @@ export class CurriculumService {
 
   public async resolveStudentCurriculum(countryCode: string) {
     return this.queryBus.execute(new ResolveStudentCurriculumQuery(countryCode));
+  }
+
+  public async getOrganizationCurriculumOverview(organizationId: string) {
+    return this.queryBus.execute(
+      new GetOrganizationCurriculumOverviewQuery(organizationId),
+    );
+  }
+
+  public async getOrganizationCurriculumTree(
+    organizationId: string,
+    curriculumId: string,
+    preview?: boolean,
+  ) {
+    return this.queryBus.execute(
+      new GetOrganizationCurriculumTreeQuery(organizationId, curriculumId, preview),
+    );
+  }
+
+  public async searchOrganizationCurriculumNodes(
+    organizationId: string,
+    query: string,
+    curriculumId?: string,
+  ) {
+    return this.queryBus.execute(
+      new SearchOrganizationCurriculumNodesQuery(
+        organizationId,
+        query,
+        curriculumId,
+      ),
+    );
   }
 }
