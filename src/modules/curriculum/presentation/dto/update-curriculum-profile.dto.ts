@@ -3,4 +3,5 @@ export class UpdateCurriculumProfileDto {
   description?: string | null;
   authority?: string;
   version?: string | null;
+  sourceUrl?: string | null;
 }

@@ -6,6 +6,9 @@ export abstract class ICurriculumProfileRepository extends BaseRepository<Curric
   public abstract findByShortCode(shortCode: string): Promise<CurriculumProfile | null>;
   public abstract findByCountryCode(countryCode: string): Promise<CurriculumProfile[]>;
   public abstract findByCountryCodes(countryCodes: string[]): Promise<CurriculumProfile[]>;
+  public abstract findByJurisdictionCodes(
+    jurisdictionCodes: string[],
+  ): Promise<CurriculumProfile[]>;
   public abstract findActive(): Promise<CurriculumProfile[]>;
   public abstract findAll(): Promise<CurriculumProfile[]>;
 }

@@ -3,16 +3,21 @@ model CurriculumProfile {
   name        String
   shortCode   String   @unique
   countryCode String
+  /// Education jurisdiction, rather than the learner's broad country. Examples: CA-ON, GB-ENG.
+  jurisdictionCode String
   description String?  @db.Text
   authority   String
   isActive    Boolean  @default(true)
   version     String?
+  sourceUrl   String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   nodes       CurriculumNode[]
   mappings    SubjectCurriculumMapping[]
 
+  @@unique([jurisdictionCode, shortCode])
+  @@index([countryCode, jurisdictionCode, isActive])
   @@map("curriculum_profiles")
 }
 
@@ -43,6 +48,8 @@ model CurriculumNode {
 
 enum NodeType {
   keystage
+  discipline
+  course
   subject
   strand
   topic

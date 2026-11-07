@@ -4,6 +4,7 @@ export interface UpdateCurriculumProfilePayload {
   description?: string | null;
   authority?: string;
   version?: string | null;
+  sourceUrl?: string | null;
 }
 
 export class UpdateCurriculumProfileCommand {

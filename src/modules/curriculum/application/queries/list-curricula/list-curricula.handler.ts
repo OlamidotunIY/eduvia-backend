@@ -27,10 +27,12 @@ export class ListCurriculaHandler
       name: p.name,
       shortCode: p.shortCode,
       countryCode: p.countryCode,
+      jurisdictionCode: p.jurisdictionCode,
       description: p.description,
       authority: p.authority,
       isActive: p.isActive,
       version: p.version,
+      sourceUrl: p.sourceUrl,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }));

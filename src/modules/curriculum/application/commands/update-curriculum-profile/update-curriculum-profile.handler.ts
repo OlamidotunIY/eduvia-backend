@@ -26,6 +26,7 @@ export class UpdateCurriculumProfileHandler
       description: payload.description,
       authority: payload.authority,
       version: payload.version,
+      sourceUrl: payload.sourceUrl,
     });
 
     await this.profileRepository.save(profile);

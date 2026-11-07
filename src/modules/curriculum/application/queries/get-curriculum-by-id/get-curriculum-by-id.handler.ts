@@ -24,10 +24,12 @@ export class GetCurriculumByIdHandler
       name: profile.name,
       shortCode: profile.shortCode,
       countryCode: profile.countryCode,
+      jurisdictionCode: profile.jurisdictionCode,
       description: profile.description,
       authority: profile.authority,
       isActive: profile.isActive,
       version: profile.version,
+      sourceUrl: profile.sourceUrl,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
     };
