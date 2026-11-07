@@ -4,7 +4,17 @@ export interface OrganizationSummaryDTO {
   name: string;
   slug: string;
   status: string;
+  country: string;
   marketplaceListed: boolean;
+}
+
+export interface SharedOrganizationSubjectDTO {
+  id: string;
+  orgId: string;
+  name: string;
+  platformSubjectId: string | null;
+  description: string | null;
+  isActive: boolean;
 }
 
 export interface OrganizationMembershipDTO {
@@ -40,4 +50,8 @@ export abstract class IOrganizationQueryPort {
   abstract getActiveMemberUserIds(orgId: string): Promise<string[]>;
   abstract isMember(orgId: string, userId: string): Promise<boolean>;
   abstract isOrgActive(id: string): Promise<boolean>;
+  abstract getOrganizationSubjects(
+    orgId: string,
+    activeOnly?: boolean,
+  ): Promise<SharedOrganizationSubjectDTO[]>;
 }

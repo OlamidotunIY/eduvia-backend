@@ -66,7 +66,6 @@ import { PrismaOrganizationRoleRepository } from './infrastructure/repositories/
 import { OrganizationQueryAdapter } from './infrastructure/services/organization-query.adapter';
 import { OrganizationAuthorizationQueryAdapter } from './infrastructure/services/organization-authorization-query.adapter';
 import { UserModule } from '../user/user.module';
-import { CurriculumModule } from '../curriculum/curriculum.module';
 
 const commandHandlers = [
   CreateOrganizationHandler,
@@ -152,7 +151,6 @@ const portBinding = [
     CqrsModule,
     BullModule.registerQueue({ name: 'org-events' }),
     UserModule,
-    CurriculumModule,
   ],
   controllers: [OrganizationController, MarketplaceController],
   providers: [

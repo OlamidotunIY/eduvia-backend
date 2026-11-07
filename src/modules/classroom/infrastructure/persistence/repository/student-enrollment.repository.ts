@@ -43,6 +43,13 @@ export class PrismaStudentEnrollmentRepository
     return records.map((record) => this.mapper.toDomain(record));
   }
 
+  public async findByOrganizationId(orgId: string): Promise<StudentEnrollment[]> {
+    const records = await this.delegate.findMany({
+      where: { orgId, status: EnrollmentStatus.ACTIVE },
+    });
+    return records.map((record) => this.mapper.toDomain(record));
+  }
+
   public async findByClassroomAndStudent(
     classroomId: string,
     studentId: string,
