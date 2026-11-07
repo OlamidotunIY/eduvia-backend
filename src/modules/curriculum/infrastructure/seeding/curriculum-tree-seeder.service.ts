@@ -48,6 +48,7 @@ export class CurriculumTreeSeederService implements OnApplicationBootstrap {
 
       for (const profile of officialMathematicsCatalog) {
         const curriculumId = uuidv7();
+        let platformSubjectMapped = false;
         await tx.curriculumProfile.create({
           data: {
             id: curriculumId,
@@ -86,7 +87,9 @@ export class CurriculumTreeSeederService implements OnApplicationBootstrap {
             },
           });
           nodesByCode.set(node.code, { id, path });
-          if (node.platformSubjectCode === 'MAT') {
+          // A platform subject maps once to a curriculum profile. A profile can
+          // contain several stages (for example England KS3 and KS4) of Mathematics.
+          if (node.platformSubjectCode === 'MAT' && !platformSubjectMapped) {
             await tx.subjectCurriculumMapping.create({
               data: {
                 id: uuidv7(),
@@ -95,6 +98,7 @@ export class CurriculumTreeSeederService implements OnApplicationBootstrap {
                 subjectNodeId: id,
               },
             });
+            platformSubjectMapped = true;
           }
         }
       }

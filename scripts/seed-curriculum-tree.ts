@@ -44,6 +44,7 @@ async function main(): Promise<void> {
 
     for (const profile of officialMathematicsCatalog) {
       const curriculumId = uuidv7();
+      let platformSubjectMapped = false;
       await connection.query(
         `INSERT INTO curriculum_profiles
          (id, name, shortCode, countryCode, jurisdictionCode, description, authority, isActive, version, sourceUrl, createdAt, updatedAt)
@@ -65,12 +66,15 @@ async function main(): Promise<void> {
           [id, curriculumId, parent?.id ?? null, node.nodeType, node.name, node.code, node.gradeLevel ?? null, depth, path],
         );
         nodesByCode.set(node.code, { id, path });
-        if (node.platformSubjectCode === 'MAT') {
+        // The schema allows one platform-subject mapping per curriculum profile,
+        // even when that profile contains several Mathematics stages.
+        if (node.platformSubjectCode === 'MAT' && !platformSubjectMapped) {
           await connection.query(
             `INSERT INTO subject_curriculum_mappings (id, platformSubjectId, curriculumId, subjectNodeId, createdAt)
              VALUES (?, ?, ?, ?, NOW())`,
             [uuidv7(), mathematics.id, curriculumId, id],
           );
+          platformSubjectMapped = true;
         }
       }
     }
