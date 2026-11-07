@@ -82,3 +82,13 @@ model SubjectCurriculumMapping {
   @@unique([platformSubjectId, curriculumId])
   @@map("subject_curriculum_mappings")
 }
+
+model PlatformSeedRun {
+  id        String   @id @default(uuid()) @map("_id")
+  key String @unique
+  completedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_seed_runs")
+}
