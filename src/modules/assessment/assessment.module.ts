@@ -35,6 +35,7 @@ import {
 import {
   AssessmentEventProcessor,
   AssessmentFinalizedProcessor,
+  AssessmentSubmissionProcessor,
 } from './infrastructure/messaging/listeners';
 import { AssessmentQueryAdapter } from './infrastructure/services/assessment-query.adapter';
 import {
@@ -104,6 +105,7 @@ const repositories = [
     ...repositories,
     AssessmentEventProcessor,
     AssessmentFinalizedProcessor,
+    AssessmentSubmissionProcessor,
     {
       provide: IAssessmentQueryPort,
       useClass: AssessmentQueryAdapter,

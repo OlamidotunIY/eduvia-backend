@@ -1,5 +1,6 @@
-import { PrismaService } from '@modules/shared';
+import { OutboxMessageId, PrismaService } from '@modules/shared';
 import { Injectable } from '@nestjs/common';
+import { OutboxStatus } from '@generated/prisma/enums';
 import {
   StudentResponse,
   StudentResponseId,
@@ -51,14 +52,33 @@ export class PrismaStudentResponseRepository implements IStudentResponseReposito
 
   public async save(entity: StudentResponse): Promise<void> {
     const data = this.mapper.toPersistence(entity);
-    await this.prisma.studentResponse.upsert({
-      where: { id: entity.id.unpack() },
-      create: {
-        id: entity.id.unpack(),
-        ...data,
-      },
-      update: data,
-    });
+    const events = entity.pullDomainEvents();
+
+    await this.prisma.$transaction([
+      this.prisma.studentResponse.upsert({
+        where: { id: entity.id.unpack() },
+        create: {
+          id: entity.id.unpack(),
+          ...data,
+        },
+        update: data,
+      }),
+      ...events.map((event) =>
+        this.prisma.outboxMessage.create({
+          data: {
+            id: OutboxMessageId.create().unpack(),
+            eventId: event.eventId,
+            type: event.eventName,
+            aggregateType: entity.constructor.name,
+            aggregateId: entity.id.unpack(),
+            payload: event.payload as object,
+            correlationId: event.correlationId,
+            occurredAt: event.occurredAt,
+            status: OutboxStatus.PENDING,
+          },
+        }),
+      ),
+    ]);
   }
 
   public async delete(id: StudentResponseId | string): Promise<void> {

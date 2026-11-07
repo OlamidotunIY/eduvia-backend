@@ -55,6 +55,10 @@ export class SubmitStudentResponseHandler
       selectedOption: payload.selectedOption,
       autoMarkResult,
     });
+    response.recordSubmission(
+      question.boardId,
+      payload.correlationId ?? crypto.randomUUID(),
+    );
 
     question.addResponse(response);
     await this.responseRepository.save(response);

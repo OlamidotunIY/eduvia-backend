@@ -4,6 +4,8 @@ import {
   AutoMarkResult,
   TeacherMark,
 } from '../value-objects';
+import { AggregateRoot } from '@modules/shared';
+import { StudentResponseSubmittedEvent } from '../events';
 
 export interface StudentResponseProps {
   id: StudentResponseId;
@@ -18,7 +20,7 @@ export interface StudentResponseProps {
   teacherMark?: TeacherMark | null;
 }
 
-export class StudentResponse {
+export class StudentResponse extends AggregateRoot<StudentResponseId> {
   public readonly id: StudentResponseId;
   private _boardQuestionId: string;
   private _studentId: string;
@@ -31,6 +33,7 @@ export class StudentResponse {
   private _teacherMark?: TeacherMark | null;
 
   private constructor(props: StudentResponseProps) {
+    super(props.id);
     this.id = props.id;
     this._boardQuestionId = props.boardQuestionId;
     this._studentId = props.studentId;
@@ -114,5 +117,21 @@ export class StudentResponse {
 
   public setTeacherMark(mark: TeacherMark): void {
     this._teacherMark = mark;
+  }
+
+  public recordSubmission(boardId: string, correlationId = 'system'): void {
+    this.addDomainEvent(
+      new StudentResponseSubmittedEvent(
+        this.id.unpack(),
+        new StudentResponseSubmittedEvent.Payload(
+          boardId,
+          this._boardQuestionId,
+          this.id.unpack(),
+          this._studentId,
+          this._responseType,
+        ),
+        correlationId,
+      ),
+    );
   }
 }
