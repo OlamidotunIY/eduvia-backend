@@ -24,7 +24,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed:platform-catalog": "tsx scripts/seed-platform-catalog.ts",
-    "seed:curriculum-tree": "tsx scripts/seed-curriculum-tree.ts"
+    "seed:curriculum-tree": "tsx scripts/seed-curriculum-tree.ts",
+    "seed:curriculum-catalog:reset": "tsx scripts/seed-curriculum-tree.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.5.1",

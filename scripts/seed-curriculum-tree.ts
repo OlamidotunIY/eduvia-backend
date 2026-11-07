@@ -1,162 +1,79 @@
 import 'dotenv/config';
 import mariadb from 'mariadb';
-import { v7 as uuidv7 } from 'uuid';
 import { inspect } from 'node:util';
-import { seedData } from '../src/modules/curriculum/infrastructure/seeding/curriculum-tree-seed.data';
+import { v7 as uuidv7 } from 'uuid';
+import { officialMathematicsCatalog } from '../src/modules/curriculum/infrastructure/seeding/official-mathematics-catalog.seed.data';
 
-const url = process.env.DATABASE_URL;
-
-if (!url) {
-  throw new Error('DATABASE_URL is missing');
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is missing');
+if (process.env.CURRICULUM_RESET_CONFIRM !== 'RESET_PLATFORM_CURRICULUM') {
+  throw new Error('Refusing destructive reset. Set CURRICULUM_RESET_CONFIRM=RESET_PLATFORM_CURRICULUM.');
 }
 
-const parsed = new URL(url);
-
-const connectionOptions = {
-  host: parsed.hostname,
-  port: Number(parsed.port || 3306),
-  user: decodeURIComponent(parsed.username),
-  password: decodeURIComponent(parsed.password),
-  database: decodeURIComponent(parsed.pathname.slice(1)),
-  connectionLimit: 5,
-  connectTimeout: 5000,
-  acquireTimeout: 15000,
-  allowPublicKeyRetrieval: true,
-};
+const parsed = new URL(databaseUrl);
+if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+  throw new Error('Refusing to reset a local database. Use the deployed-database tunnel DATABASE_URL.');
+}
 
 async function main(): Promise<void> {
-  const connection = await mariadb.createConnection(connectionOptions);
-
+  const connection = await mariadb.createConnection({
+    host: parsed.hostname,
+    port: Number(parsed.port || 3306),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: decodeURIComponent(parsed.pathname.slice(1)),
+    connectTimeout: 10_000,
+    allowPublicKeyRetrieval: true,
+  });
   try {
-    // 1. Fetch all platform subjects to index by shortCode
-    const rawPlatformSubjects: Array<{ id: string; shortCode: string }> =
-      await connection.query('SELECT id, shortCode FROM platform_subjects');
-    const platformSubjectMap = new Map<string, string>();
-    for (const ps of rawPlatformSubjects) {
-      platformSubjectMap.set(ps.shortCode, ps.id);
-    }
+    const [target] = await connection.query<{ database: string }[]>('SELECT DATABASE() AS database');
+    console.log(`Resetting platform curriculum in database: ${target?.database ?? '<unknown>'}`);
+    const [mathematics] = await connection.query<{ id: string }[]>(
+      'SELECT id FROM platform_subjects WHERE shortCode = ? LIMIT 1', ['MAT'],
+    );
+    if (!mathematics) throw new Error('Platform subject MAT is required. Run pnpm seed:platform-catalog first.');
 
-    let totalNodesInserted = 0;
-    let totalNodesUpdated = 0;
-    let totalMappingsInserted = 0;
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM subject_curriculum_mappings');
+    await connection.query('DELETE FROM curriculum_profiles');
 
-    for (const curriculum of seedData) {
-      // Find curriculum profile
-      const [profile]: Array<{ id: string }> = await connection.query(
-        'SELECT id FROM curriculum_profiles WHERE shortCode = ?',
-        [curriculum.curriculumCode],
+    for (const profile of officialMathematicsCatalog) {
+      const curriculumId = uuidv7();
+      await connection.query(
+        `INSERT INTO curriculum_profiles
+         (id, name, shortCode, countryCode, jurisdictionCode, description, authority, isActive, version, sourceUrl, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, true, ?, ?, NOW(), NOW())`,
+        [curriculumId, profile.name, profile.shortCode, profile.countryCode, profile.jurisdictionCode, `Platform-owned ${profile.name} catalogue. Source-backed headings only.`, profile.authority, profile.version, profile.sourceUrl],
       );
 
-      if (!profile) {
-        console.warn(`Curriculum profile ${curriculum.curriculumCode} not found in DB. Skipping.`);
-        continue;
-      }
-
-      const curriculumId = profile.id;
-      const codeToNodeMap = new Map<string, { id: string; path: string }>();
-
-      // Fetch existing nodes for this curriculum to preserve IDs
-      const existingNodes: Array<{ id: string; code: string; path: string }> =
+      const nodesByCode = new Map<string, { id: string; path: string }>();
+      for (const node of profile.nodes) {
+        const id = uuidv7();
+        const parent = node.parentCode ? nodesByCode.get(node.parentCode) : undefined;
+        if (node.parentCode && !parent) throw new Error(`Missing parent ${node.parentCode} for ${node.code}`);
+        const path = parent ? `${parent.path}${id}/` : `/${id}/`;
+        const depth = parent ? parent.path.split('/').filter(Boolean).length : 0;
         await connection.query(
-          'SELECT id, code, path FROM curriculum_nodes WHERE curriculumId = ?',
-          [curriculumId],
+          `INSERT INTO curriculum_nodes
+           (id, curriculumId, parentNodeId, nodeType, name, code, gradeLevel, depth, path, isLeaf, isActive, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, false, true, NOW(), NOW())`,
+          [id, curriculumId, parent?.id ?? null, node.nodeType, node.name, node.code, node.gradeLevel ?? null, depth, path],
         );
-      for (const en of existingNodes) {
-        if (en.code) {
-          codeToNodeMap.set(en.code, { id: en.id, path: en.path });
+        nodesByCode.set(node.code, { id, path });
+        if (node.platformSubjectCode === 'MAT') {
+          await connection.query(
+            `INSERT INTO subject_curriculum_mappings (id, platformSubjectId, curriculumId, subjectNodeId, createdAt)
+             VALUES (?, ?, ?, ?, NOW())`,
+            [uuidv7(), mathematics.id, curriculumId, id],
+          );
         }
       }
-
-      // Sort nodes by depth (0, 1, 2, 3, 4) to ensure parents are inserted first
-      const sortedNodes = [...curriculum.nodes].sort((a, b) => a.depth - b.depth);
-
-      for (const node of sortedNodes) {
-        let nodeId: string;
-        let parentNodeId: string | null = null;
-        let materializedPath: string;
-
-        if (node.parentCode) {
-          const parent = codeToNodeMap.get(node.parentCode);
-          if (!parent) {
-            throw new Error(
-              `Parent node with code "${node.parentCode}" not found for "${node.code}"`,
-            );
-          }
-          parentNodeId = parent.id;
-        }
-
-        const existing = codeToNodeMap.get(node.code);
-        if (existing) {
-          nodeId = existing.id;
-          materializedPath = parentNodeId
-            ? `${codeToNodeMap.get(node.parentCode!)!.path}${nodeId}/`
-            : `/${nodeId}/`;
-
-          await connection.query(
-            `UPDATE curriculum_nodes
-             SET parentNodeId = ?, name = ?, description = ?, gradeLevel = ?, depth = ?, path = ?, isLeaf = ?, isActive = true, updatedAt = NOW()
-             WHERE id = ?`,
-            [
-              parentNodeId,
-              node.name,
-              node.description ?? null,
-              node.gradeLevel ?? null,
-              node.depth,
-              materializedPath,
-              node.isLeaf ? 1 : 0,
-              nodeId,
-            ],
-          );
-          totalNodesUpdated++;
-        } else {
-          nodeId = uuidv7();
-          materializedPath = parentNodeId
-            ? `${codeToNodeMap.get(node.parentCode!)!.path}${nodeId}/`
-            : `/${nodeId}/`;
-
-          await connection.query(
-            `INSERT INTO curriculum_nodes (id, curriculumId, parentNodeId, nodeType, name, code, description, gradeLevel, depth, path, isLeaf, isActive, createdAt, updatedAt)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, NOW(), NOW())`,
-            [
-              nodeId,
-              curriculumId,
-              parentNodeId,
-              node.nodeType,
-              node.name,
-              node.code,
-              node.description ?? null,
-              node.gradeLevel ?? null,
-              node.depth,
-              materializedPath,
-              node.isLeaf ? 1 : 0,
-            ],
-          );
-          totalNodesInserted++;
-        }
-
-        codeToNodeMap.set(node.code, { id: nodeId, path: materializedPath });
-
-        // If this node represents a platform subject mapping
-        if (node.platformSubjectCode && node.nodeType === 'subject') {
-          const platformSubjectId = platformSubjectMap.get(node.platformSubjectCode);
-          if (platformSubjectId) {
-            await connection.query(
-              `INSERT INTO subject_curriculum_mappings (id, platformSubjectId, curriculumId, subjectNodeId, createdAt)
-               VALUES (?, ?, ?, ?, NOW())
-               ON DUPLICATE KEY UPDATE subjectNodeId = VALUES(subjectNodeId)`,
-              [uuidv7(), platformSubjectId, curriculumId, nodeId],
-            );
-            totalMappingsInserted++;
-          }
-        }
-      }
-
-      console.log(`✓ Seeded curriculum ${curriculum.curriculumCode}: ${curriculum.nodes.length} nodes processed.`);
     }
-
-    console.log(
-      `Done! Total new nodes inserted: ${totalNodesInserted}, updated: ${totalNodesUpdated}, mappings updated: ${totalMappingsInserted}.`,
-    );
+    await connection.commit();
+    console.log(`Seeded ${officialMathematicsCatalog.length} verified mathematics curricula.`);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
   } finally {
     await connection.end();
   }
