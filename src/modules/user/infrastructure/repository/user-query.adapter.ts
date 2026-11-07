@@ -24,6 +24,29 @@ export class UserQueryAdapter implements IUserQueryPort {
     return user ? this.toDTO(user) : null;
   }
 
+  async getUsersByIds(ids: string[]): Promise<UserDTO[]> {
+    if (!ids.length) return [];
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    return users.map((u) => ({
+      id: u.id,
+      userType: u.userType,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      status: u.status,
+      emailVerified: u.emailVerified,
+      twoFactorEnabled: Boolean(u.twoFactorEnabled),
+      onboardingStatus: u.onboardingStatus,
+      timezone: u.timezone,
+      image: u.image,
+      activeOrganizationId: u.activeOrganizationId,
+    }));
+  }
+
   async getStudentCountryCodes(studentIds: string[]): Promise<string[]> {
     if (!studentIds.length) return [];
     const profiles = await this.prisma.studentProfile.findMany({

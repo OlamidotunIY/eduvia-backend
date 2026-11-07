@@ -28,6 +28,7 @@ export interface StudentCurriculumContextDto {
 export abstract class IUserQueryPort {
   abstract getUserByEmail(email: string): Promise<UserDTO | null>;
   abstract getUserById(id: string): Promise<UserDTO | null>;
+  abstract getUsersByIds(ids: string[]): Promise<UserDTO[]>;
   abstract getStudentCountryCodes(studentIds: string[]): Promise<string[]>;
   abstract getStudentCurriculumContexts(
     studentIds: string[],

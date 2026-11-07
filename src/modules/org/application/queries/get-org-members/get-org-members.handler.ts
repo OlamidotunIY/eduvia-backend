@@ -35,16 +35,18 @@ export class GetOrganizationMembersHandler
     );
 
     const userIds = Array.from(new Set(members.map((m) => m.userId)));
-    const users = await Promise.all(
-      userIds.map((id) => this.userQuery.getUserById(id).catch(() => null)),
-    );
-    const userMap = new Map<string, NonNullable<(typeof users)[number]>>();
+    const users = await this.userQuery.getUsersByIds(userIds);
+    const userMap = new Map<string, (typeof users)[number]>();
     for (const u of users) {
       if (u) userMap.set(u.id, u);
     }
 
     return members.map((m) => {
       const u = userMap.get(m.userId);
+      const fullName = u
+        ? [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email
+        : null;
+
       return {
         id: m.id.value,
         orgId: m.orgId.value,
@@ -55,13 +57,21 @@ export class GetOrganizationMembersHandler
         status: m.status,
         joinedAt: m.joinedAt,
         updatedAt: m.updatedAt,
+        fullName: fullName ?? null,
+        firstName: u?.firstName ?? null,
+        lastName: u?.lastName ?? null,
+        email: u?.email ?? null,
+        image: u?.image ?? null,
+        avatarUrl: u?.image ?? null,
         user: u
           ? {
               id: u.id,
               firstName: u.firstName,
               lastName: u.lastName,
+              fullName: fullName || `${u.firstName} ${u.lastName}`.trim(),
               email: u.email,
               image: u.image,
+              avatarUrl: u.image ?? null,
               status: u.status,
             }
           : null,
