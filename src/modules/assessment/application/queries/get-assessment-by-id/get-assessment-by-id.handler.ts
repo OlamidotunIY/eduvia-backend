@@ -3,6 +3,7 @@ import { GetAssessmentByIdQuery } from './get-assessment-by-id.query';
 import { AssessmentDetailDto } from './get-assessment-by-id.dto';
 import {
   IAssessmentRepository,
+  IQuestionRepository,
   AssessmentNotFoundError,
 } from '../../../domain';
 import {
