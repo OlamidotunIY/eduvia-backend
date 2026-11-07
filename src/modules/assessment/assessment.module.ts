@@ -9,6 +9,7 @@ import {
 import { OrgModule } from '../org/org.module';
 import { BoardModule } from '../board/board.module';
 import { ClassroomModule } from '../classroom/classroom.module';
+import { UserModule } from '../user/user.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -81,6 +82,7 @@ const repositories = [
     OrgModule,
     BoardModule,
     ClassroomModule,
+    UserModule,
     BullModule.registerQueue(
       { name: 'assessment-events' },
       { name: 'classroom-events' },
