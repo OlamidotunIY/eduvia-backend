@@ -105,6 +105,7 @@ export class AssessmentController {
   @Post(':id/items/:itemId/mark')
   @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_MARK)
   async applyTeacherMark(
+    @Param('orgId') orgId: string,
     @Param('id') id: string,
     @Param('itemId') itemId: string,
     @Body() dto: ApplyTeacherMarkDto,
@@ -112,6 +113,7 @@ export class AssessmentController {
     @CorrelationId() correlationId: string,
   ) {
     return this.assessmentService.applyTeacherMark(
+      orgId,
       id,
       itemId,
       dto,
@@ -123,11 +125,13 @@ export class AssessmentController {
   @Post(':id/finalize')
   @RequireOrganizationPermissions(OrganizationPermission.ASSESSMENTS_FINALIZE)
   async finalizeAssessment(
+    @Param('orgId') orgId: string,
     @Param('id') id: string,
     @Body('curriculumNodeId') curriculumNodeId: string | null,
     @CorrelationId() correlationId: string,
   ) {
     return this.assessmentService.finalizeAssessment(
+      orgId,
       id,
       curriculumNodeId,
       correlationId,

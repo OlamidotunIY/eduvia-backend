@@ -147,6 +147,7 @@ export class AssessmentService {
   }
 
   async applyTeacherMark(
+    orgId: string,
     assessmentId: string,
     markingItemId: string,
     dto: ApplyTeacherMarkDto,
@@ -155,6 +156,7 @@ export class AssessmentService {
   ) {
     return this.commandBus.execute(
       new ApplyTeacherMarkCommand({
+        orgId,
         assessmentId,
         markingItemId,
         marksAwarded: dto.marksAwarded,
@@ -166,12 +168,14 @@ export class AssessmentService {
   }
 
   async finalizeAssessment(
+    orgId: string,
     assessmentId: string,
     curriculumNodeId?: string | null,
     correlationId?: string,
   ) {
     return this.commandBus.execute(
       new FinalizeAssessmentCommand({
+        orgId,
         assessmentId,
         curriculumNodeId,
         correlationId,
