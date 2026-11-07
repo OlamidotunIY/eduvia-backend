@@ -1,5 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IOrganizationQueryPort } from '@modules/shared';
+import {
+  IClassroomQueryPort,
+  IOrganizationQueryPort,
+  IUserQueryPort,
+} from '@modules/shared';
 import { GetOrganizationCurriculumTreeQuery } from './get-org-curriculum-tree.query';
 import { OrganizationCurriculumTreeNodeDto } from './get-org-curriculum-tree.dto';
 import {
@@ -16,6 +20,8 @@ export class GetOrganizationCurriculumTreeHandler
 {
   constructor(
     private readonly orgQuery: IOrganizationQueryPort,
+    private readonly classroomQuery: IClassroomQueryPort,
+    private readonly userQuery: IUserQueryPort,
     private readonly profileRepository: ICurriculumProfileRepository,
     private readonly nodeRepository: ICurriculumNodeRepository,
     private readonly mappingRepository: ISubjectCurriculumMappingRepository,
@@ -74,17 +80,49 @@ export class GetOrganizationCurriculumTreeHandler
       rawMap.set(node.id.unpack(), node);
     }
 
+    const enrolledStudentIds = await this.classroomQuery.getEnrolledStudentIds(
+      query.organizationId,
+    );
+    const learnerContexts = await this.userQuery.getStudentCurriculumContexts(
+      enrolledStudentIds,
+    );
+    const learnerGrades = new Set(
+      learnerContexts
+        .map((learner) => learner.gradeLevel?.trim().toLowerCase())
+        .filter((grade): grade is string => Boolean(grade)),
+    );
+
+    const allowedCourseNodeIds = new Set(
+      nodes
+        .filter(
+          (node) =>
+            node.nodeType === 'course' &&
+            Boolean(node.gradeLevel) &&
+            learnerGrades.has(node.gradeLevel!.trim().toLowerCase()),
+        )
+        .map((node) => node.id.unpack()),
+    );
+    const profileHasCourses = nodes.some((node) => node.nodeType === 'course');
+
+    const isDescendantOf = (nodeId: string, ancestorId: string): boolean =>
+      nodeId === ancestorId ||
+      rawMap.get(nodeId)?.path.value.includes(`/${ancestorId}/`) === true;
+
     // A mapped discipline and all descendants are visible. Its ancestors remain
     // visible as breadcrumbs, so the organization tree never becomes hollow.
     const isNodeAllowed = (nodeId: string): boolean => {
       const node = rawMap.get(nodeId);
       if (!node) return false;
       const id = node.id.unpack();
-      return Array.from(allowedDisciplineNodeIds).some(
-        (rootId) =>
-          id === rootId ||
-          node.path.value.includes(`/${rootId}/`) ||
-          rawMap.get(rootId)?.path.value.includes(`/${id}/`),
+      const belongsToMappedDiscipline = Array.from(allowedDisciplineNodeIds).some(
+        (rootId) => isDescendantOf(id, rootId) || isDescendantOf(rootId, id),
+      );
+      if (!belongsToMappedDiscipline) return false;
+
+      // Courses are the grade-specific unit of delivery. Nodes above a course
+      // remain only as a breadcrumb; courses for other learner grades vanish.
+      return !profileHasCourses || Array.from(allowedCourseNodeIds).some(
+        (courseId) => isDescendantOf(id, courseId) || isDescendantOf(courseId, id),
       );
     };
 
