@@ -5,6 +5,8 @@ import {
   Question,
   QuestionProvenance,
   IQuestionRepository,
+  InsufficientQuestionPermissionError,
+  QuestionOwnerType,
 } from '../../../domain';
 
 @CommandHandler(CreateQuestionCommand)
@@ -16,6 +18,17 @@ export class CreateQuestionHandler
   async execute(command: CreateQuestionCommand): Promise<CreateQuestionResult> {
     const { payload } = command;
     const correlationId = payload.correlationId ?? crypto.randomUUID();
+
+    if (payload.ownerType === QuestionOwnerType.platform && payload.orgId) {
+      throw new InsufficientQuestionPermissionError(
+        'Platform questions cannot be associated with an organization ID.',
+      );
+    }
+    if (payload.ownerType === QuestionOwnerType.org && !payload.orgId) {
+      throw new InsufficientQuestionPermissionError(
+        'Organization questions must have an organization ID.',
+      );
+    }
 
     const provenance = QuestionProvenance.create({
       source: payload.provenance.source,
