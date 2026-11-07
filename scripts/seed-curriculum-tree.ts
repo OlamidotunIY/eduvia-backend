@@ -11,8 +11,13 @@ if (process.env.CURRICULUM_RESET_CONFIRM !== 'RESET_PLATFORM_CURRICULUM') {
 }
 
 const parsed = new URL(databaseUrl);
-if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
-  throw new Error('Refusing to reset a local database. Use the deployed-database tunnel DATABASE_URL.');
+if (
+  ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname) &&
+  process.env.DEPLOYED_DATABASE_TUNNEL !== 'true'
+) {
+  throw new Error(
+    'Refusing localhost. When DATABASE_URL is an intentional deployed-database tunnel, set DEPLOYED_DATABASE_TUNNEL=true.',
+  );
 }
 
 async function main(): Promise<void> {
