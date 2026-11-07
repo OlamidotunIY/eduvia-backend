@@ -1,3 +1,12 @@
+export interface OrganizationMemberUserDTO {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
+  status: string;
+}
+
 export interface OrganizationMemberDTO {
   id: string;
   orgId: string;
@@ -8,4 +17,6 @@ export interface OrganizationMemberDTO {
   status: string;
   joinedAt: Date;
   updatedAt: Date;
+  user?: OrganizationMemberUserDTO | null;
 }
+
