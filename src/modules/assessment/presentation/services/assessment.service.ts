@@ -5,6 +5,7 @@ import {
   PublishQuestionCommand,
   UnpublishQuestionCommand,
   UpdateQuestionContentCommand,
+  DeleteQuestionCommand,
   CreateAssessmentCommand,
   ApplyTeacherMarkCommand,
   FinalizeAssessmentCommand,
@@ -13,6 +14,7 @@ import {
 import {
   GetQuestionByIdQuery,
   SearchQuestionsQuery,
+  GetQuestionSummaryQuery,
   GetAssessmentByIdQuery,
   ListAssessmentsQuery,
   GetStudentMasteryQuery,
@@ -35,7 +37,11 @@ export class AssessmentService {
     private readonly queryBus: QueryBus,
   ) {}
 
-  async createQuestion(dto: CreateQuestionDto, correlationId?: string) {
+  async createQuestion(
+    dto: CreateQuestionDto,
+    actor?: { orgId?: string; userId?: string; role?: string },
+    correlationId?: string,
+  ) {
     return this.commandBus.execute(
       new CreateQuestionCommand({
         ownerType: dto.ownerType,
@@ -59,11 +65,16 @@ export class AssessmentService {
     );
   }
 
-  async getQuestion(id: string) {
-    return this.queryBus.execute(new GetQuestionByIdQuery(id));
+  async getQuestion(id: string, context?: { orgId?: string; role?: string }) {
+    return this.queryBus.execute(
+      new GetQuestionByIdQuery(id, context?.orgId, context?.role),
+    );
   }
 
-  async searchQuestions(dto: SearchQuestionsDto, user?: { orgId?: string; userId?: string }) {
+  async searchQuestions(
+    dto: SearchQuestionsDto,
+    user?: { orgId?: string; userId?: string; role?: string },
+  ) {
     const { skip, take, ...filter } = dto;
     return this.queryBus.execute(
       new SearchQuestionsQuery(
@@ -71,7 +82,14 @@ export class AssessmentService {
         user?.orgId,
         user?.userId,
         skip !== undefined || take !== undefined ? { skip, take } : undefined,
+        user?.role,
       ),
+    );
+  }
+
+  async getQuestionSummary(orgId: string, teacherId?: string) {
+    return this.queryBus.execute(
+      new GetQuestionSummaryQuery(orgId, teacherId),
     );
   }
 
@@ -93,19 +111,40 @@ export class AssessmentService {
     );
   }
 
-  async publishQuestion(id: string, correlationId?: string) {
+  async publishQuestion(
+    id: string,
+    actor?: { role: string; userId?: string; orgId?: string },
+    correlationId?: string,
+  ) {
     return this.commandBus.execute(
       new PublishQuestionCommand({
         questionId: id,
+        actor,
         correlationId,
       }),
     );
   }
 
-  async unpublishQuestion(id: string) {
+  async unpublishQuestion(
+    id: string,
+    actor?: { role: string; userId?: string; orgId?: string },
+  ) {
     return this.commandBus.execute(
       new UnpublishQuestionCommand({
         questionId: id,
+        actor,
+      }),
+    );
+  }
+
+  async deleteQuestion(
+    id: string,
+    actor?: { role: string; userId?: string; orgId?: string },
+  ) {
+    return this.commandBus.execute(
+      new DeleteQuestionCommand({
+        questionId: id,
+        actor,
       }),
     );
   }
