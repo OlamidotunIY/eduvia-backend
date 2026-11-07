@@ -10,14 +10,29 @@ export class SearchQuestionsHandler
   constructor(private readonly questionRepository: IQuestionRepository) {}
 
   async execute(query: SearchQuestionsQuery): Promise<SearchQuestionsResultDto> {
-    const questions = query.orgId
-      ? await this.questionRepository.findForOrg(
-          query.orgId,
-          query.teacherId,
-          query.filter,
-          query.pagination,
-        )
-      : await this.questionRepository.search(query.filter, query.pagination);
+    const isLearner = query.userRole === 'STUDENT' || query.userRole === 'LEARNER';
+    const effectiveFilter = isLearner
+      ? { ...query.filter, isPublished: true }
+      : query.filter;
+
+    const [questions, total] = query.orgId
+      ? await Promise.all([
+          this.questionRepository.findForOrg(
+            query.orgId,
+            query.teacherId,
+            effectiveFilter,
+            query.pagination,
+          ),
+          this.questionRepository.countForOrg(
+            query.orgId,
+            query.teacherId,
+            effectiveFilter,
+          ),
+        ])
+      : [
+          await this.questionRepository.search(effectiveFilter, query.pagination),
+          questionsCount(await this.questionRepository.search(effectiveFilter)),
+        ];
 
     return {
       items: questions.map((question) => ({
@@ -32,8 +47,8 @@ export class SearchQuestionsHandler
           text: opt.text,
           imageUrl: opt.imageUrl,
         })),
-        correctOptionKey: question.correctOptionKey,
-        markScheme: question.markScheme,
+        correctOptionKey: isLearner ? null : question.correctOptionKey,
+        markScheme: isLearner ? null : question.markScheme,
         maxMarks: question.maxMarks,
         difficultyLevel: question.difficultyLevel,
         subject: question.subject,
@@ -49,7 +64,11 @@ export class SearchQuestionsHandler
         createdAt: question.createdAt,
         updatedAt: question.updatedAt,
       })),
-      total: questions.length,
+      total,
     };
   }
+}
+
+function questionsCount(items: unknown[]): number {
+  return items.length;
 }
