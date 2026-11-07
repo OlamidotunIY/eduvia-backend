@@ -3,4 +3,6 @@ import { AssessmentDetailDto } from '../get-assessment-by-id/get-assessment-by-i
 export interface ListAssessmentsDto {
   items: AssessmentDetailDto[];
   total: number;
+  skip: number;
+  take: number | null;
 }

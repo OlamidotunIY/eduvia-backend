@@ -45,7 +45,12 @@ export class ListAssessmentsHandler
           ).present(assessment),
         ),
       ),
-      total: assessments.length,
+      total: await this.assessmentRepository.countByOrgId(
+        query.orgId,
+        query.filter,
+      ),
+      skip: query.pagination?.skip ?? 0,
+      take: query.pagination?.take ?? null,
     };
   }
 }

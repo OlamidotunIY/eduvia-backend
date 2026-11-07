@@ -16,7 +16,9 @@ import {
   GetAssessmentByIdQuery,
   ListAssessmentsQuery,
   GetStudentMasteryQuery,
+  GetAssessmentSummaryQuery,
 } from '../../application/queries';
+import { AssessmentFilter } from '../../domain';
 import {
   CreateQuestionDto,
   UpdateQuestionDto,
@@ -126,9 +128,18 @@ export class AssessmentService {
 
   async listAssessments(
     orgId: string,
+    filter?: AssessmentFilter,
     pagination?: { skip?: number; take?: number },
   ) {
-    return this.queryBus.execute(new ListAssessmentsQuery(orgId, undefined, pagination));
+    return this.queryBus.execute(
+      new ListAssessmentsQuery(orgId, filter, pagination),
+    );
+  }
+
+  async getAssessmentSummary(orgId: string, filter?: AssessmentFilter) {
+    return this.queryBus.execute(
+      new GetAssessmentSummaryQuery({ orgId, filter }),
+    );
   }
 
   async getAssessment(id: string, orgId?: string) {

@@ -5,6 +5,8 @@ import {
   AssessmentId,
   IAssessmentRepository,
   AssessmentFilter,
+  AssessmentStatus,
+  AssessmentSummary,
 } from '../../../domain';
 import { AssessmentMapper } from '../mappers/assessment.mapper';
 import { MarkingItemMapper } from '../mappers/marking-item.mapper';
@@ -75,20 +77,7 @@ export class PrismaAssessmentRepository implements IAssessmentRepository {
     filter?: AssessmentFilter,
     pagination?: { skip?: number; take?: number },
   ): Promise<Assessment[]> {
-    const where: any = { orgId };
-
-    if (filter?.lessonId) {
-      where.lessonId = filter.lessonId;
-    }
-    if (filter?.boardId) {
-      where.boardId = filter.boardId;
-    }
-    if (filter?.studentId) {
-      where.studentId = filter.studentId;
-    }
-    if (filter?.status) {
-      where.status = filter.status;
-    }
+    const where = this.toWhere(orgId, filter);
 
     const records = await this.prisma.assessment.findMany({
       where,
@@ -125,5 +114,61 @@ export class PrismaAssessmentRepository implements IAssessmentRepository {
     });
 
     return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  public async countByOrgId(
+    orgId: string,
+    filter?: AssessmentFilter,
+  ): Promise<number> {
+    return this.prisma.assessment.count({
+      where: this.toWhere(orgId, filter),
+    });
+  }
+
+  public async getSummaryByOrgId(
+    orgId: string,
+    filter?: AssessmentFilter,
+  ): Promise<AssessmentSummary> {
+    const where = this.toWhere(orgId, filter);
+    const [total, pendingMarking, partiallyMarked, fullyMarked, scores] =
+      await Promise.all([
+        this.prisma.assessment.count({ where }),
+        this.prisma.assessment.count({
+          where: { ...where, status: AssessmentStatus.pending_marking },
+        }),
+        this.prisma.assessment.count({
+          where: { ...where, status: AssessmentStatus.partially_marked },
+        }),
+        this.prisma.assessment.count({
+          where: { ...where, status: AssessmentStatus.fully_marked },
+        }),
+        this.prisma.assessment.aggregate({
+          where: { ...where, status: AssessmentStatus.fully_marked },
+          _avg: { scorePercent: true },
+        }),
+      ]);
+
+    return {
+      total,
+      pendingMarking,
+      partiallyMarked,
+      fullyMarked,
+      averageScorePercent: scores._avg.scorePercent,
+    };
+  }
+
+  private toWhere(orgId: string, filter?: AssessmentFilter): any {
+    const where: any = { orgId };
+    if (filter?.lessonId) where.lessonId = filter.lessonId;
+    if (filter?.boardId) where.boardId = filter.boardId;
+    if (filter?.studentId) where.studentId = filter.studentId;
+    if (filter?.status) where.status = filter.status;
+    if (filter?.createdFrom || filter?.createdTo) {
+      where.createdAt = {
+        ...(filter.createdFrom ? { gte: filter.createdFrom } : {}),
+        ...(filter.createdTo ? { lte: filter.createdTo } : {}),
+      };
+    }
+    return where;
   }
 }
