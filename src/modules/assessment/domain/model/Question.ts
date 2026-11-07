@@ -324,7 +324,13 @@ export class Question extends AggregateRoot<QuestionId> {
     return new Date(this._updatedAt);
   }
 
-  public publish(correlationId = 'system'): void {
+  public publish(
+    correlationId = 'system',
+    actor?: { role: string; userId?: string; orgId?: string },
+  ): void {
+    if (actor) {
+      this.assertCanModify(actor);
+    }
     if (this._isPublished) {
       throw new QuestionAlreadyPublishedError(this.id.value);
     }
@@ -339,7 +345,10 @@ export class Question extends AggregateRoot<QuestionId> {
     );
   }
 
-  public unpublish(): void {
+  public unpublish(actor?: { role: string; userId?: string; orgId?: string }): void {
+    if (actor) {
+      this.assertCanModify(actor);
+    }
     this._isPublished = false;
     this.touch();
   }
@@ -442,14 +451,21 @@ export class Question extends AggregateRoot<QuestionId> {
     this.touch();
   }
 
-  public delete(): void {
+  public delete(actor?: { role: string; userId?: string; orgId?: string }): void {
+    if (actor) {
+      this.assertCanModify(actor);
+    }
     if (this._usageCount > 0) {
       throw new QuestionCannotBeDeletedError(this.id.value, this._usageCount);
     }
   }
 
-  private assertCanModify(actor?: { role: string; userId?: string; orgId?: string }): void {
-    if (!actor) return;
+  public assertCanModify(actor?: { role: string; userId?: string; orgId?: string }): void {
+    if (!actor) {
+      throw new InsufficientQuestionPermissionError(
+        'Authentication and actor context required to modify question.',
+      );
+    }
     if (this._ownerType === QuestionOwnerType.platform && actor.role !== 'SUPER_ADMIN') {
       throw new InsufficientQuestionPermissionError(
         'Platform questions can only be modified by Super Admins.',
@@ -457,11 +473,18 @@ export class Question extends AggregateRoot<QuestionId> {
     }
     if (
       this._ownerType === QuestionOwnerType.org &&
-      actor.orgId &&
-      this._orgId !== actor.orgId
+      (!actor.orgId || this._orgId !== actor.orgId)
     ) {
       throw new InsufficientQuestionPermissionError(
         'Cannot modify questions belonging to another organization.',
+      );
+    }
+    if (
+      this._ownerType === QuestionOwnerType.teacher &&
+      (!actor.orgId || this._orgId !== actor.orgId)
+    ) {
+      throw new InsufficientQuestionPermissionError(
+        'Cannot modify teacher questions belonging to another organization.',
       );
     }
   }
