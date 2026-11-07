@@ -10,6 +10,8 @@ import {
 describe('GetOrganizationCurriculumTreeHandler', () => {
   let handler: GetOrganizationCurriculumTreeHandler;
   let mockOrgQuery: any;
+  let mockClassroomQuery: any;
+  let mockUserQuery: any;
   let mockProfileRepo: any;
   let mockNodeRepo: any;
   let mockMappingRepo: any;
@@ -24,6 +26,8 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
     mockOrgQuery = {
       getOrganizationSubjects: jest.fn(),
     };
+    mockClassroomQuery = { getEnrolledStudentIds: jest.fn() };
+    mockUserQuery = { getStudentCurriculumContexts: jest.fn() };
     mockProfileRepo = {
       findById: jest.fn(),
     };
@@ -36,6 +40,8 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
 
     handler = new GetOrganizationCurriculumTreeHandler(
       mockOrgQuery,
+      mockClassroomQuery,
+      mockUserQuery,
       mockProfileRepo,
       mockNodeRepo,
       mockMappingRepo,
@@ -51,6 +57,10 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
     // Org only offers Mathematics ('plat-mat'), NOT French
     mockOrgQuery.getOrganizationSubjects.mockResolvedValue([
       { id: 'subj-1', name: 'Mathematics', platformSubjectId: '018e0000-0000-7000-8000-000000000100', isActive: true },
+    ]);
+    mockClassroomQuery.getEnrolledStudentIds.mockResolvedValue(['student-1']);
+    mockUserQuery.getStudentCurriculumContexts.mockResolvedValue([
+      { studentId: 'student-1', countryCode: 'GB', gradeLevel: 'Year 7-9' },
     ]);
 
     mockMappingRepo.findByCurriculumId.mockResolvedValue([
@@ -139,12 +149,14 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
     expect(subjectNames).not.toContain('French');
   });
 
-  it('returns entire tree when preview is true regardless of offered subjects', async () => {
+  it('does not allow an organization to bypass its subject scope with preview', async () => {
     mockProfileRepo.findById.mockResolvedValue({
       id: CurriculumProfileId.from(curriculumId),
       name: 'England National Curriculum',
     });
     mockOrgQuery.getOrganizationSubjects.mockResolvedValue([]);
+    mockClassroomQuery.getEnrolledStudentIds.mockResolvedValue([]);
+    mockUserQuery.getStudentCurriculumContexts.mockResolvedValue([]);
 
     mockNodeRepo.findByCurriculumId.mockResolvedValue([
       {
@@ -181,13 +193,7 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
       new GetOrganizationCurriculumTreeQuery('org-1', curriculumId, true),
     );
 
-    expect(tree).toHaveLength(1);
-    expect(tree[0].name).toBe('Key Stage 3');
-    expect(tree[0].code).toBe('KS3');
-    expect(tree[0].path).toBe('/' + ks3Id + '/');
-    expect(tree[0].children).toHaveLength(1);
-    expect(tree[0].children[0].name).toBe('Mathematics');
-    expect(tree[0].children[0].code).toBe('MAT-KS3');
+    expect(tree).toEqual([]);
   });
 
   it('returns empty tree if organization offers no mapped subjects', async () => {
@@ -195,6 +201,8 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
       id: CurriculumProfileId.from(curriculumId),
     });
     mockOrgQuery.getOrganizationSubjects.mockResolvedValue([]);
+    mockClassroomQuery.getEnrolledStudentIds.mockResolvedValue([]);
+    mockUserQuery.getStudentCurriculumContexts.mockResolvedValue([]);
 
     const tree = await handler.execute(
       new GetOrganizationCurriculumTreeQuery('org-1', curriculumId),

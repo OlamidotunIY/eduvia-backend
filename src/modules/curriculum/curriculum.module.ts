@@ -40,6 +40,8 @@ import { CurriculumService } from './presentation/services';
 import { OrgModule } from '../org/org.module';
 import { ClassroomModule } from '../classroom/classroom.module';
 import { UserModule } from '../user/user.module';
+import { PlatformAdminModule } from '../platform-admin/platform-admin.module';
+import { CurriculumEditorGuard } from './presentation/guards';
 
 const mappers = [
   CurriculumProfileMapper,
@@ -79,6 +81,7 @@ const repositories = [
     OrgModule,
     ClassroomModule,
     UserModule,
+    PlatformAdminModule,
   ],
   controllers: [
     CurriculumController,
@@ -90,6 +93,7 @@ const repositories = [
   providers: [
     AuthGuard,
     OrganizationPermissionGuard,
+    CurriculumEditorGuard,
     CurriculumService,
     ...CURRICULUM_COMMAND_HANDLERS,
     ...CURRICULUM_QUERY_HANDLERS,

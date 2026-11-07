@@ -37,11 +37,12 @@ export class GetOrganizationCurriculumOverviewHandler
       throw new CurriculumProfileNotFoundError(`organization:${query.organizationId}`);
     }
 
-    // 1. Resolve student countries from active classroom enrollments
+    // 1. Resolve learner contexts from active classroom enrollments. Country is
+    // not granular enough for curricula: Ontario and England are jurisdictions.
     const enrolledStudentIds = await this.classroomQuery.getEnrolledStudentIds(
       query.organizationId,
     );
-    const studentCountryCodes = await this.userQuery.getStudentCountryCodes(
+    const learnerContexts = await this.userQuery.getStudentCurriculumContexts(
       enrolledStudentIds,
     );
 
@@ -64,20 +65,34 @@ export class GetOrganizationCurriculumOverviewHandler
       return countryToIso2[lower] ?? val.trim().toUpperCase();
     };
 
-    // 2. Build covered country set: org country + enrolled student countries + international
+    const jurisdictionByCountry: Record<string, string> = {
+      CA: 'CA-ON',
+      NG: 'NG',
+      GB: 'GB-ENG',
+    };
+
+    // 2. Build explicit learning contexts. There is deliberately no fallback to
+    // every active profile: organizations should only see curricula they teach.
     const coveredCountriesSet = new Set<string>();
     if (org.country) {
       coveredCountriesSet.add(normalizeCountry(org.country));
     }
-    for (const code of studentCountryCodes) {
-      if (code) {
-        coveredCountriesSet.add(normalizeCountry(code));
+    for (const learner of learnerContexts) {
+      if (learner.countryCode) {
+        coveredCountriesSet.add(normalizeCountry(learner.countryCode));
       }
     }
-    // Also include international standards (INT)
-    coveredCountriesSet.add('INT');
-
     const coveredCountries = Array.from(coveredCountriesSet);
+    const coveredJurisdictions = coveredCountries
+      .map((country) => jurisdictionByCountry[country])
+      .filter((value): value is string => Boolean(value));
+    const learnerGrades = Array.from(
+      new Set(
+        learnerContexts
+          .map((learner) => learner.gradeLevel)
+          .filter((grade): grade is string => Boolean(grade)),
+      ),
+    );
 
     // 3. Resolve organization offered subjects
     const orgSubjects = await this.orgQuery.getOrganizationSubjects(
@@ -109,12 +124,9 @@ export class GetOrganizationCurriculumOverviewHandler
     }
 
     // 4. Fetch curriculum profiles for covered countries
-    let matchingProfiles = await this.profileRepository.findByCountryCodes(
-      coveredCountries,
+    const matchingProfiles = await this.profileRepository.findByJurisdictionCodes(
+      coveredJurisdictions,
     );
-    if (matchingProfiles.length === 0) {
-      matchingProfiles = await this.profileRepository.findActive();
-    }
 
     // 5. For each profile, count how many offered subjects are mapped
     const curricula: OrganizationScopedCurriculumProfileDto[] = [];
@@ -127,14 +139,20 @@ export class GetOrganizationCurriculumOverviewHandler
         offeredPlatformSubjectIds.has(m.platformSubjectId.unpack()),
       ).length;
 
+      if (mappedOfferedSubjectCount === 0) {
+        continue;
+      }
+
       curricula.push({
         id: profile.id.unpack(),
         name: profile.name,
         shortCode: profile.shortCode,
         countryCode: profile.countryCode,
+        jurisdictionCode: profile.jurisdictionCode,
         authority: profile.authority,
         description: profile.description,
         version: profile.version,
+        sourceUrl: profile.sourceUrl,
         isActive: profile.isActive,
         mappedOfferedSubjectCount,
       });
@@ -144,6 +162,8 @@ export class GetOrganizationCurriculumOverviewHandler
       organizationId: org.id,
       organizationCountry: org.country,
       coveredCountries,
+      coveredJurisdictions,
+      learnerGrades,
       enrolledStudentCount: enrolledStudentIds.length,
       offeredSubjects,
       unmappedSubjects,

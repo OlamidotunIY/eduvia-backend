@@ -7,10 +7,12 @@ export interface CurriculumProfileProps {
   name: string;
   shortCode: string;
   countryCode: string;
+  jurisdictionCode: string;
   description?: string | null;
   authority: string;
   isActive: boolean;
   version?: string | null;
+  sourceUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,10 +21,12 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
   private _name: string;
   private _shortCode: string;
   private _countryCode: string;
+  private _jurisdictionCode: string;
   private _description: string | null;
   private _authority: string;
   private _isActive: boolean;
   private _version: string | null;
+  private _sourceUrl: string | null;
   private _createdAt: Date;
   private _updatedAt: Date;
 
@@ -31,10 +35,12 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
     this._name = props.name;
     this._shortCode = props.shortCode;
     this._countryCode = props.countryCode;
+    this._jurisdictionCode = props.jurisdictionCode;
     this._description = props.description ?? null;
     this._authority = props.authority;
     this._isActive = props.isActive;
     this._version = props.version ?? null;
+    this._sourceUrl = props.sourceUrl ?? null;
     this._createdAt = new Date(props.createdAt);
     this._updatedAt = new Date(props.updatedAt);
   }
@@ -45,10 +51,12 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
       name: string;
       shortCode: string;
       countryCode: string;
+      jurisdictionCode: string;
       description?: string | null;
       authority: string;
       isActive?: boolean;
       version?: string | null;
+      sourceUrl?: string | null;
     },
     correlationId = 'system',
   ): CurriculumProfile {
@@ -60,10 +68,12 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
       name: props.name.trim(),
       shortCode: props.shortCode.trim().toUpperCase(),
       countryCode: props.countryCode.trim().toUpperCase(),
+      jurisdictionCode: props.jurisdictionCode.trim().toUpperCase(),
       description: props.description ?? null,
       authority: props.authority.trim(),
       isActive: props.isActive ?? true,
       version: props.version ?? null,
+      sourceUrl: props.sourceUrl ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -103,6 +113,10 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
     return this._countryCode;
   }
 
+  public get jurisdictionCode(): string {
+    return this._jurisdictionCode;
+  }
+
   public get description(): string | null {
     return this._description;
   }
@@ -117,6 +131,10 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
 
   public get version(): string | null {
     return this._version;
+  }
+
+  public get sourceUrl(): string | null {
+    return this._sourceUrl;
   }
 
   public get createdAt(): Date {
@@ -142,6 +160,7 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
     description?: string | null;
     authority?: string;
     version?: string | null;
+    sourceUrl?: string | null;
   }): void {
     if (params.name !== undefined) {
       this._name = params.name.trim();
@@ -154,6 +173,9 @@ export class CurriculumProfile extends AggregateRoot<CurriculumProfileId> {
     }
     if (params.version !== undefined) {
       this._version = params.version ?? null;
+    }
+    if (params.sourceUrl !== undefined) {
+      this._sourceUrl = params.sourceUrl?.trim() ?? null;
     }
     this.touch();
   }

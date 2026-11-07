@@ -78,43 +78,6 @@ const platformSubjects = [
   ['MUS', 'Music', 'Music theory, performance, composition, and listening.'],
 ] as const;
 
-const curricula = [
-  [
-    'NG-BEC',
-    'Nigeria Basic Education Curriculum',
-    'NG',
-    'Nigerian Educational Research and Development Council',
-    'Basic education curriculum framework.',
-  ],
-  [
-    'NG-SSS',
-    'Nigeria Senior Secondary Curriculum',
-    'NG',
-    'Nigerian Educational Research and Development Council',
-    'Senior secondary curriculum framework.',
-  ],
-  [
-    'GB-NC',
-    'England National Curriculum',
-    'GB',
-    'Department for Education',
-    'National Curriculum for England.',
-  ],
-  [
-    'IB-DP',
-    'International Baccalaureate Diploma Programme',
-    'INT',
-    'International Baccalaureate Organization',
-    'International Baccalaureate Diploma Programme framework.',
-  ],
-  [
-    'CA-ON',
-    'Ontario Curriculum',
-    'CA',
-    'Ontario Ministry of Education',
-    'Provincial curriculum framework for Ontario.',
-  ],
-] as const;
 
 const url = process.env.DATABASE_URL;
 
@@ -149,23 +112,8 @@ async function main(): Promise<void> {
       );
     }
 
-    for (const [
-      shortCode,
-      name,
-      countryCode,
-      authority,
-      description,
-    ] of curricula) {
-      await connection.query(
-        `INSERT INTO curriculum_profiles (id, shortCode, name, countryCode, authority, description, isActive, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, true, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE name = VALUES(name), countryCode = VALUES(countryCode), authority = VALUES(authority), description = VALUES(description), isActive = true, updatedAt = NOW()`,
-        [uuidv7(), shortCode, name, countryCode, authority, description],
-      );
-    }
-
     console.log(
-      `Platform catalog is ready: ${platformSubjects.length} subjects and ${curricula.length} curriculum profiles.`,
+      `Platform subject catalog is ready: ${platformSubjects.length} subjects. Curriculum content is seeded separately after editorial review.`,
     );
   } finally {
     await connection.end();

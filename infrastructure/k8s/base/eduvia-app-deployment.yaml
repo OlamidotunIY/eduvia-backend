@@ -37,6 +37,9 @@ spec:
           value: "3000"
         - name: NODE_ENV
           value: "production"
+        # Enables versioned platform catalogue seeds only inside a deployed app pod.
+        - name: CURRICULUM_CATALOG_SEED_ENABLED
+          value: "true"
         - name: PUBLIC_API_URL
           value: "https://api.eduvia.name.ng"
         - name: CORS_ORIGINS

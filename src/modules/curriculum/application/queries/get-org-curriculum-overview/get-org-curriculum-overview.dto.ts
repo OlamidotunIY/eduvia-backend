@@ -15,9 +15,11 @@ export interface OrganizationScopedCurriculumProfileDto {
   name: string;
   shortCode: string;
   countryCode: string;
+  jurisdictionCode: string;
   authority: string;
   description: string | null;
   version: string | null;
+  sourceUrl: string | null;
   isActive: boolean;
   mappedOfferedSubjectCount: number;
 }
@@ -26,6 +28,8 @@ export interface OrganizationCurriculumOverviewDto {
   organizationId: string;
   organizationCountry: string;
   coveredCountries: string[];
+  coveredJurisdictions: string[];
+  learnerGrades: string[];
   enrolledStudentCount: number;
   offeredSubjects: OrganizationOfferedSubjectSummaryDto[];
   unmappedSubjects: OrganizationUnmappedSubjectDto[];

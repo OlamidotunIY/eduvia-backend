@@ -23,10 +23,10 @@ describe('GetOrganizationCurriculumOverviewHandler', () => {
       getEnrolledStudentIds: jest.fn(),
     };
     mockUserQuery = {
-      getStudentCountryCodes: jest.fn(),
+      getStudentCurriculumContexts: jest.fn(),
     };
     mockProfileRepo = {
-      findByCountryCodes: jest.fn(),
+      findByJurisdictionCodes: jest.fn(),
     };
     mockMappingRepo = {
       findByCurriculumId: jest.fn(),
@@ -41,29 +41,34 @@ describe('GetOrganizationCurriculumOverviewHandler', () => {
     );
   });
 
-  it('resolves covered countries and maps offered subjects correctly', async () => {
+  it('resolves jurisdiction-scoped curricula and maps offered subjects correctly', async () => {
     mockOrgQuery.getOrganizationById.mockResolvedValue({
       id: 'org-1',
       country: 'GB',
       name: 'London Academy',
     });
     mockClassroomQuery.getEnrolledStudentIds.mockResolvedValue(['stu-1', 'stu-2']);
-    mockUserQuery.getStudentCountryCodes.mockResolvedValue(['CA']);
+    mockUserQuery.getStudentCurriculumContexts.mockResolvedValue([
+      { studentId: 'stu-1', countryCode: 'CA', gradeLevel: 'Grade 9' },
+      { studentId: 'stu-2', countryCode: 'GB', gradeLevel: 'Year 10' },
+    ]);
 
     mockOrgQuery.getOrganizationSubjects.mockResolvedValue([
-      { id: 'subj-1', name: 'Maths Year 10', platformSubjectId: 'plat-mat', isActive: true },
+      { id: 'subj-1', name: 'Maths Year 10', platformSubjectId: '018e0000-0000-7000-8000-000000000010', isActive: true },
       { id: 'subj-2', name: 'Robotics', platformSubjectId: null, isActive: true },
     ]);
 
-    mockProfileRepo.findByCountryCodes.mockResolvedValue([
+    mockProfileRepo.findByJurisdictionCodes.mockResolvedValue([
       {
         id: CurriculumProfileId.from('018e0000-0000-7000-8000-000000000001'),
         name: 'England National Curriculum',
         shortCode: 'GB-NC',
         countryCode: 'GB',
+        jurisdictionCode: 'GB-ENG',
         authority: 'DfE',
         description: null,
         version: '2024',
+        sourceUrl: 'https://example.test/england',
         isActive: true,
       },
     ]);
@@ -83,7 +88,9 @@ describe('GetOrganizationCurriculumOverviewHandler', () => {
     expect(result.organizationCountry).toBe('GB');
     expect(result.coveredCountries).toContain('GB');
     expect(result.coveredCountries).toContain('CA');
-    expect(result.coveredCountries).toContain('INT');
+    expect(result.coveredJurisdictions).toContain('GB-ENG');
+    expect(result.coveredJurisdictions).toContain('CA-ON');
+    expect(result.learnerGrades).toEqual(expect.arrayContaining(['Grade 9', 'Year 10']));
     expect(result.enrolledStudentCount).toBe(2);
     expect(result.offeredSubjects).toHaveLength(2);
     expect(result.unmappedSubjects).toHaveLength(1);

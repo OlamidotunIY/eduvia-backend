@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import {
   AuthGuard,
   OrganizationPermissionGuard,
@@ -31,12 +25,10 @@ export class OrganizationCurriculumController {
   async getTree(
     @Param('organizationId') organizationId: string,
     @Param('curriculumId') curriculumId: string,
-    @Query('preview') preview?: string,
   ) {
     return this.curriculumService.getOrganizationCurriculumTree(
       organizationId,
       curriculumId,
-      preview === 'true',
     );
   }
 

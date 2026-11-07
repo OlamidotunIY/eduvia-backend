@@ -52,6 +52,18 @@ export class PrismaCurriculumProfileRepository
     return records.map((record) => this.mapper.toDomain(record));
   }
 
+  public async findByJurisdictionCodes(
+    jurisdictionCodes: string[],
+  ): Promise<CurriculumProfile[]> {
+    if (!jurisdictionCodes.length) return [];
+    const normalized = jurisdictionCodes.map((code) => code.trim().toUpperCase());
+    const records = await this.delegate.findMany({
+      where: { jurisdictionCode: { in: normalized }, isActive: true },
+      orderBy: { name: 'asc' },
+    });
+    return records.map((record) => this.mapper.toDomain(record));
+  }
+
   public async findActive(): Promise<CurriculumProfile[]> {
     const records = await this.delegate.findMany({
       where: { isActive: true },

@@ -10,10 +10,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard, CorrelationId } from '@modules/shared';
 import { CurriculumService } from '../services/curriculum.service';
+import { CurriculumEditorGuard } from '../guards';
 import { UpdateCurriculumNodeDto } from '../dto';
 
 @Controller('curriculum-nodes')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, CurriculumEditorGuard)
 export class CurriculumNodeController {
   constructor(private readonly curriculumService: CurriculumService) {}
 

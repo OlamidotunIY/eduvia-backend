@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard, CorrelationId } from '@modules/shared';
 import { CurriculumService } from '../services/curriculum.service';
-import { CurriculumTreeSeederService } from '../../infrastructure/seeding/curriculum-tree-seeder.service';
+import { CurriculumEditorGuard } from '../guards';
 import {
   CreateCurriculumProfileDto,
   UpdateCurriculumProfileDto,
@@ -18,17 +18,9 @@ import {
 } from '../dto';
 
 @Controller('curricula')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, CurriculumEditorGuard)
 export class CurriculumController {
-  constructor(
-    private readonly curriculumService: CurriculumService,
-    private readonly seederService: CurriculumTreeSeederService,
-  ) {}
-
-  @Post('admin/seed-tree')
-  async seedTree() {
-    return this.seederService.seed(true);
-  }
+  constructor(private readonly curriculumService: CurriculumService) {}
 
   @Get()
   async listCurricula(

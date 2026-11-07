@@ -1,5 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IOrganizationQueryPort } from '@modules/shared';
+import {
+  IClassroomQueryPort,
+  IOrganizationQueryPort,
+  IUserQueryPort,
+} from '@modules/shared';
 import { GetOrganizationCurriculumTreeQuery } from './get-org-curriculum-tree.query';
 import { OrganizationCurriculumTreeNodeDto } from './get-org-curriculum-tree.dto';
 import {
@@ -16,6 +20,8 @@ export class GetOrganizationCurriculumTreeHandler
 {
   constructor(
     private readonly orgQuery: IOrganizationQueryPort,
+    private readonly classroomQuery: IClassroomQueryPort,
+    private readonly userQuery: IUserQueryPort,
     private readonly profileRepository: ICurriculumProfileRepository,
     private readonly nodeRepository: ICurriculumNodeRepository,
     private readonly mappingRepository: ISubjectCurriculumMappingRepository,
@@ -42,10 +48,7 @@ export class GetOrganizationCurriculumTreeHandler
         .filter((id): id is string => Boolean(id)),
     );
 
-    const isPreview = query.preview === true;
-
-    // If org has no mapped platform subjects and preview is not requested, return empty tree
-    if (!isPreview && offeredPlatformSubjectIds.size === 0) {
+    if (offeredPlatformSubjectIds.size === 0) {
       return [];
     }
 
@@ -55,59 +58,19 @@ export class GetOrganizationCurriculumTreeHandler
       return [];
     }
 
-    if (isPreview) {
-      const rawMap = new Map<string, (typeof nodes)[0]>();
-      const childrenMap = new Map<string, string[]>();
-      const rootIds: string[] = [];
-
-      for (const node of nodes) {
-        rawMap.set(node.id.unpack(), node);
-        const parentId = node.parentNodeId?.unpack() ?? null;
-        if (!parentId) {
-          rootIds.push(node.id.unpack());
-        } else {
-          const siblings = childrenMap.get(parentId) ?? [];
-          siblings.push(node.id.unpack());
-          childrenMap.set(parentId, siblings);
-        }
-      }
-
-      const buildSubtree = (nodeId: string): OrganizationCurriculumTreeNodeDto => {
-        const node = rawMap.get(nodeId)!;
-        const childIds = childrenMap.get(nodeId) ?? [];
-        return {
-          id: node.id.unpack(),
-          curriculumId: node.curriculumId.unpack(),
-          parentNodeId: node.parentNodeId ? node.parentNodeId.unpack() : null,
-          nodeType: node.nodeType,
-          name: node.name,
-          code: node.code ?? null,
-          description: node.description,
-          gradeLevel: node.gradeLevel,
-          depth: node.depth,
-          path: node.path.value,
-          isLeaf: node.isLeaf,
-          isActive: node.isActive,
-          children: childIds.map(buildSubtree),
-        };
-      };
-
-      return rootIds.map(buildSubtree);
-    }
-
-    // 2. Fetch mappings for this curriculum
+    // 2. Fetch mapped discipline roots for this curriculum.
     const mappings = await this.mappingRepository.findByCurriculumId(
       query.curriculumId,
     );
-    const allowedSubjectNodeIds = new Set<string>();
+    const allowedDisciplineNodeIds = new Set<string>();
 
     for (const mapping of mappings) {
       if (offeredPlatformSubjectIds.has(mapping.platformSubjectId.unpack())) {
-        allowedSubjectNodeIds.add(mapping.subjectNodeId.unpack());
+        allowedDisciplineNodeIds.add(mapping.subjectNodeId.unpack());
       }
     }
 
-    if (allowedSubjectNodeIds.size === 0) {
+    if (allowedDisciplineNodeIds.size === 0) {
       return [];
     }
 
@@ -117,49 +80,50 @@ export class GetOrganizationCurriculumTreeHandler
       rawMap.set(node.id.unpack(), node);
     }
 
-    // Helper: find subject ancestor ID for a node
-    const getSubjectAncestorId = (nodeId: string): string | null => {
-      let current = rawMap.get(nodeId);
-      while (current) {
-        if (current.nodeType === 'subject') {
-          return current.id.unpack();
-        }
-        if (!current.parentNodeId) break;
-        current = rawMap.get(current.parentNodeId.unpack());
-      }
-      return null;
-    };
+    const enrolledStudentIds = await this.classroomQuery.getEnrolledStudentIds(
+      query.organizationId,
+    );
+    const learnerContexts = await this.userQuery.getStudentCurriculumContexts(
+      enrolledStudentIds,
+    );
+    const learnerGrades = new Set(
+      learnerContexts
+        .map((learner) => learner.gradeLevel?.trim().toLowerCase())
+        .filter((grade): grade is string => Boolean(grade)),
+    );
 
-    // Helper: check if a node or any of its descendants belongs to allowed subjects
+    const allowedCourseNodeIds = new Set(
+      nodes
+        .filter(
+          (node) =>
+            node.nodeType === 'course' &&
+            Boolean(node.gradeLevel) &&
+            learnerGrades.has(node.gradeLevel!.trim().toLowerCase()),
+        )
+        .map((node) => node.id.unpack()),
+    );
+    const profileHasCourses = nodes.some((node) => node.nodeType === 'course');
+
+    const isDescendantOf = (nodeId: string, ancestorId: string): boolean =>
+      nodeId === ancestorId ||
+      rawMap.get(nodeId)?.path.value.includes(`/${ancestorId}/`) === true;
+
+    // A mapped discipline and all descendants are visible. Its ancestors remain
+    // visible as breadcrumbs, so the organization tree never becomes hollow.
     const isNodeAllowed = (nodeId: string): boolean => {
       const node = rawMap.get(nodeId);
       if (!node) return false;
+      const id = node.id.unpack();
+      const belongsToMappedDiscipline = Array.from(allowedDisciplineNodeIds).some(
+        (rootId) => isDescendantOf(id, rootId) || isDescendantOf(rootId, id),
+      );
+      if (!belongsToMappedDiscipline) return false;
 
-      // Subject level
-      if (node.nodeType === 'subject') {
-        return allowedSubjectNodeIds.has(node.id.unpack());
-      }
-
-      // Descendants of subject (strand, topic, learning_objective)
-      if (node.depth > 1) {
-        const subjectId = getSubjectAncestorId(nodeId);
-        return subjectId !== null && allowedSubjectNodeIds.has(subjectId);
-      }
-
-      // Ancestors of subject (e.g. keystage / depth 0)
-      // Check if ANY child subject of this keystage is allowed
-      for (const child of nodes) {
-        if (
-          child.parentNodeId &&
-          child.parentNodeId.unpack() === nodeId &&
-          child.nodeType === 'subject' &&
-          allowedSubjectNodeIds.has(child.id.unpack())
-        ) {
-          return true;
-        }
-      }
-
-      return false;
+      // Courses are the grade-specific unit of delivery. Nodes above a course
+      // remain only as a breadcrumb; courses for other learner grades vanish.
+      return !profileHasCourses || Array.from(allowedCourseNodeIds).some(
+        (courseId) => isDescendantOf(id, courseId) || isDescendantOf(courseId, id),
+      );
     };
 
     // 4. Build DTO map for allowed nodes

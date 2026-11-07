@@ -19,8 +19,17 @@ export interface UserDTO {
   activeOrganizationId: string | null;
 }
 
+export interface StudentCurriculumContextDto {
+  studentId: string;
+  countryCode: string;
+  gradeLevel: string | null;
+}
+
 export abstract class IUserQueryPort {
   abstract getUserByEmail(email: string): Promise<UserDTO | null>;
   abstract getUserById(id: string): Promise<UserDTO | null>;
   abstract getStudentCountryCodes(studentIds: string[]): Promise<string[]>;
+  abstract getStudentCurriculumContexts(
+    studentIds: string[],
+  ): Promise<StudentCurriculumContextDto[]>;
 }

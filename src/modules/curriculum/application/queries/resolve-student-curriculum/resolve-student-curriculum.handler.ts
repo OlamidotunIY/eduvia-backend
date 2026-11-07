@@ -25,9 +25,11 @@ export class ResolveStudentCurriculumHandler
         name: active.name,
         shortCode: active.shortCode,
         countryCode: active.countryCode,
+        jurisdictionCode: active.jurisdictionCode,
         description: active.description,
         authority: active.authority,
         version: active.version,
+        sourceUrl: active.sourceUrl,
       },
     };
   }
