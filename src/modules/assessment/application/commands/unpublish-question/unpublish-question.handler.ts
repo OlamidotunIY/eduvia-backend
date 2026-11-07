@@ -20,7 +20,7 @@ export class UnpublishQuestionHandler
       throw new QuestionNotFoundError(payload.questionId);
     }
 
-    question.unpublish();
+    question.unpublish(payload.actor);
     await this.questionRepository.save(question);
 
     return {

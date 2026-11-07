@@ -77,22 +77,7 @@ export class PrismaQuestionRepository implements IQuestionRepository {
     filter?: QuestionFilter,
     pagination?: { skip?: number; take?: number },
   ): Promise<Question[]> {
-    const where: any = {
-      OR: [
-        { ownerType: QuestionOwnerType.platform },
-        { ownerType: QuestionOwnerType.org, orgId },
-        ...(currentTeacherId
-          ? [
-              {
-                ownerType: QuestionOwnerType.teacher,
-                orgId,
-                ownerId: currentTeacherId,
-              },
-            ]
-          : [{ ownerType: QuestionOwnerType.teacher, orgId }]),
-      ],
-    };
-
+    const where: any = this.buildOrgScopeWhere(orgId, currentTeacherId, filter);
     this.applyCommonFilters(where, filter);
 
     const records = await this.prisma.question.findMany({
@@ -104,6 +89,89 @@ export class PrismaQuestionRepository implements IQuestionRepository {
     });
 
     return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  public async countForOrg(
+    orgId: string,
+    currentTeacherId?: string,
+    filter?: QuestionFilter,
+  ): Promise<number> {
+    const where: any = this.buildOrgScopeWhere(orgId, currentTeacherId, filter);
+    this.applyCommonFilters(where, filter);
+    return this.prisma.question.count({ where });
+  }
+
+  public async getSummaryForOrg(
+    orgId: string,
+    currentTeacherId?: string,
+  ): Promise<{
+    totalAccessible: number;
+    platformQuestions: number;
+    orgQuestions: number;
+    publishedOrgQuestions: number;
+  }> {
+    const [platformCount, orgCount, publishedOrgCount, teacherCount] = await Promise.all([
+      this.prisma.question.count({
+        where: { ownerType: QuestionOwnerType.platform },
+      }),
+      this.prisma.question.count({
+        where: { ownerType: QuestionOwnerType.org, orgId },
+      }),
+      this.prisma.question.count({
+        where: { ownerType: QuestionOwnerType.org, orgId, isPublished: true },
+      }),
+      currentTeacherId
+        ? this.prisma.question.count({
+            where: { ownerType: QuestionOwnerType.teacher, orgId, ownerId: currentTeacherId },
+          })
+        : this.prisma.question.count({
+            where: { ownerType: QuestionOwnerType.teacher, orgId },
+          }),
+    ]);
+
+    return {
+      totalAccessible: platformCount + orgCount + teacherCount,
+      platformQuestions: platformCount,
+      orgQuestions: orgCount + teacherCount,
+      publishedOrgQuestions: publishedOrgCount,
+    };
+  }
+
+  private buildOrgScopeWhere(
+    orgId: string,
+    currentTeacherId?: string,
+    filter?: QuestionFilter,
+  ): any {
+    const where: any = {};
+
+    if (filter?.ownerType === QuestionOwnerType.platform) {
+      where.ownerType = QuestionOwnerType.platform;
+    } else if (filter?.ownerType === QuestionOwnerType.org) {
+      where.ownerType = QuestionOwnerType.org;
+      where.orgId = orgId;
+    } else if (filter?.ownerType === QuestionOwnerType.teacher) {
+      where.ownerType = QuestionOwnerType.teacher;
+      where.orgId = orgId;
+      if (currentTeacherId) {
+        where.ownerId = currentTeacherId;
+      }
+    } else {
+      where.OR = [
+        { ownerType: QuestionOwnerType.platform },
+        { ownerType: QuestionOwnerType.org, orgId },
+        ...(currentTeacherId
+          ? [
+              {
+                ownerType: QuestionOwnerType.teacher,
+                orgId,
+                ownerId: currentTeacherId,
+              },
+            ]
+          : [{ ownerType: QuestionOwnerType.teacher, orgId }]),
+      ];
+    }
+
+    return where;
   }
 
   public async findPlatformQuestions(

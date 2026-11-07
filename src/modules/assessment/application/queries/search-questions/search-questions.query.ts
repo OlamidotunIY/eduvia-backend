@@ -6,5 +6,6 @@ export class SearchQuestionsQuery {
     public readonly orgId?: string,
     public readonly teacherId?: string,
     public readonly pagination?: { skip?: number; take?: number },
+    public readonly userRole?: string,
   ) {}
 }

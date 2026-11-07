@@ -2,6 +2,7 @@ import { CreateQuestionHandler } from './create-question/create-question.handler
 import { PublishQuestionHandler } from './publish-question/publish-question.handler';
 import { UnpublishQuestionHandler } from './unpublish-question/unpublish-question.handler';
 import { UpdateQuestionContentHandler } from './update-question-content/update-question-content.handler';
+import { DeleteQuestionHandler } from './delete-question/delete-question.handler';
 import { CreateAssessmentHandler } from './create-assessment/create-assessment.handler';
 import { ApplyTeacherMarkHandler } from './apply-teacher-mark/apply-teacher-mark.handler';
 import { FinalizeAssessmentHandler } from './finalize-assessment/finalize-assessment.handler';
@@ -22,6 +23,10 @@ export * from './unpublish-question/unpublish-question.handler';
 export * from './update-question-content/update-question-content.command';
 export * from './update-question-content/update-question-content.result';
 export * from './update-question-content/update-question-content.handler';
+
+export * from './delete-question/delete-question.command';
+export * from './delete-question/delete-question.result';
+export * from './delete-question/delete-question.handler';
 
 export * from './create-assessment/create-assessment.command';
 export * from './create-assessment/create-assessment.result';
@@ -44,6 +49,7 @@ export const COMMAND_HANDLERS = [
   PublishQuestionHandler,
   UnpublishQuestionHandler,
   UpdateQuestionContentHandler,
+  DeleteQuestionHandler,
   CreateAssessmentHandler,
   ApplyTeacherMarkHandler,
   FinalizeAssessmentHandler,

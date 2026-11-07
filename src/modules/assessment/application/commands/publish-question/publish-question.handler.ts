@@ -21,7 +21,7 @@ export class PublishQuestionHandler
       throw new QuestionNotFoundError(payload.questionId);
     }
 
-    question.publish(correlationId);
+    question.publish(correlationId, payload.actor);
     await this.questionRepository.save(question);
 
     return {

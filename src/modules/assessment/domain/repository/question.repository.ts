@@ -14,6 +14,13 @@ export interface QuestionFilter {
   search?: string;
 }
 
+export interface QuestionSummaryDto {
+  totalAccessible: number;
+  platformQuestions: number;
+  orgQuestions: number;
+  publishedOrgQuestions: number;
+}
+
 export abstract class IQuestionRepository extends BaseRepository<Question, QuestionId> {
   public abstract findForOrg(
     orgId: string,
@@ -21,6 +28,17 @@ export abstract class IQuestionRepository extends BaseRepository<Question, Quest
     filter?: QuestionFilter,
     pagination?: { skip?: number; take?: number },
   ): Promise<Question[]>;
+
+  public abstract countForOrg(
+    orgId: string,
+    currentTeacherId?: string,
+    filter?: QuestionFilter,
+  ): Promise<number>;
+
+  public abstract getSummaryForOrg(
+    orgId: string,
+    currentTeacherId?: string,
+  ): Promise<QuestionSummaryDto>;
 
   public abstract findPlatformQuestions(
     filter?: QuestionFilter,

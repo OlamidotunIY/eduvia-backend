@@ -4,6 +4,8 @@ import { QuestionDetailDto } from './get-question-by-id.dto';
 import {
   IQuestionRepository,
   QuestionNotFoundError,
+  InsufficientQuestionPermissionError,
+  QuestionOwnerType,
 } from '../../../domain';
 
 @QueryHandler(GetQuestionByIdQuery)
@@ -15,6 +17,24 @@ export class GetQuestionByIdHandler
   async execute(query: GetQuestionByIdQuery): Promise<QuestionDetailDto> {
     const question = await this.questionRepository.findById(query.questionId);
     if (!question) {
+      throw new QuestionNotFoundError(query.questionId);
+    }
+
+    if (
+      (question.ownerType === QuestionOwnerType.org ||
+        question.ownerType === QuestionOwnerType.teacher) &&
+      query.orgId &&
+      question.orgId !== query.orgId
+    ) {
+      throw new InsufficientQuestionPermissionError(
+        'Cannot access questions belonging to another organization.',
+      );
+    }
+
+    const isLearner =
+      query.userRole === 'STUDENT' || query.userRole === 'LEARNER';
+
+    if (isLearner && !question.isPublished) {
       throw new QuestionNotFoundError(query.questionId);
     }
 
@@ -30,8 +50,8 @@ export class GetQuestionByIdHandler
         text: opt.text,
         imageUrl: opt.imageUrl,
       })),
-      correctOptionKey: question.correctOptionKey,
-      markScheme: question.markScheme,
+      correctOptionKey: isLearner ? null : question.correctOptionKey,
+      markScheme: isLearner ? null : question.markScheme,
       maxMarks: question.maxMarks,
       difficultyLevel: question.difficultyLevel,
       subject: question.subject,

@@ -28,6 +28,7 @@ import {
 } from './infrastructure/persistence/repository';
 import { CurriculumCascadeDeactivateProcessor } from './infrastructure/messaging/listeners';
 import { CurriculumQueryAdapter } from './infrastructure/services/curriculum-query.adapter';
+import { CurriculumTreeSeederService } from './infrastructure/seeding/curriculum-tree-seeder.service';
 import {
   CurriculumController,
   CurriculumNodeController,
@@ -95,6 +96,7 @@ const repositories = [
     ...mappers,
     ...repositories,
     CurriculumCascadeDeactivateProcessor,
+    CurriculumTreeSeederService,
     {
       provide: ICurriculumQueryPort,
       useClass: CurriculumQueryAdapter,
@@ -107,6 +109,7 @@ const repositories = [
     ISubjectCurriculumMappingRepository,
     ICurriculumQueryPort,
     CurriculumService,
+    CurriculumTreeSeederService,
   ],
 })
 export class CurriculumModule {}
