@@ -7,6 +7,8 @@ import {
   OrganizationPermissionGuard,
 } from '@modules/shared';
 import { OrgModule } from '../org/org.module';
+import { BoardModule } from '../board/board.module';
+import { ClassroomModule } from '../classroom/classroom.module';
 import { COMMAND_HANDLERS } from './application/commands';
 import { QUERY_HANDLERS } from './application/queries';
 import {
@@ -77,6 +79,8 @@ const repositories = [
   imports: [
     CqrsModule,
     OrgModule,
+    BoardModule,
+    ClassroomModule,
     BullModule.registerQueue(
       { name: 'assessment-events' },
       { name: 'classroom-events' },

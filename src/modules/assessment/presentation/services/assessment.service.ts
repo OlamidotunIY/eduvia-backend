@@ -119,7 +119,6 @@ export class AssessmentService {
         lessonId: dto.lessonId,
         boardId: dto.boardId,
         studentId: dto.studentId,
-        items: dto.items,
         correlationId,
       }),
     );
