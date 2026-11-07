@@ -25,7 +25,8 @@ export class ConversationsController {
     @CurrentUser() user: CurrentUserPayload,
     @Query('orgId') orgId?: string,
   ) {
-    return this.conversationsService.getUserConversations(user.id, orgId);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.getUserConversations(userId, orgId);
   }
 
   @Post()
@@ -33,7 +34,8 @@ export class ConversationsController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: CreateConversationDto,
   ) {
-    return this.conversationsService.createConversation(user.id, dto);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.createConversation(userId, dto);
   }
 
   @Get(':id')
@@ -41,7 +43,8 @@ export class ConversationsController {
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.conversationsService.getConversationDetail(id, user.id);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.getConversationDetail(id, userId);
   }
 
   @Post(':id/messages')
@@ -50,7 +53,8 @@ export class ConversationsController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: SendMessageDto,
   ) {
-    return this.conversationsService.sendMessage(id, user.id, dto);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.sendMessage(id, userId, dto);
   }
 
   @Post(':id/close')
@@ -58,7 +62,8 @@ export class ConversationsController {
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.conversationsService.closeConversation(id, user.id);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.closeConversation(id, userId);
   }
 
   @Post(':id/reopen')
@@ -66,6 +71,7 @@ export class ConversationsController {
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.conversationsService.reopenConversation(id, user.id);
+    const userId = user.userId ?? (user as any).id;
+    return this.conversationsService.reopenConversation(id, userId);
   }
 }
