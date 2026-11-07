@@ -139,6 +139,57 @@ describe('GetOrganizationCurriculumTreeHandler', () => {
     expect(subjectNames).not.toContain('French');
   });
 
+  it('returns entire tree when preview is true regardless of offered subjects', async () => {
+    mockProfileRepo.findById.mockResolvedValue({
+      id: CurriculumProfileId.from(curriculumId),
+      name: 'England National Curriculum',
+    });
+    mockOrgQuery.getOrganizationSubjects.mockResolvedValue([]);
+
+    mockNodeRepo.findByCurriculumId.mockResolvedValue([
+      {
+        id: CurriculumNodeId.from(ks3Id),
+        curriculumId: CurriculumProfileId.from(curriculumId),
+        parentNodeId: null,
+        nodeType: 'keystage',
+        name: 'Key Stage 3',
+        code: 'KS3',
+        description: null,
+        gradeLevel: 'Year 7-9',
+        depth: 0,
+        path: NodePath.from('/' + ks3Id + '/'),
+        isLeaf: false,
+        isActive: true,
+      },
+      {
+        id: CurriculumNodeId.from(mathsSubjectId),
+        curriculumId: CurriculumProfileId.from(curriculumId),
+        parentNodeId: CurriculumNodeId.from(ks3Id),
+        nodeType: 'subject',
+        name: 'Mathematics',
+        code: 'MAT-KS3',
+        description: null,
+        gradeLevel: 'Year 7-9',
+        depth: 1,
+        path: NodePath.from('/' + ks3Id + '/' + mathsSubjectId + '/'),
+        isLeaf: false,
+        isActive: true,
+      },
+    ]);
+
+    const tree = await handler.execute(
+      new GetOrganizationCurriculumTreeQuery('org-1', curriculumId, true),
+    );
+
+    expect(tree).toHaveLength(1);
+    expect(tree[0].name).toBe('Key Stage 3');
+    expect(tree[0].code).toBe('KS3');
+    expect(tree[0].path).toBe('/' + ks3Id + '/');
+    expect(tree[0].children).toHaveLength(1);
+    expect(tree[0].children[0].name).toBe('Mathematics');
+    expect(tree[0].children[0].code).toBe('MAT-KS3');
+  });
+
   it('returns empty tree if organization offers no mapped subjects', async () => {
     mockProfileRepo.findById.mockResolvedValue({
       id: CurriculumProfileId.from(curriculumId),
