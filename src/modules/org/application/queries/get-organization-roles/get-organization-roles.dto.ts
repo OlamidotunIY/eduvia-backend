@@ -8,6 +8,7 @@ export interface OrganizationRoleDTO {
   description: string | null;
   permissions: OrganizationPermission[];
   isSystem: boolean;
+  membersCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

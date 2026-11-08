@@ -9,3 +9,5 @@ export * from './reject-application.dto';
 export * from './change-member-role.dto';
 export * from './create-organization-role.dto';
 export * from './update-organization-role.dto';
+export * from './organization-role-response.dto';
+export * from './organization-permission-response.dto';
