@@ -1,11 +1,14 @@
 export interface TeacherPerformanceStatProps {
   teacherId: string;
   teacherName: string;
+  teacherRole?: string;
+  avatarUrl?: string | null;
   lessonsDelivered: number;
   avgReportSubmissionHours: number;
   avgStudentScorePercent: number | null;
   reportCompletionRate: number;
   studentRetentionRate: number;
+  completionRate?: number;
 }
 
 export class TeacherPerformanceStat {
@@ -27,6 +30,14 @@ export class TeacherPerformanceStat {
     return this.props.teacherName;
   }
 
+  public get teacherRole(): string | undefined {
+    return this.props.teacherRole;
+  }
+
+  public get avatarUrl(): string | null | undefined {
+    return this.props.avatarUrl;
+  }
+
   public get lessonsDelivered(): number {
     return this.props.lessonsDelivered;
   }
@@ -43,11 +54,18 @@ export class TeacherPerformanceStat {
     return this.props.reportCompletionRate;
   }
 
+  public get completionRate(): number {
+    return this.props.completionRate ?? this.props.reportCompletionRate;
+  }
+
   public get studentRetentionRate(): number {
     return this.props.studentRetentionRate;
   }
 
-  public toJSON(): TeacherPerformanceStatProps {
-    return { ...this.props };
+  public toJSON(): TeacherPerformanceStatProps & { completionRate: number } {
+    return {
+      ...this.props,
+      completionRate: this.completionRate,
+    };
   }
 }
