@@ -82,25 +82,25 @@ export class OrgAnalyticsSnapshot {
     this._totalLessonsLastMonth = props.totalLessonsLastMonth;
     this._avgLessonCompletionRate = props.avgLessonCompletionRate;
     this._avgReportSubmissionTimeHours = props.avgReportSubmissionTimeHours;
-    this._activeLearnersTrend = props.activeLearnersTrend ?? 12;
-    this._activeLearnersSparkline = props.activeLearnersSparkline ?? [210, 218, 225, 235, 248];
-    this._activeTeachersTrend = props.activeTeachersTrend ?? 6;
-    this._activeTeachersSparkline = props.activeTeachersSparkline ?? [15, 16, 17, 18, 18];
-    this._lessonsTrend = props.lessonsTrend ?? 9;
-    this._lessonsSparkline = props.lessonsSparkline ?? [380, 395, 410, 422, 436];
-    this._completionRateTrend = props.completionRateTrend ?? 3.2;
-    this._completionRateSparkline = props.completionRateSparkline ?? [88.5, 89.8, 90.6, 91.5, 92.4];
+    this._activeLearnersTrend = props.activeLearnersTrend ?? 0;
+    this._activeLearnersSparkline = props.activeLearnersSparkline ?? [];
+    this._activeTeachersTrend = props.activeTeachersTrend ?? 0;
+    this._activeTeachersSparkline = props.activeTeachersSparkline ?? [];
+    this._lessonsTrend = props.lessonsTrend ?? 0;
+    this._lessonsSparkline = props.lessonsSparkline ?? [];
+    this._completionRateTrend = props.completionRateTrend ?? 0;
+    this._completionRateSparkline = props.completionRateSparkline ?? [];
     this._weeklyCompletedLessons = props.weeklyCompletedLessons ?? [
-      { week: 'Week 1', thisMonth: 42, lastMonth: 32 },
-      { week: 'Week 2', thisMonth: 84, lastMonth: 58 },
-      { week: 'Week 3', thisMonth: 121, lastMonth: 88 },
-      { week: 'Week 4', thisMonth: 106, lastMonth: 94 },
+      { week: 'Week 1', thisMonth: 0, lastMonth: 0 },
+      { week: 'Week 2', thisMonth: 0, lastMonth: 0 },
+      { week: 'Week 3', thisMonth: 0, lastMonth: 0 },
+      { week: 'Week 4', thisMonth: 0, lastMonth: 0 },
     ];
-    this._avgReportSubmissionTrend = props.avgReportSubmissionTrend ?? -34;
+    this._avgReportSubmissionTrend = props.avgReportSubmissionTrend ?? 0;
     this._completionBreakdown = props.completionBreakdown ?? {
-      completedPercentage: 92.4,
-      inProgressPercentage: 5.1,
-      notStartedPercentage: 2.5,
+      completedPercentage: 0,
+      inProgressPercentage: 0,
+      notStartedPercentage: 0,
     };
     this._teacherPerformance = [...props.teacherPerformance];
     this._studentChurnRisk = [...props.studentChurnRisk];
