@@ -21,11 +21,14 @@ export class OrgAnalyticsSnapshotMapper
       TeacherPerformanceStat.create({
         teacherId: t.teacherId,
         teacherName: t.teacherName,
-        lessonsDelivered: t.lessonsDelivered,
-        avgReportSubmissionHours: t.avgReportSubmissionHours,
+        teacherRole: t.teacherRole,
+        avatarUrl: t.avatarUrl ?? null,
+        lessonsDelivered: t.lessonsDelivered ?? 0,
+        avgReportSubmissionHours: t.avgReportSubmissionHours ?? 0,
         avgStudentScorePercent: t.avgStudentScorePercent ?? null,
-        reportCompletionRate: t.reportCompletionRate,
-        studentRetentionRate: t.studentRetentionRate,
+        reportCompletionRate: t.reportCompletionRate ?? t.completionRate ?? 0,
+        studentRetentionRate: t.studentRetentionRate ?? 0,
+        completionRate: t.completionRate ?? t.reportCompletionRate ?? 0,
       }),
     );
 
@@ -36,7 +39,12 @@ export class OrgAnalyticsSnapshotMapper
       StudentChurnRisk.create({
         studentId: c.studentId,
         studentName: c.studentName,
-        riskScore: c.riskScore,
+        avatarUrl: c.avatarUrl ?? null,
+        gradeSubject: c.gradeSubject,
+        riskLevel: c.riskLevel,
+        reason: c.reason,
+        avgScorePercent: c.avgScorePercent,
+        riskScore: c.riskScore ?? 0,
         riskFactors: c.riskFactors || [],
         lastLessonAt: c.lastLessonAt ? new Date(c.lastLessonAt) : null,
       }),
@@ -49,7 +57,10 @@ export class OrgAnalyticsSnapshotMapper
       trialLessonsCompleted: rawFunnel.trialLessonsCompleted ?? 0,
       enrolledStudents: rawFunnel.enrolledStudents ?? 0,
       conversionRate: rawFunnel.conversionRate ?? 0,
+      stages: rawFunnel.stages,
     });
+
+    const trends = rawFunnel.trends || {};
 
     return OrgAnalyticsSnapshot.reconstitute({
       id: OrgAnalyticsSnapshotId.from(record.id),
@@ -61,6 +72,17 @@ export class OrgAnalyticsSnapshotMapper
       totalLessonsLastMonth: record.totalLessonsLastMonth,
       avgLessonCompletionRate: record.avgLessonCompletionRate,
       avgReportSubmissionTimeHours: record.avgReportSubmissionTimeHours,
+      activeLearnersTrend: trends.activeLearnersTrend,
+      activeLearnersSparkline: trends.activeLearnersSparkline,
+      activeTeachersTrend: trends.activeTeachersTrend,
+      activeTeachersSparkline: trends.activeTeachersSparkline,
+      lessonsTrend: trends.lessonsTrend,
+      lessonsSparkline: trends.lessonsSparkline,
+      completionRateTrend: trends.completionRateTrend,
+      completionRateSparkline: trends.completionRateSparkline,
+      weeklyCompletedLessons: rawFunnel.weeklyCompletedLessons,
+      avgReportSubmissionTrend: trends.avgReportSubmissionTrend,
+      completionBreakdown: rawFunnel.completionBreakdown,
       teacherPerformance,
       studentChurnRisk,
       funnelStats,
@@ -72,6 +94,24 @@ export class OrgAnalyticsSnapshotMapper
   toPersistence(
     entity: OrgAnalyticsSnapshot,
   ): Omit<PrismaOrgAnalyticsSnapshot, 'id'> {
+    const funnelPayload = {
+      ...entity.funnelStats.toJSON(),
+      stages: entity.funnelStats.stages,
+      weeklyCompletedLessons: entity.weeklyCompletedLessons,
+      completionBreakdown: entity.completionBreakdown,
+      trends: {
+        activeLearnersTrend: entity.activeLearnersTrend,
+        activeLearnersSparkline: entity.activeLearnersSparkline,
+        activeTeachersTrend: entity.activeTeachersTrend,
+        activeTeachersSparkline: entity.activeTeachersSparkline,
+        lessonsTrend: entity.lessonsTrend,
+        lessonsSparkline: entity.lessonsSparkline,
+        completionRateTrend: entity.completionRateTrend,
+        completionRateSparkline: entity.completionRateSparkline,
+        avgReportSubmissionTrend: entity.avgReportSubmissionTrend,
+      },
+    };
+
     return {
       orgId: entity.orgId,
       snapshotDate: entity.snapshotDate,
@@ -83,7 +123,7 @@ export class OrgAnalyticsSnapshotMapper
       avgReportSubmissionTimeHours: entity.avgReportSubmissionTimeHours,
       teacherPerformance: entity.teacherPerformance.map((t) => t.toJSON()) as any,
       studentChurnRisk: entity.studentChurnRisk.map((c) => c.toJSON()) as any,
-      funnelStats: entity.funnelStats.toJSON() as any,
+      funnelStats: funnelPayload as any,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

@@ -1,6 +1,11 @@
 export interface StudentChurnRiskProps {
   studentId: string;
   studentName: string;
+  avatarUrl?: string | null;
+  gradeSubject?: string;
+  riskLevel?: 'high' | 'medium' | 'low';
+  reason?: string;
+  avgScorePercent?: number;
   riskScore: number;
   riskFactors: string[];
   lastLessonAt: Date | null;
@@ -32,6 +37,33 @@ export class StudentChurnRisk {
     return this.props.studentName;
   }
 
+  public get avatarUrl(): string | null | undefined {
+    return this.props.avatarUrl;
+  }
+
+  public get gradeSubject(): string | undefined {
+    return this.props.gradeSubject;
+  }
+
+  public get riskLevel(): 'high' | 'medium' | 'low' {
+    if (this.props.riskLevel) return this.props.riskLevel;
+    if (this.props.riskScore >= 0.7) return 'high';
+    if (this.props.riskScore >= 0.3) return 'medium';
+    return 'low';
+  }
+
+  public get reason(): string {
+    if (this.props.reason) return this.props.reason;
+    if (this.props.riskFactors && this.props.riskFactors.length > 0) {
+      return this.props.riskFactors[0];
+    }
+    return 'Low activity';
+  }
+
+  public get avgScorePercent(): number {
+    return this.props.avgScorePercent ?? Math.round((1 - this.props.riskScore) * 100);
+  }
+
   public get riskScore(): number {
     return this.props.riskScore;
   }
@@ -44,7 +76,16 @@ export class StudentChurnRisk {
     return this.props.lastLessonAt;
   }
 
-  public toJSON(): StudentChurnRiskProps {
-    return { ...this.props };
+  public toJSON(): StudentChurnRiskProps & {
+    riskLevel: 'high' | 'medium' | 'low';
+    reason: string;
+    avgScorePercent: number;
+  } {
+    return {
+      ...this.props,
+      riskLevel: this.riskLevel,
+      reason: this.reason,
+      avgScorePercent: this.avgScorePercent,
+    };
   }
 }

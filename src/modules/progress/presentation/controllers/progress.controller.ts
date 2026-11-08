@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
   AuthGuard,
   CorrelationId,
@@ -22,10 +23,14 @@ import {
   UpdateLessonReportDto,
   ApproveAiSummaryDto,
   AddReportCommentDto,
+  OrgAnalyticsResponseDTO,
+  StudentChurnRiskDTO,
+  TeacherPerformanceDTO,
 } from '../dto';
 import { CommentAuthorRole } from '../../domain';
 import { OrganizationPermission } from '../../../org/domain';
 
+@ApiTags('Progress & Analytics')
 @Controller()
 @UseGuards(AuthGuard, OrganizationPermissionGuard)
 export class ProgressController {
@@ -150,6 +155,7 @@ export class ProgressController {
 
   @Get('orgs/:orgId/analytics')
   @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
+  @ApiOkResponse({ type: OrgAnalyticsResponseDTO })
   async getOrgAnalytics(
     @Param('orgId') orgId: string,
     @Query('date') dateStr?: string,
@@ -160,12 +166,14 @@ export class ProgressController {
 
   @Get('orgs/:orgId/analytics/churn-risk')
   @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
+  @ApiOkResponse({ type: [StudentChurnRiskDTO] })
   async getStudentChurnRisk(@Param('orgId') orgId: string) {
     return this.progressService.getStudentChurnRisk(orgId);
   }
 
   @Get('orgs/:orgId/analytics/teacher-performance')
   @RequireOrganizationPermissions(OrganizationPermission.ANALYTICS_READ)
+  @ApiOkResponse({ type: [TeacherPerformanceDTO] })
   async getTeacherPerformance(@Param('orgId') orgId: string) {
     return this.progressService.getTeacherPerformance(orgId);
   }
