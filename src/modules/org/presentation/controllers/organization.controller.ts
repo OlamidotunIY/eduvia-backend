@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse } from '@nestjs/swagger';
 import {
   AuthGuard,
   CorrelationId,
@@ -29,6 +30,8 @@ import {
   UpdatePolicyDTO,
   UpdateSubjectDTO,
   UpdateOrganizationRoleDTO,
+  OrganizationRoleResponseDTO,
+  OrganizationPermissionResponseDTO,
 } from '../dto';
 import { OrganizationService } from '../services';
 import { OrganizationPermission } from '../../domain';
@@ -290,12 +293,27 @@ export class OrganizationController {
 
   @UseGuards(AuthGuard, OrganizationPermissionGuard)
   @RequireOrganizationPermissions(OrganizationPermission.ROLES_READ)
+  @ApiOkResponse({ type: [OrganizationRoleResponseDTO] })
   @Get(':organizationId/roles')
   async getRoles(
     @CurrentUser() currentUser: CurrentUserPayload,
     @Param('organizationId') organizationId: string,
-  ) {
+  ): Promise<OrganizationRoleResponseDTO[]> {
     return this.organizationService.getRoles(organizationId, currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.ROLES_READ)
+  @ApiOkResponse({ type: [OrganizationPermissionResponseDTO] })
+  @Get(':organizationId/permissions')
+  async getPermissions(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+  ): Promise<OrganizationPermissionResponseDTO[]> {
+    return this.organizationService.getPermissions(
+      organizationId,
+      currentUser.userId,
+    );
   }
 
   @UseGuards(AuthGuard, OrganizationPermissionGuard)

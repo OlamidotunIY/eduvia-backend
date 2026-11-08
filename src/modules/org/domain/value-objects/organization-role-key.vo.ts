@@ -4,4 +4,5 @@ export enum OrganizationRoleKey {
   LEAD_TEACHER = 'lead_teacher',
   TEACHER = 'teacher',
   TEACHING_ASSISTANT = 'teaching_assistant',
+  ACADEMIC_COORDINATOR = 'academic_coordinator',
 }

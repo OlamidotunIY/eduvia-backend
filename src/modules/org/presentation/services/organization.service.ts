@@ -38,6 +38,7 @@ import {
   GetOrganizationBySlugQuery,
   GetOrganizationMembersQuery,
   GetOrganizationRolesQuery,
+  GetOrganizationPermissionsQuery,
   GetOrganizationSubjectsQuery,
   GetTeacherApplicationsQuery,
   ListMarketplaceOrganizationsQuery,
@@ -301,6 +302,12 @@ export class OrganizationService {
   async getRoles(orgId: string, callerUserId: string) {
     return this.queryBus.execute(
       new GetOrganizationRolesQuery(orgId, callerUserId),
+    );
+  }
+
+  async getPermissions(orgId: string, callerUserId: string) {
+    return this.queryBus.execute(
+      new GetOrganizationPermissionsQuery(orgId, callerUserId),
     );
   }
 

@@ -35,6 +35,7 @@ import {
   GetOrganizationBySlugHandler,
   GetOrganizationMembersHandler,
   GetOrganizationRolesHandler,
+  GetOrganizationPermissionsHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
   ListMarketplaceOrganizationsHandler,
@@ -97,6 +98,7 @@ const queryHandlers = [
   GetTeacherApplicationsHandler,
   GetOrganizationMembersHandler,
   GetOrganizationRolesHandler,
+  GetOrganizationPermissionsHandler,
   ListMarketplaceOrganizationsHandler,
 ];
 
