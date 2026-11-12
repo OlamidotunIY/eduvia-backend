@@ -165,4 +165,19 @@ export class PrismaConversationRepository
 
     return record ? this.conversationMapper.toDomain(record) : null;
   }
+
+  public async findByClassroomId(classroomId: string): Promise<Conversation | null> {
+    const record = await this.prisma.conversation.findFirst({
+      where: {
+        classroomId,
+      },
+      include: {
+        messages: {
+          orderBy: { sentAt: 'asc' },
+        },
+      },
+    });
+
+    return record ? this.conversationMapper.toDomain(record) : null;
+  }
 }

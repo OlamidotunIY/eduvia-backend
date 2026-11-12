@@ -36,6 +36,7 @@ export class ConversationsService {
         participants,
         dto.studentId,
         dto.parentId,
+        dto.classroomId,
         dto.subject,
       ),
     );

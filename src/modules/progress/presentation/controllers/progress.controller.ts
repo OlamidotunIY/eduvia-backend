@@ -177,4 +177,38 @@ export class ProgressController {
   async getTeacherPerformance(@Param('orgId') orgId: string) {
     return this.progressService.getTeacherPerformance(orgId);
   }
+
+  @Get('orgs/:orgId/progress/students')
+  @RequireOrganizationPermissions(OrganizationPermission.PROGRESS_READ)
+  async getOrgStudentsProgress(
+    @Param('orgId') orgId: string,
+    @Query('classroomId') classroomId?: string,
+    @Query('subjectId') subjectId?: string,
+    @Query('search') search?: string,
+    @Query('masteryTier') masteryTier?: string,
+  ) {
+    return this.progressService.getOrgStudentsProgress(orgId, {
+      classroomId,
+      subjectId,
+      search,
+      masteryTier,
+    });
+  }
+
+  @Get('orgs/:orgId/students/progress')
+  @RequireOrganizationPermissions(OrganizationPermission.PROGRESS_READ)
+  async getOrgStudentsProgressAlias(
+    @Param('orgId') orgId: string,
+    @Query('classroomId') classroomId?: string,
+    @Query('subjectId') subjectId?: string,
+    @Query('search') search?: string,
+    @Query('masteryTier') masteryTier?: string,
+  ) {
+    return this.progressService.getOrgStudentsProgress(orgId, {
+      classroomId,
+      subjectId,
+      search,
+      masteryTier,
+    });
+  }
 }

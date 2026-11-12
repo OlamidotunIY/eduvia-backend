@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Post,
@@ -14,6 +15,7 @@ import {
 } from '@modules/shared';
 import { ConversationsService } from '../services/conversations.service';
 import { CreateConversationDto, SendMessageDto } from '../dto';
+import { ConversationType } from '../../domain';
 
 @Controller('conversations')
 @UseGuards(AuthGuard)
@@ -35,6 +37,15 @@ export class ConversationsController {
     @Body() dto: CreateConversationDto,
   ) {
     const userId = user.userId ?? (user as any).id;
+    const userType = user.userType ?? (user as any).type;
+
+    // Enforce messaging rule: teachers cannot directly message parents
+    if (userType === 'teacher' && (dto.type === ConversationType.parent_admin || dto.parentId)) {
+      throw new ForbiddenException(
+        'Teachers are not permitted to directly message parents from the platform. Communication is restricted to students or classroom chatrooms.',
+      );
+    }
+
     return this.conversationsService.createConversation(userId, dto);
   }
 

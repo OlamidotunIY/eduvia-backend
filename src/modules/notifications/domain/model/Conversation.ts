@@ -24,6 +24,7 @@ export interface ConversationProps {
   participants: string[];
   studentId: string | null;
   parentId: string | null;
+  classroomId?: string | null;
   subject: string | null;
   status: ConversationStatus;
   lastMessageAt: Date | null;
@@ -38,6 +39,7 @@ export class Conversation extends AggregateRoot<ConversationId> {
   private _participants: string[];
   private _studentId: string | null;
   private _parentId: string | null;
+  private _classroomId: string | null;
   private _subject: string | null;
   private _status: ConversationStatus;
   private _lastMessageAt: Date | null;
@@ -52,6 +54,7 @@ export class Conversation extends AggregateRoot<ConversationId> {
     this._participants = [...props.participants];
     this._studentId = props.studentId ?? null;
     this._parentId = props.parentId ?? null;
+    this._classroomId = props.classroomId ?? null;
     this._subject = props.subject ?? null;
     this._status = props.status;
     this._lastMessageAt = props.lastMessageAt ? new Date(props.lastMessageAt) : null;
@@ -68,6 +71,7 @@ export class Conversation extends AggregateRoot<ConversationId> {
       participants: string[];
       studentId?: string | null;
       parentId?: string | null;
+      classroomId?: string | null;
       subject?: string | null;
     },
     correlationId = 'conversation-starter',
@@ -75,7 +79,13 @@ export class Conversation extends AggregateRoot<ConversationId> {
     if (!props.orgId) {
       throw new BusinessRuleViolationError('Organization ID is required to start a conversation.');
     }
-    if (!props.participants || props.participants.length !== 2) {
+    if (props.type === ConversationType.classroom_group) {
+      if (!props.participants || props.participants.length < 1) {
+        throw new InvalidConversationParticipantsError(
+          'A classroom conversation must have at least one participant.',
+        );
+      }
+    } else if (!props.participants || props.participants.length !== 2) {
       throw new InvalidConversationParticipantsError(
         'A conversation must have exactly two participants.',
       );
@@ -103,6 +113,7 @@ export class Conversation extends AggregateRoot<ConversationId> {
       participants: props.participants,
       studentId: props.studentId ?? null,
       parentId: props.parentId ?? null,
+      classroomId: props.classroomId ?? null,
       subject: props.subject?.trim() ?? null,
       status: ConversationStatus.active,
       lastMessageAt: null,
@@ -208,12 +219,31 @@ export class Conversation extends AggregateRoot<ConversationId> {
     );
   }
 
+  public addParticipant(userId: string): void {
+    if (!this._participants.includes(userId)) {
+      this._participants.push(userId);
+      this.touch();
+    }
+  }
+
+  public removeParticipant(userId: string): void {
+    const idx = this._participants.indexOf(userId);
+    if (idx !== -1) {
+      this._participants.splice(idx, 1);
+      this.touch();
+    }
+  }
+
   public get orgId(): string {
     return this._orgId;
   }
 
   public get type(): ConversationType {
     return this._type;
+  }
+
+  public get classroomId(): string | null {
+    return this._classroomId;
   }
 
   public get participants(): string[] {

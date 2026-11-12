@@ -15,4 +15,6 @@ export abstract class IConversationRepository extends BaseRepository<Conversatio
     orgId: string,
     parentId: string,
   ): Promise<Conversation | null>;
+
+  public abstract findByClassroomId(classroomId: string): Promise<Conversation | null>;
 }

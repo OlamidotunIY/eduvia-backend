@@ -79,6 +79,7 @@ model Conversation {
   participants  Json
   studentId     String?            @map("student_id")
   parentId      String?            @map("parent_id")
+  classroomId   String?            @map("classroom_id")
   subject       String?
   status        ConversationStatus @default(active)
   lastMessageAt DateTime?          @map("last_message_at")
@@ -90,12 +91,14 @@ model Conversation {
   @@index([orgId])
   @@index([studentId])
   @@index([parentId])
+  @@index([classroomId])
   @@map("conversations")
 }
 
 enum ConversationType {
   student_teacher
   parent_admin
+  classroom_group
 }
 
 enum ConversationStatus {
