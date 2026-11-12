@@ -53,6 +53,7 @@ export enum DevicePlatform {
 export enum ConversationType {
   student_teacher = 'student_teacher',
   parent_admin = 'parent_admin',
+  classroom_group = 'classroom_group',
 }
 
 export enum ConversationStatus {

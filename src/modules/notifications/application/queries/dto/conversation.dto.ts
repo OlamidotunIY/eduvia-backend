@@ -33,6 +33,7 @@ export class ConversationSummaryDto {
   participants: string[];
   studentId: string | null;
   parentId: string | null;
+  classroomId: string | null;
   subject: string | null;
   status: string;
   lastMessageAt: string | null;
@@ -47,6 +48,7 @@ export class ConversationSummaryDto {
     dto.participants = entity.participants;
     dto.studentId = entity.studentId;
     dto.parentId = entity.parentId;
+    dto.classroomId = entity.classroomId;
     dto.subject = entity.subject;
     dto.status = entity.status;
     dto.lastMessageAt = entity.lastMessageAt ? entity.lastMessageAt.toISOString() : null;

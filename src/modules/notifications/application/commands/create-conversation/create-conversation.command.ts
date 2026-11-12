@@ -8,6 +8,7 @@ export class CreateConversationCommand implements ICommand {
     public readonly participants: string[],
     public readonly studentId?: string | null,
     public readonly parentId?: string | null,
+    public readonly classroomId?: string | null,
     public readonly subject?: string | null,
   ) {}
 }

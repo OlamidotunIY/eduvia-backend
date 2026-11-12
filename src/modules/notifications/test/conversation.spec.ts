@@ -149,4 +149,28 @@ describe('Conversation Aggregate Root', () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toBeInstanceOf(ConversationReopenedEvent);
   });
+
+  it('should successfully create a classroom_group conversation with single teacher participant and allow adding students', () => {
+    const classroomId = '018f9210-9c24-7123-8345-abcdef123470';
+    const conversation = Conversation.create({
+      orgId,
+      type: ConversationType.classroom_group,
+      participants: [teacherId],
+      classroomId,
+      subject: 'Grade 5 Mathematics Classroom',
+    });
+
+    expect(conversation).toBeDefined();
+    expect(conversation.type).toBe(ConversationType.classroom_group);
+    expect(conversation.classroomId).toBe(classroomId);
+    expect(conversation.participants).toEqual([teacherId]);
+
+    // Add student
+    conversation.addParticipant(studentId);
+    expect(conversation.participants).toEqual([teacherId, studentId]);
+
+    // Adding same participant should not duplicate
+    conversation.addParticipant(studentId);
+    expect(conversation.participants).toEqual([teacherId, studentId]);
+  });
 });

@@ -6,5 +6,6 @@ export class CreateConversationDto {
   participants: string[];
   studentId?: string | null;
   parentId?: string | null;
+  classroomId?: string | null;
   subject?: string | null;
 }

@@ -35,12 +35,22 @@ export class CreateConversationHandler implements ICommandHandler<CreateConversa
       }
     }
 
+    if (command.type === ConversationType.classroom_group && command.classroomId) {
+      const existing = await this.conversationRepository.findByClassroomId(
+        command.classroomId,
+      );
+      if (existing) {
+        return existing.id.toString();
+      }
+    }
+
     const conversation = Conversation.create({
       orgId: command.orgId,
       type: command.type,
       participants: command.participants,
       studentId: command.studentId,
       parentId: command.parentId,
+      classroomId: command.classroomId,
       subject: command.subject,
     });
 

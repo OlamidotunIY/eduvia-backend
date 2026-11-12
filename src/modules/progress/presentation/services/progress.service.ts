@@ -16,6 +16,8 @@ import {
   GetOrgAnalyticsQuery,
   GetStudentChurnRiskQuery,
   GetTeacherPerformanceQuery,
+  GetOrgStudentsProgressQuery,
+  type GetOrgStudentsProgressFilter,
 } from '../../application/queries';
 import {
   CreateLessonReportDto,
@@ -165,5 +167,14 @@ export class ProgressService {
 
   async getTeacherPerformance(orgId: string) {
     return this.queryBus.execute(new GetTeacherPerformanceQuery(orgId));
+  }
+
+  async getOrgStudentsProgress(
+    orgId: string,
+    filters?: GetOrgStudentsProgressFilter,
+  ) {
+    return this.queryBus.execute(
+      new GetOrgStudentsProgressQuery(orgId, filters),
+    );
   }
 }

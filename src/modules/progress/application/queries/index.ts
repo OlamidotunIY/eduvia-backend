@@ -5,6 +5,7 @@ import { GetStudentLessonHistoryHandler } from './get-student-lesson-history';
 import { GetOrgAnalyticsHandler } from './get-org-analytics';
 import { GetStudentChurnRiskHandler } from './get-student-churn-risk';
 import { GetTeacherPerformanceHandler } from './get-teacher-performance';
+import { GetOrgStudentsProgressHandler } from './get-org-students-progress';
 
 export * from './get-lesson-report';
 export * from './get-lesson-report-by-lesson';
@@ -13,6 +14,7 @@ export * from './get-student-lesson-history';
 export * from './get-org-analytics';
 export * from './get-student-churn-risk';
 export * from './get-teacher-performance';
+export * from './get-org-students-progress';
 
 export const QUERY_HANDLERS = [
   GetLessonReportHandler,
@@ -22,4 +24,5 @@ export const QUERY_HANDLERS = [
   GetOrgAnalyticsHandler,
   GetStudentChurnRiskHandler,
   GetTeacherPerformanceHandler,
+  GetOrgStudentsProgressHandler,
 ];

@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { PrismaService } from '@modules/shared';
 import { CreateClassroomCommand } from './create-classroom.command';
 import { CreateClassroomResult } from './create-classroom.result';
 import {
@@ -16,6 +18,7 @@ export class CreateClassroomHandler implements ICommandHandler<
   constructor(
     private readonly classroomRepository: IClassroomRepository,
     private readonly materializer: ClassroomLessonMaterializer,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(
@@ -44,6 +47,28 @@ export class CreateClassroomHandler implements ICommandHandler<
     });
 
     await this.classroomRepository.save(classroom);
+
+    // Auto-create classroom chatroom with primary teacher as initial participant
+    try {
+      const existingConv = await this.prisma.conversation.findFirst({
+        where: { classroomId: classroom.id.value },
+      });
+      if (!existingConv) {
+        await this.prisma.conversation.create({
+          data: {
+            id: randomUUID(),
+            orgId: payload.orgId,
+            type: 'classroom_group' as any,
+            classroomId: classroom.id.value,
+            subject: payload.name,
+            participants: [payload.primaryTeacherId],
+            status: 'active',
+          },
+        });
+      }
+    } catch {
+      // Ensure chatroom provisioning does not block classroom creation
+    }
 
     // Materialize eight-week horizon of occurrences synchronously on creation
     await this.materializer.materializeClassroom(classroom, {
