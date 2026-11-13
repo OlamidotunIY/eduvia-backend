@@ -27,11 +27,14 @@ export class PrismaTeacherApplicationRepository
   }
 
   public async findByOrganizationId(
-    orgId: OrganizationId |string,
+    orgId: OrganizationId | string,
   ): Promise<TeacherApplication[]> {
     const records = await this.delegate.findMany({
       where: {
         orgId: String(orgId),
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -44,6 +47,30 @@ export class PrismaTeacherApplicationRepository
     const record = await this.delegate.findFirst({
       where: {
         applicantUserId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!record) {
+      return null;
+    }
+
+    return this.mapper.toDomain(record);
+  }
+
+  public async findByOrgIdAndApplicantUserId(
+    orgId: OrganizationId | string,
+    applicantUserId: string,
+  ): Promise<TeacherApplication | null> {
+    const record = await this.delegate.findFirst({
+      where: {
+        orgId: String(orgId),
+        applicantUserId,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 

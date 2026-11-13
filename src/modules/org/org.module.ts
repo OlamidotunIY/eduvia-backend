@@ -30,6 +30,7 @@ import {
   UpdateOrganizationPolicyHandler,
   UpdateOrganizationProfileHandler,
   UpdateOrganizationSubjectHandler,
+  UpdateTeacherApplicationSettingsHandler,
 } from './application/commands';
 import {
   GetOrganizationBySlugHandler,
@@ -38,6 +39,7 @@ import {
   GetOrganizationPermissionsHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
+  GetTeacherApplicationSettingsHandler,
   ListMarketplaceOrganizationsHandler,
 } from './application/queries';
 import { OrganizationInvitationMapper } from './infrastructure/mappers/organization-invitation.mapper';
@@ -90,12 +92,14 @@ const commandHandlers = [
   ProvisionDefaultOrganizationRolesHandler,
   CreateOrganizationRoleHandler,
   UpdateOrganizationRoleHandler,
+  UpdateTeacherApplicationSettingsHandler,
 ];
 
 const queryHandlers = [
   GetOrganizationBySlugHandler,
   GetOrganizationSubjectsHandler,
   GetTeacherApplicationsHandler,
+  GetTeacherApplicationSettingsHandler,
   GetOrganizationMembersHandler,
   GetOrganizationRolesHandler,
   GetOrganizationPermissionsHandler,

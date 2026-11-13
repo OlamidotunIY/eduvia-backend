@@ -11,8 +11,10 @@ import { CreateOrganizationMembershipCommand } from '../../../application/comman
 import { ProvisionDefaultOrganizationRolesCommand } from '../../../application/commands/provision-default-organization-roles';
 import {
   InvitationRole,
+  legacyRoleToRoleKey,
   OrganizationId,
   OrganizationRole,
+  OrganizationRoleId,
   OrganizationRoleKey,
 } from '../../../domain';
 
@@ -84,17 +86,29 @@ export class OrganizationEventProcessor extends WorkerHost {
     if (job.name === TeacherApplicationApprovedEvent.name) {
       const payload = job.data
         .payload as TeacherApplicationApprovedEvent.Payload;
-      const teacherRole = await this.roleRepository.findByOrgIdAndKey(
-        payload.orgId,
-        OrganizationRoleKey.TEACHER,
-      );
+      const orgIdStr =
+        typeof payload.orgId === 'string'
+          ? payload.orgId
+          : ((payload.orgId as { value?: string })?.value ?? String(payload.orgId));
+      const assignedRole = payload.role ?? OrganizationRole.TEACHER;
+      let resolvedRoleId: OrganizationRoleId | undefined;
+      if (payload.roleId) {
+        resolvedRoleId = OrganizationRoleId.from(payload.roleId);
+      } else {
+        const matchedRole = await this.roleRepository.findByOrgIdAndKey(
+          orgIdStr,
+          legacyRoleToRoleKey(assignedRole),
+        );
+        resolvedRoleId = matchedRole?.id;
+      }
+
       await this.commandBus.execute(
         new CreateOrganizationMembershipCommand({
-          orgId: OrganizationId.from(payload.orgId),
+          orgId: OrganizationId.from(orgIdStr),
           userId: payload.applicantUserId,
-          role: OrganizationRole.TEACHER,
-          roleId: teacherRole?.id,
-          subjects: payload.approvedSubjects,
+          role: assignedRole,
+          roleId: resolvedRoleId,
+          subjects: payload.approvedSubjects ?? [],
           activateForUserIfUnset: true,
           correlationId: job.data.correlationId,
         }),
