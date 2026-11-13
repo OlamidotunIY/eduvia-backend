@@ -16,4 +16,6 @@ export abstract class IGoogleOAuthPort {
     code: string;
     codeVerifier: string;
   }): Promise<GoogleOAuthIdentity>;
+
+  abstract verifyIdToken(idToken: string): Promise<GoogleOAuthIdentity>;
 }

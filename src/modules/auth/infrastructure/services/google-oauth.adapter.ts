@@ -55,20 +55,66 @@ export class GoogleOAuthAdapter implements IGoogleOAuthPort {
       { headers: { authorization: `Bearer ${accessToken}` } },
     );
     const profile = (await profileResponse.json()) as Record<string, unknown>;
+    if (!profileResponse.ok) {
+      throw new UnauthorizedException(
+        'Google must provide a verified email address and full name',
+      );
+    }
+    return this.extractIdentity(profile);
+  }
+
+  async verifyIdToken(idToken: string): Promise<GoogleOAuthIdentity> {
+    if (!idToken || typeof idToken !== 'string') {
+      throw new UnauthorizedException('Google ID token is required');
+    }
+
+    const { clientId } = this.config();
+    const tokenInfoUrl = new URL('https://oauth2.googleapis.com/tokeninfo');
+    tokenInfoUrl.searchParams.set('id_token', idToken);
+
+    const response = await fetch(tokenInfoUrl);
+    const payload = (await response.json()) as Record<string, unknown>;
+    if (!response.ok) {
+      throw new UnauthorizedException(
+        typeof payload.error_description === 'string'
+          ? payload.error_description
+          : 'Google ID token was rejected',
+      );
+    }
+
+    const issuer = typeof payload.iss === 'string' ? payload.iss : '';
+    const audience = typeof payload.aud === 'string' ? payload.aud : '';
+    const allowedAudiences = [
+      clientId,
+      ...(process.env['GOOGLE_OAUTH_MOBILE_CLIENT_IDS'] ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ];
+
+    if (
+      (issuer !== 'https://accounts.google.com' &&
+        issuer !== 'accounts.google.com') ||
+      !allowedAudiences.includes(audience)
+    ) {
+      throw new UnauthorizedException(
+        'Google ID token does not match this Eduvia application',
+      );
+    }
+
+    return this.extractIdentity(payload);
+  }
+
+  private extractIdentity(profile: Record<string, unknown>): GoogleOAuthIdentity {
     const subject = typeof profile.sub === 'string' ? profile.sub : undefined;
     const email = typeof profile.email === 'string' ? profile.email : undefined;
+    const emailVerified =
+      profile.email_verified === true || profile.email_verified === 'true';
     const firstName =
       typeof profile.given_name === 'string' ? profile.given_name.trim() : '';
     const lastName =
       typeof profile.family_name === 'string' ? profile.family_name.trim() : '';
-    if (
-      !profileResponse.ok ||
-      !subject ||
-      !email ||
-      profile.email_verified !== true ||
-      !firstName ||
-      !lastName
-    ) {
+    if (!subject || !email || !emailVerified || !firstName || !lastName) {
       throw new UnauthorizedException(
         'Google must provide a verified email address and full name',
       );
