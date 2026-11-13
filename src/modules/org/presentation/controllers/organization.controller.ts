@@ -19,6 +19,7 @@ import {
   type CurrentUserPayload,
 } from '@modules/shared';
 import {
+  ApproveApplicationDTO,
   ChangeMemberRoleDTO,
   CreateOrganizationRoleDTO,
   CreateOrganizationDTO,
@@ -26,15 +27,18 @@ import {
   ReceiveTeacherApplicationDTO,
   RejectApplicationDTO,
   SendInvitationDTO,
+  TeacherApplicationSettingsDTO,
   UpdateOrganizationDTO,
   UpdatePolicyDTO,
   UpdateSubjectDTO,
   UpdateOrganizationRoleDTO,
+  UpdateTeacherApplicationSettingsDTO,
   OrganizationRoleResponseDTO,
   OrganizationPermissionResponseDTO,
 } from '../dto';
 import { OrganizationService } from '../services';
-import { OrganizationPermission } from '../../domain';
+import { ApplicationStatus, OrganizationPermission } from '../../domain';
+import { TeacherApplicationDTO } from '../../application/queries';
 
 @Controller('organizations')
 export class OrganizationController {
@@ -198,14 +202,49 @@ export class OrganizationController {
 
   @UseGuards(AuthGuard, OrganizationPermissionGuard)
   @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_READ)
+  @Get(':organizationId/applications/settings')
+  @ApiOkResponse({ type: TeacherApplicationSettingsDTO })
+  async getApplicationSettings(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+  ) {
+    return this.organizationService.getApplicationSettings(
+      organizationId,
+      currentUser.userId,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_REVIEW)
+  @Patch(':organizationId/applications/settings')
+  @ApiOkResponse({ type: TeacherApplicationSettingsDTO })
+  async updateApplicationSettings(
+    @CurrentUser() currentUser: CurrentUserPayload,
+    @Param('organizationId') organizationId: string,
+    @Body() dto: UpdateTeacherApplicationSettingsDTO,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.organizationService.updateApplicationSettings(
+      organizationId,
+      currentUser.userId,
+      dto,
+      correlationId,
+    );
+  }
+
+  @UseGuards(AuthGuard, OrganizationPermissionGuard)
+  @RequireOrganizationPermissions(OrganizationPermission.APPLICATIONS_READ)
   @Get(':organizationId/applications')
+  @ApiOkResponse({ type: TeacherApplicationDTO, isArray: true })
   async getApplications(
     @CurrentUser() currentUser: CurrentUserPayload,
     @Param('organizationId') organizationId: string,
+    @Query('status') status?: ApplicationStatus,
   ) {
     return this.organizationService.getApplications(
       organizationId,
       currentUser.userId,
+      status,
     );
   }
 
@@ -232,12 +271,14 @@ export class OrganizationController {
     @CurrentUser() currentUser: CurrentUserPayload,
     @Param('organizationId') organizationId: string,
     @Param('id') id: string,
+    @Body() dto: ApproveApplicationDTO,
     @CorrelationId() correlationId: string,
   ) {
     return this.organizationService.approveApplication(
       organizationId,
       id,
       currentUser.userId,
+      dto,
       correlationId,
     );
   }

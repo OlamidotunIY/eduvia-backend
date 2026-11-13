@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
+  ApproveApplicationDTO,
   ChangeMemberRoleDTO,
   CreateOrganizationRoleDTO,
   CreateOrganizationDTO,
@@ -12,6 +13,7 @@ import {
   UpdatePolicyDTO,
   UpdateSubjectDTO,
   UpdateOrganizationRoleDTO,
+  UpdateTeacherApplicationSettingsDTO,
 } from '../dto';
 import {
   AcceptOrganizationInvitationByTokenCommand,
@@ -33,6 +35,7 @@ import {
   UpdateOrganizationProfileCommand,
   UpdateOrganizationSubjectCommand,
   UpdateOrganizationRoleCommand,
+  UpdateTeacherApplicationSettingsCommand,
 } from '../../application/commands';
 import {
   GetOrganizationBySlugQuery,
@@ -41,8 +44,10 @@ import {
   GetOrganizationPermissionsQuery,
   GetOrganizationSubjectsQuery,
   GetTeacherApplicationsQuery,
+  GetTeacherApplicationSettingsQuery,
   ListMarketplaceOrganizationsQuery,
 } from '../../application/queries';
+import { ApplicationStatus } from '../../domain';
 
 @Injectable()
 export class OrganizationService {
@@ -89,6 +94,10 @@ export class OrganizationService {
 
   async listMarketplaceOrganizations() {
     return this.queryBus.execute(new ListMarketplaceOrganizationsQuery());
+  }
+
+  async listMarketplaceOrganizationSubjects(orgId: string) {
+    return this.queryBus.execute(new GetOrganizationSubjectsQuery(orgId, true));
   }
 
   async updateProfile(
@@ -213,7 +222,7 @@ export class OrganizationService {
       new ReceiveTeacherApplicationCommand({
         orgId: organizationId,
         applicantUserId: userId,
-        appliedSubjects: dto.appliedSubjects,
+        appliedSubjects: dto.appliedSubjects ?? [],
         coverLetter: dto.coverLetter,
         qualifications: dto.qualifications,
         correlationId,
@@ -221,9 +230,36 @@ export class OrganizationService {
     );
   }
 
-  async getApplications(orgId: string, callerUserId: string) {
+  async getApplications(
+    orgId: string,
+    callerUserId: string,
+    status?: ApplicationStatus,
+  ) {
     return this.queryBus.execute(
-      new GetTeacherApplicationsQuery(orgId, callerUserId),
+      new GetTeacherApplicationsQuery(orgId, callerUserId, status),
+    );
+  }
+
+  async getApplicationSettings(orgId: string, callerUserId: string) {
+    return this.queryBus.execute(
+      new GetTeacherApplicationSettingsQuery(orgId, callerUserId),
+    );
+  }
+
+  async updateApplicationSettings(
+    orgId: string,
+    callerUserId: string,
+    dto: UpdateTeacherApplicationSettingsDTO,
+    correlationId: string,
+  ) {
+    return this.commandBus.execute(
+      new UpdateTeacherApplicationSettingsCommand({
+        orgId,
+        callerUserId,
+        acceptingTeachers: dto.acceptingTeachers,
+        marketplaceListed: dto.marketplaceListed,
+        correlationId,
+      }),
     );
   }
 
@@ -231,6 +267,7 @@ export class OrganizationService {
     orgId: string,
     applicationId: string,
     callerUserId: string,
+    dto: ApproveApplicationDTO | undefined,
     correlationId: string,
   ) {
     return this.commandBus.execute(
@@ -239,6 +276,9 @@ export class OrganizationService {
         orgId,
         reviewerUserId: callerUserId,
         correlationId,
+        approvedSubjects: dto?.approvedSubjects,
+        role: dto?.role,
+        roleId: dto?.roleId,
       }),
     );
   }

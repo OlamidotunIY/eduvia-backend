@@ -6,7 +6,7 @@ import { CreateBoardCommand } from '../../../application/commands';
 import { BoardDocumentService } from '../../sharedb';
 import { BoardGateway } from '@modules/websocket';
 
-@Processor('classroom-events')
+@Processor('board-events')
 export class BoardEventProcessor extends WorkerHost {
   constructor(
     private readonly commandBus: CommandBus,

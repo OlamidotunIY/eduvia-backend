@@ -1,4 +1,4 @@
-const OUTBOX_EVENT_ROUTES = new Map<string, string>([
+const OUTBOX_EVENT_ROUTES = new Map<string, string | readonly string[]>([
   ['UserRegistrationRequestedEvent', 'user-events'],
   ['UserRegistrationCreatedEvent', 'auth-events'],
   ['AuthAccountCreatedEvent', 'user-events'],
@@ -23,10 +23,10 @@ const OUTBOX_EVENT_ROUTES = new Map<string, string>([
   ['ClassroomRecurrenceUpdatedEvent', 'classroom-events'],
   ['StudentEnrolledInClassroomEvent', 'classroom-events'],
   ['StudentRemovedFromClassroomEvent', 'classroom-events'],
-  ['LessonCreatedEvent', 'classroom-events'],
+  ['LessonCreatedEvent', 'board-events'],
   ['LessonScheduledEvent', 'classroom-events'],
   ['LessonStartedEvent', 'classroom-events'],
-  ['LessonCompletedEvent', 'classroom-events'],
+  ['LessonCompletedEvent', ['assessment-events', 'progress-events']],
   ['LessonReportedEvent', 'classroom-events'],
   ['LessonArchivedEvent', 'classroom-events'],
   ['LessonCancelledEvent', 'classroom-events'],

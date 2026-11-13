@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@modules/shared';
-import { ApplicationStatus, OrganizationId, TeacherApplicationId } from '../value-objects';
+import { ApplicationStatus, OrganizationId, OrganizationRole, TeacherApplicationId } from '../value-objects';
 import { TeacherApplicationReceivedEvent } from '../events/teacher-application-received.event';
 import { TeacherApplicationApprovedEvent } from '../events/teacher-application-approved.event';
 import { TeacherApplicationRejectedEvent } from '../events/teacher-application-rejected.event';
@@ -106,10 +106,22 @@ export class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
     return new TeacherApplication(params);
   }
 
-  public approve(reviewerId: string, correlationId: string): void {
+  public approve(
+    reviewerId: string,
+    correlationId: string,
+    options?: {
+      approvedSubjects?: string[];
+      role?: OrganizationRole;
+      roleId?: string | null;
+    },
+  ): void {
     if (this._status !== ApplicationStatus.PENDING_REVIEW) {
       throw new OrganizationInvariantError('Only a pending application can be approved');
     }
+
+    const approvedSubjects = options?.approvedSubjects ?? this.appliedSubjects;
+    const assignedRole = options?.role ?? OrganizationRole.TEACHER;
+    const assignedRoleId = options?.roleId ?? null;
 
     this._status = ApplicationStatus.APPROVED;
     this._reviewedBy = reviewerId;
@@ -123,7 +135,9 @@ export class TeacherApplication extends AggregateRoot<TeacherApplicationId> {
           this.getId(),
           this.orgId,
           this.applicantUserId,
-          this.appliedSubjects,
+          approvedSubjects,
+          assignedRole,
+          assignedRoleId,
         ),
         correlationId,
       ),

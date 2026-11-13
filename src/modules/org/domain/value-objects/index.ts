@@ -12,3 +12,4 @@ export * from "./org-invitation-status.v0"
 export * from './organization-role-id.vo';
 export * from './organization-permission.vo';
 export * from './organization-role-key.vo';
+export * from './org-role-mapping';

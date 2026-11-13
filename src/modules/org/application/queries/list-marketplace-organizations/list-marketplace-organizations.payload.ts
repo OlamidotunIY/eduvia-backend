@@ -1,3 +1,9 @@
+export interface MarketplaceSubjectDTO {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 export interface MarketplaceOrganizationDTO {
   id: string;
   name: string;
@@ -8,4 +14,5 @@ export interface MarketplaceOrganizationDTO {
   country: string;
   timezone: string;
   acceptingTeachers: boolean;
+  subjects?: MarketplaceSubjectDTO[];
 }

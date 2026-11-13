@@ -1,7 +1,15 @@
+import { Optional } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ReceiveTeacherApplicationCommand } from './receive-teacher-application.command';
 import { ReceiveTeacherApplicationResult } from './receive-teacher-application.result';
-import { IOrganizationRepository, OrganizationInvariantError, OrganizationNotActiveError, OrganizationNotFound } from '../../../domain';
+import {
+  ApplicationStatus,
+  IOrganizationMembershipRepository,
+  IOrganizationRepository,
+  OrganizationInvariantError,
+  OrganizationNotActiveError,
+  OrganizationNotFound,
+} from '../../../domain';
 import { ITeacherApplicationRepository } from '../../../domain/repository/teacher-application.repository';
 import { TeacherApplication } from '../../../domain/entities';
 
@@ -14,6 +22,8 @@ export class ReceiveTeacherApplicationHandler implements ICommandHandler<
   constructor(
     private readonly organizationRepository: IOrganizationRepository,
     private readonly teacherApplicationRepository: ITeacherApplicationRepository,
+    @Optional()
+    private readonly membershipRepository?: IOrganizationMembershipRepository,
   ) {}
 
   async execute(
@@ -39,21 +49,46 @@ export class ReceiveTeacherApplicationHandler implements ICommandHandler<
       throw new OrganizationInvariantError('Organization is not accepting teacher applications');
     }
 
+    if (this.membershipRepository) {
+      const existingMembership = await this.membershipRepository.findByOrgIdAndUserId(
+        payload.orgId,
+        payload.applicantUserId,
+      );
+      if (existingMembership?.isActive()) {
+        throw new OrganizationInvariantError('You are already an active member of this organization');
+      }
+    }
+
     const existingApplication =
-      await this.teacherApplicationRepository.findByApplicantUserId(
+      await this.teacherApplicationRepository.findByOrgIdAndApplicantUserId(
+        payload.orgId,
         payload.applicantUserId,
       );
 
-    if (existingApplication) {
-      throw new OrganizationInvariantError('Teacher already has an application');
+    if (
+      existingApplication &&
+      (existingApplication.status === ApplicationStatus.PENDING_REVIEW ||
+        existingApplication.status === ApplicationStatus.APPROVED)
+    ) {
+      throw new OrganizationInvariantError('You already have an active application for this organization');
     }
+
+    const appliedSubjects = Array.from(
+      new Set(
+        (payload.appliedSubjects ?? [])
+          .map((subject) => subject.trim())
+          .filter(Boolean),
+      ),
+    );
+    const coverLetter = payload.coverLetter?.trim() || null;
+    const qualifications = payload.qualifications?.trim() || null;
 
     const application = TeacherApplication.create({
       orgId: organization.id,
       applicantUserId: payload.applicantUserId,
-      appliedSubjects: payload.appliedSubjects,
-      coverLetter: payload.coverLetter,
-      qualifications: payload.qualifications,
+      appliedSubjects,
+      coverLetter,
+      qualifications,
       correlationId: payload.correlationId,
     });
 

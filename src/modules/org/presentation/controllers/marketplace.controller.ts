@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from '../services';
 
@@ -13,5 +13,13 @@ export class MarketplaceController {
   })
   async listOrganizations() {
     return this.organizationService.listMarketplaceOrganizations();
+  }
+
+  @Get('organizations/:organizationId/subjects')
+  @ApiOperation({
+    summary: 'List active subjects offered by an organization for teacher applications',
+  })
+  async listOrganizationSubjects(@Param('organizationId') organizationId: string) {
+    return this.organizationService.listMarketplaceOrganizationSubjects(organizationId);
   }
 }

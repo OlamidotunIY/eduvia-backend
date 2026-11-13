@@ -13,4 +13,9 @@ export abstract class ITeacherApplicationRepository extends BaseRepository<
   public abstract findByApplicantUserId(
     applicantUserId: string,
   ): Promise<TeacherApplication | null>;
+
+  public abstract findByOrgIdAndApplicantUserId(
+    orgId: OrganizationId | string,
+    applicantUserId: string,
+  ): Promise<TeacherApplication | null>;
 }
