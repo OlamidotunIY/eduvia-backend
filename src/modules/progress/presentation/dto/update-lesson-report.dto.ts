@@ -7,4 +7,5 @@ export class UpdateLessonReportDto {
   homeworkSet?: string | null;
   nextSteps?: string | null;
   overallRating?: number | null;
+  parentCanView?: boolean;
 }

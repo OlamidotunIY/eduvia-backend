@@ -18,6 +18,10 @@ import {
   GetTeacherPerformanceQuery,
   GetOrgStudentsProgressQuery,
   type GetOrgStudentsProgressFilter,
+  GetOrgReportsQuery,
+  type GetOrgReportsFilter,
+  GetMissingReportLessonsQuery,
+  type GetMissingReportLessonsFilter,
 } from '../../application/queries';
 import {
   CreateLessonReportDto,
@@ -84,6 +88,7 @@ export class ProgressService {
         homeworkSet: dto.homeworkSet,
         nextSteps: dto.nextSteps,
         overallRating: dto.overallRating,
+        parentCanView: dto.parentCanView,
       }),
     );
   }
@@ -175,6 +180,19 @@ export class ProgressService {
   ) {
     return this.queryBus.execute(
       new GetOrgStudentsProgressQuery(orgId, filters),
+    );
+  }
+
+  async getOrgReports(orgId: string, filters?: GetOrgReportsFilter) {
+    return this.queryBus.execute(new GetOrgReportsQuery(orgId, filters));
+  }
+
+  async getMissingReportLessons(
+    orgId: string,
+    filters?: GetMissingReportLessonsFilter,
+  ) {
+    return this.queryBus.execute(
+      new GetMissingReportLessonsQuery(orgId, filters),
     );
   }
 }

@@ -33,6 +33,7 @@ export class UpdateLessonReportHandler
       homeworkSet: payload.homeworkSet,
       nextSteps: payload.nextSteps,
       overallRating: payload.overallRating,
+      parentCanView: payload.parentCanView,
     });
 
     await this.reportRepository.save(report);

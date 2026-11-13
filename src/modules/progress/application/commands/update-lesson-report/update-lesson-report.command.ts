@@ -8,6 +8,7 @@ export interface UpdateLessonReportPayload {
   homeworkSet?: string | null;
   nextSteps?: string | null;
   overallRating?: number | null;
+  parentCanView?: boolean;
 }
 
 export class UpdateLessonReportCommand {
