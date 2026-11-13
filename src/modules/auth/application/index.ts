@@ -46,6 +46,8 @@ export { ExchangeGoogleOAuthCommand } from './commands/exchange-google-oauth/exc
 export { ExchangeGoogleOAuthHandler } from './commands/exchange-google-oauth/exchange-google-oauth.handler';
 export type { ExchangeGoogleOAuthResult } from './commands/exchange-google-oauth/exchange-google-oauth.result';
 
+export * from './commands/authenticate-google-native';
+
 export * from './commands/start-email-registration';
 export * from './commands/finalize-registration';
 
