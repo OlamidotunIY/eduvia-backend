@@ -233,6 +233,7 @@ export class LessonReport extends AggregateRoot<LessonReportId> {
     homeworkSet?: string | null;
     nextSteps?: string | null;
     overallRating?: number | null;
+    parentCanView?: boolean;
   }): void {
     this.ensureNotArchived();
 
@@ -256,6 +257,9 @@ export class LessonReport extends AggregateRoot<LessonReportId> {
         throw new BusinessRuleViolationError('Overall rating must be between 1 and 5.');
       }
       this._overallRating = params.overallRating;
+    }
+    if (params.parentCanView !== undefined) {
+      this._parentCanView = params.parentCanView;
     }
 
     this.touch();

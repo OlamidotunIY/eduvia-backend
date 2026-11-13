@@ -29,6 +29,10 @@ import {
 } from '../dto';
 import { CommentAuthorRole } from '../../domain';
 import { OrganizationPermission } from '../../../org/domain';
+import {
+  OrgReportsResponseDto,
+  MissingReportLessonItemDto,
+} from '../../application/queries';
 
 @ApiTags('Progress & Analytics')
 @Controller()
@@ -45,6 +49,50 @@ export class ProgressController {
   ) {
     const requesterRole = user?.role === 'parent' ? 'parent' : 'teacher';
     return this.progressService.getReportByLesson(lessonId, requesterRole);
+  }
+
+  @Get('orgs/:orgId/reports')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_READ)
+  @ApiOkResponse({ type: OrgReportsResponseDto })
+  async getOrgReports(
+    @Param('orgId') orgId: string,
+    @Query('status') status?: string,
+    @Query('classroomId') classroomId?: string,
+    @Query('subjectId') subjectId?: string,
+    @Query('teacherId') teacherId?: string,
+    @Query('studentId') studentId?: string,
+    @Query('attendanceStatus') attendanceStatus?: string,
+    @Query('search') search?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.progressService.getOrgReports(orgId, {
+      status,
+      classroomId,
+      subjectId,
+      teacherId,
+      studentId,
+      attendanceStatus,
+      search,
+      from,
+      to,
+    });
+  }
+
+  @Get('orgs/:orgId/reports/missing-lessons')
+  @RequireOrganizationPermissions(OrganizationPermission.REPORTS_READ)
+  @ApiOkResponse({ type: [MissingReportLessonItemDto] })
+  async getMissingReportLessons(
+    @Param('orgId') orgId: string,
+    @Query('classroomId') classroomId?: string,
+    @Query('teacherId') teacherId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.progressService.getMissingReportLessons(orgId, {
+      classroomId,
+      teacherId,
+      search,
+    });
   }
 
   @Get('orgs/:orgId/reports/:reportId')
