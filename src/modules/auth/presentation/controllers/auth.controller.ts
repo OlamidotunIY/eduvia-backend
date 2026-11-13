@@ -5,6 +5,7 @@ import type { Response } from 'express';
 import {
   ChangePasswordDto,
   GoogleAuthorizationDto,
+  GoogleNativeAuthDto,
   GoogleTokenExchangeDto,
   LoginDto,
   RefreshTokenDto,
@@ -99,6 +100,28 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Eduvia access and refresh tokens' })
   async exchangeGoogle(@Body() dto: GoogleTokenExchangeDto) {
     return this.auth.exchangeGoogle(dto);
+  }
+
+  @Post('google/native')
+  @ApiOperation({
+    summary: 'Authenticate with a native Google ID token (mobile)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Eduvia access and refresh tokens or pending registration handoff',
+  })
+  async authenticateGoogleNative(
+    @Body() dto: GoogleNativeAuthDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.auth.authenticateGoogleNative(
+      dto,
+      ip,
+      userAgent,
+      correlationId,
+    );
   }
 
   @Post('refresh')

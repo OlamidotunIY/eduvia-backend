@@ -9,10 +9,12 @@ import {
   RefreshTokenDto,
   VerifyOtpDto,
   GoogleAuthorizationDto,
+  GoogleNativeAuthDto,
   GoogleTokenExchangeDto,
   RegisterEmailDto,
 } from '../dto/auth.dto';
 import {
+  AuthenticateGoogleNativeCommand,
   ChangePasswordCommand,
   LoginCommand,
   LogoutCommand,
@@ -73,6 +75,23 @@ export class AuthService {
 
   async exchangeGoogle(dto: GoogleTokenExchangeDto) {
     return this.commandBus.execute(new ExchangeGoogleOAuthCommand(dto));
+  }
+
+  async authenticateGoogleNative(
+    dto: GoogleNativeAuthDto,
+    ipAddress: string,
+    userAgent: string,
+    correlationId: string,
+  ) {
+    return this.commandBus.execute(
+      new AuthenticateGoogleNativeCommand({
+        idToken: dto.idToken,
+        intent: dto.intent,
+        ipAddress,
+        userAgent,
+        correlationId,
+      }),
+    );
   }
 
   async login(

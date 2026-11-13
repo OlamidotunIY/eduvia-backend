@@ -51,4 +51,11 @@ export class GoogleTokenExchangeDto {
   /** The single-use code issued to the frontend after Google authentication. */
   code!: string;
 }
+
+export class GoogleNativeAuthDto {
+  /** Google ID token obtained from native Google Sign-In on mobile. */
+  idToken!: string;
+  /** Use signup for a first-time Eduvia account, or login for an existing Google-linked account. */
+  intent?: GoogleOAuthIntent;
+}
 import { GoogleOAuthIntent } from '../../domain';

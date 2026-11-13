@@ -16,6 +16,7 @@ import {
   StartGoogleOAuthHandler,
   CompleteGoogleOAuthHandler,
   ExchangeGoogleOAuthHandler,
+  AuthenticateGoogleNativeHandler,
   FinalizeRegistrationHandler,
   StartEmailRegistrationHandler,
   GetRegistrationStatusHandler,
@@ -69,6 +70,7 @@ const CommandHandlers = [
   StartGoogleOAuthHandler,
   CompleteGoogleOAuthHandler,
   ExchangeGoogleOAuthHandler,
+  AuthenticateGoogleNativeHandler,
   FinalizeRegistrationHandler,
   StartEmailRegistrationHandler,
 ];
