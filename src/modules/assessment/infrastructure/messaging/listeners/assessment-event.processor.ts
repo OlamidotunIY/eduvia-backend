@@ -5,7 +5,7 @@ import { Optional, Inject } from '@nestjs/common';
 import { IBoardQueryPort } from '@modules/shared';
 import { CreateAssessmentCommand } from '../../../application/commands';
 
-@Processor('classroom-events')
+@Processor('assessment-events')
 export class AssessmentEventProcessor extends WorkerHost {
   constructor(
     private readonly commandBus: CommandBus,

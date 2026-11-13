@@ -48,9 +48,9 @@ class OutboxPublisherService {
       }
 
       for (const message of messages) {
-        const queue = this.resolveQueue(message.type);
+        const queues = this.resolveQueues(message.type);
 
-        if (!queue) {
+        if (queues.length === 0) {
           const structuredError = JSON.stringify({
             code: 'UNROUTABLE_EVENT',
             message: `No BullMQ route configured for ${message.type}`,
@@ -70,18 +70,23 @@ class OutboxPublisherService {
         }
 
         try {
-          await queue.add(
-            message.type,
-            {
-              eventId: message.eventId,
-              aggregateId: message.aggregateId,
-              aggregateType: message.aggregateType,
-              correlationId: message.correlationId,
-              occurredAt: message.occurredAt,
-              payload: message.payload,
-            },
-            { jobId: message.id },
-          );
+          for (const { queueName, queue } of queues) {
+            await queue.add(
+              message.type,
+              {
+                eventId: message.eventId,
+                aggregateId: message.aggregateId,
+                aggregateType: message.aggregateType,
+                correlationId: message.correlationId,
+                occurredAt: message.occurredAt,
+                payload: message.payload,
+              },
+              {
+                jobId:
+                  queues.length > 1 ? `${message.id}:${queueName}` : message.id,
+              },
+            );
+          }
 
           await this.prisma.outboxMessage.update({
             where: { id: message.id },
@@ -131,9 +136,26 @@ class OutboxPublisherService {
     }
   }
 
-  private resolveQueue(eventType: string): Queue | null {
-    const queueName = OUTBOX_EVENT_ROUTES.get(eventType);
+  private resolveQueues(
+    eventType: string,
+  ): Array<{ queueName: string; queue: Queue }> {
+    const route = OUTBOX_EVENT_ROUTES.get(eventType);
+    if (!route) {
+      return [];
+    }
 
+    const queueNames = Array.isArray(route) ? route : [route];
+    const resolved: Array<{ queueName: string; queue: Queue }> = [];
+    for (const queueName of queueNames) {
+      const queue = this.resolveQueueByName(queueName);
+      if (queue) {
+        resolved.push({ queueName, queue });
+      }
+    }
+    return resolved;
+  }
+
+  private resolveQueueByName(queueName: string): Queue | null {
     if (queueName === 'auth-events') {
       return this.authEventsQueue;
     }
