@@ -5,6 +5,8 @@ import {
   ILearningBoardRepository,
   IBoardSectionRepository,
   LearningBoardNotFoundError,
+  BoardSectionNotFoundError,
+  BoardLockedError,
 } from '../../../domain';
 
 @CommandHandler(RemoveBoardSectionCommand)
@@ -18,14 +20,20 @@ export class RemoveBoardSectionHandler
 
   async execute(command: RemoveBoardSectionCommand): Promise<RemoveBoardSectionResult> {
     const { payload } = command;
-    const correlationId = payload.correlationId ?? crypto.randomUUID();
 
     const board = await this.boardRepository.findById(payload.boardId);
     if (!board) {
       throw new LearningBoardNotFoundError({ boardId: payload.boardId });
     }
+    if (board.isLocked) {
+      throw new BoardLockedError();
+    }
 
-    board.removeSection(payload.sectionId, correlationId);
+    const existing = await this.sectionRepository.findById(payload.sectionId);
+    if (!existing || existing.boardId !== payload.boardId) {
+      throw new BoardSectionNotFoundError({ sectionId: payload.sectionId });
+    }
+
     await this.sectionRepository.delete(payload.sectionId);
     await this.boardRepository.save(board);
 

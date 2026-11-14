@@ -4,6 +4,9 @@ export interface StudentResponseDto {
   id: string;
   boardQuestionId: string;
   studentId: string;
+  studentName?: string | null;
+  studentEmail?: string | null;
+  studentImage?: string | null;
   responseType: string;
   textContent: string | null;
   imageUrl: string | null;

@@ -25,11 +25,14 @@ export class AddBoardSectionHandler
       throw new LearningBoardNotFoundError({ boardId: payload.boardId });
     }
 
+    const existingSections = await this.sectionRepository.findByBoardId(payload.boardId);
+    const nextPosition = payload.position ?? existingSections.length;
+
     const section = board.addSection(
       {
         type: payload.type,
         content: payload.content,
-        position: payload.position,
+        position: nextPosition,
         createdBy: payload.createdBy,
         isTeacherOnly: payload.isTeacherOnly,
       },
