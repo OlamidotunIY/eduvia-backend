@@ -21,6 +21,7 @@ import {
   RemoveBoardQuestionHandler,
   SubmitStudentResponseHandler,
   MarkStudentResponseHandler,
+  SaveCanvasStateHandler,
 } from './application/commands';
 import {
   GetBoardByIdHandler,
@@ -75,6 +76,7 @@ const commandHandlers = [
   RemoveBoardQuestionHandler,
   SubmitStudentResponseHandler,
   MarkStudentResponseHandler,
+  SaveCanvasStateHandler,
 ];
 
 const queryHandlers = [

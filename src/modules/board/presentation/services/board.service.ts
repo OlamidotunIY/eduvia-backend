@@ -8,9 +8,13 @@ import {
   SubmitResponseDto,
   MarkResponseDto,
   GetUploadUrlDto,
+  AddSectionDto,
+  UpdateSectionDto,
+  SaveCanvasStateDto,
 } from '../dto';
 import {
   SaveLessonPlanCommand,
+  SaveCanvasStateCommand,
   CompleteLessonPlanCommand,
   SwitchBoardModeCommand,
   LockBoardCommand,
@@ -18,6 +22,9 @@ import {
   ImportBoardContentCommand,
   AttachBoardQuestionCommand,
   RemoveBoardQuestionCommand,
+  AddBoardSectionCommand,
+  UpdateBoardSectionCommand,
+  RemoveBoardSectionCommand,
   SubmitStudentResponseCommand,
   MarkStudentResponseCommand,
 } from '../../application/commands';
@@ -157,6 +164,55 @@ export class BoardService {
     );
   }
 
+  async addSection(
+    boardId: string,
+    dto: AddSectionDto,
+    createdBy: string,
+    correlationId?: string,
+  ) {
+    return this.commandBus.execute(
+      new AddBoardSectionCommand({
+        boardId,
+        type: dto.type,
+        content: dto.content,
+        position: dto.position,
+        createdBy,
+        isTeacherOnly: dto.isTeacherOnly,
+        correlationId,
+      }),
+    );
+  }
+
+  async updateSection(
+    boardId: string,
+    sectionId: string,
+    dto: UpdateSectionDto,
+    correlationId?: string,
+  ) {
+    return this.commandBus.execute(
+      new UpdateBoardSectionCommand({
+        boardId,
+        sectionId,
+        content: dto.content,
+        correlationId,
+      }),
+    );
+  }
+
+  async removeSection(
+    boardId: string,
+    sectionId: string,
+    correlationId?: string,
+  ) {
+    return this.commandBus.execute(
+      new RemoveBoardSectionCommand({
+        boardId,
+        sectionId,
+        correlationId,
+      }),
+    );
+  }
+
   async submitResponse(
     boardQuestionId: string,
     studentId: string,
@@ -208,5 +264,20 @@ export class BoardService {
 
   async getUploadUrl(boardId: string, dto: GetUploadUrlDto) {
     return this.storageService.getUploadUrl(boardId, dto.filename, dto.contentType);
+  }
+
+  async saveCanvasState(boardId: string, dto: SaveCanvasStateDto) {
+    return this.commandBus.execute(
+      new SaveCanvasStateCommand({
+        boardId,
+        canvasState: {
+          strokes: Array.isArray(dto.strokes) ? dto.strokes : [],
+          surfaceStyle: dto.surfaceStyle,
+          boardBgColor: dto.boardBgColor,
+          notebookWidthMode: dto.notebookWidthMode,
+          notebookPages: dto.notebookPages,
+        },
+      }),
+    );
   }
 }

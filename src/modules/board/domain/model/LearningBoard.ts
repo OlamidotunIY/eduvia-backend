@@ -28,6 +28,14 @@ import {
   BoardQuestionNotFoundError,
 } from '../errors';
 
+export interface BoardCanvasState {
+  strokes: Array<Record<string, unknown>>;
+  surfaceStyle?: string;
+  boardBgColor?: string;
+  notebookWidthMode?: string;
+  notebookPages?: number;
+}
+
 export interface LearningBoardProps {
   id: LearningBoardId;
   lessonId: string;
@@ -35,6 +43,7 @@ export interface LearningBoardProps {
   mode: BoardMode;
   plan: LessonPlan;
   isLocked: boolean;
+  canvasState?: BoardCanvasState | null;
   createdAt: Date;
   updatedAt: Date;
   sections?: BoardSection[];
@@ -47,6 +56,7 @@ export class LearningBoard extends AggregateRoot<LearningBoardId> {
   private _mode: BoardMode;
   private _plan: LessonPlan;
   private _isLocked: boolean;
+  private _canvasState: BoardCanvasState | null;
   private _createdAt: Date;
   private _updatedAt: Date;
   private _sections: BoardSection[];
@@ -59,6 +69,7 @@ export class LearningBoard extends AggregateRoot<LearningBoardId> {
     this._mode = props.mode;
     this._plan = props.plan;
     this._isLocked = props.isLocked;
+    this._canvasState = props.canvasState ?? null;
     this._createdAt = new Date(props.createdAt);
     this._updatedAt = new Date(props.updatedAt);
     this._sections = props.sections ? [...props.sections] : [];
@@ -123,6 +134,10 @@ export class LearningBoard extends AggregateRoot<LearningBoardId> {
 
   public get isLocked(): boolean {
     return this._isLocked;
+  }
+
+  public get canvasState(): BoardCanvasState | null {
+    return this._canvasState;
   }
 
   public get createdAt(): Date {
@@ -414,6 +429,14 @@ export class LearningBoard extends AggregateRoot<LearningBoardId> {
 
   public updatePlan(props: Partial<LessonPlanProps>): void {
     this._plan = this._plan.update(props);
+    this._updatedAt = new Date();
+  }
+
+  public updateCanvasState(nextState: BoardCanvasState): void {
+    if (this._isLocked) {
+      throw new BoardLockedError();
+    }
+    this._canvasState = nextState;
     this._updatedAt = new Date();
   }
 

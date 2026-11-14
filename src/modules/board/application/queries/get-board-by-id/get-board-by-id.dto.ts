@@ -1,4 +1,4 @@
-import { LessonPlanProps } from '../../../domain';
+import { BoardCanvasState, LessonPlanProps } from '../../../domain';
 
 export interface BoardSectionDto {
   id: string;
@@ -12,6 +12,21 @@ export interface BoardSectionDto {
   updatedAt: Date;
 }
 
+export interface BoardQuestionDetailDto {
+  id: string;
+  type: string;
+  stem: string;
+  subject: string;
+  difficultyLevel: number;
+  maxMarks: number;
+  options: Array<{
+    id: string;
+    key: string;
+    text: string;
+    imageUrl: string | null;
+  }>;
+}
+
 export interface BoardQuestionDto {
   id: string;
   boardId: string;
@@ -22,6 +37,7 @@ export interface BoardQuestionDto {
   dueAt: Date | null;
   showOptions: boolean;
   maxMarks: number;
+  question?: BoardQuestionDetailDto;
 }
 
 export interface BoardDetailDto {
@@ -31,6 +47,7 @@ export interface BoardDetailDto {
   mode: string;
   isLocked: boolean;
   plan: LessonPlanProps;
+  canvasState?: BoardCanvasState | null;
   sections: BoardSectionDto[];
   questions: BoardQuestionDto[];
   createdAt: Date;

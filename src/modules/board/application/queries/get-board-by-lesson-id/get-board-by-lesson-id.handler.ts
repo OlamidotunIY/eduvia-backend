@@ -4,6 +4,7 @@ import { PrismaService } from '@modules/shared';
 import { CreateBoardCommand } from '../../commands';
 import { GetBoardByLessonIdQuery } from './get-board-by-lesson-id.query';
 import { BoardDetailDto } from './get-board-by-lesson-id.dto';
+import { enrichBoardQuestions } from '../enrich-board-questions';
 import {
   ILearningBoardRepository,
   IBoardSectionRepository,
@@ -55,6 +56,7 @@ export class GetBoardByLessonIdHandler
 
     const sections = await this.sectionRepository.findByBoardId(board.id.unpack());
     const questions = await this.questionRepository.findByBoardId(board.id.unpack());
+    const enrichedQuestions = await enrichBoardQuestions(questions, this.prisma);
 
     return {
       id: board.id.unpack(),
@@ -63,6 +65,7 @@ export class GetBoardByLessonIdHandler
       mode: board.mode,
       isLocked: board.isLocked,
       plan: board.plan.toJSON(),
+      canvasState: board.canvasState ?? null,
       sections: sections.map((s) => ({
         id: s.id.unpack(),
         boardId: s.boardId,
@@ -74,17 +77,7 @@ export class GetBoardByLessonIdHandler
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       })),
-      questions: questions.map((q) => ({
-        id: q.id.unpack(),
-        boardId: q.boardId,
-        questionId: q.questionId,
-        position: q.position,
-        mode: q.mode,
-        assignedAt: q.assignedAt,
-        dueAt: q.dueAt ?? null,
-        showOptions: q.showOptions,
-        maxMarks: q.maxMarks,
-      })),
+      questions: enrichedQuestions,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
     };

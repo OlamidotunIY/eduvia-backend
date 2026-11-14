@@ -1,6 +1,9 @@
+import { Optional } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { PrismaService } from '@modules/shared';
 import { GetBoardByIdQuery } from './get-board-by-id.query';
 import { BoardDetailDto } from './get-board-by-id.dto';
+import { enrichBoardQuestions } from '../enrich-board-questions';
 import {
   ILearningBoardRepository,
   IBoardSectionRepository,
@@ -16,6 +19,7 @@ export class GetBoardByIdHandler
     private readonly boardRepository: ILearningBoardRepository,
     private readonly sectionRepository: IBoardSectionRepository,
     private readonly questionRepository: IBoardQuestionRepository,
+    @Optional() private readonly prisma?: PrismaService,
   ) {}
 
   async execute(query: GetBoardByIdQuery): Promise<BoardDetailDto> {
@@ -29,6 +33,7 @@ export class GetBoardByIdHandler
 
     const sections = await this.sectionRepository.findByBoardId(board.id.unpack());
     const questions = await this.questionRepository.findByBoardId(board.id.unpack());
+    const enrichedQuestions = await enrichBoardQuestions(questions, this.prisma);
 
     return {
       id: board.id.unpack(),
@@ -37,6 +42,7 @@ export class GetBoardByIdHandler
       mode: board.mode,
       isLocked: board.isLocked,
       plan: board.plan.toJSON(),
+      canvasState: board.canvasState ?? null,
       sections: sections.map((s) => ({
         id: s.id.unpack(),
         boardId: s.boardId,
@@ -48,17 +54,7 @@ export class GetBoardByIdHandler
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       })),
-      questions: questions.map((q) => ({
-        id: q.id.unpack(),
-        boardId: q.boardId,
-        questionId: q.questionId,
-        position: q.position,
-        mode: q.mode,
-        assignedAt: q.assignedAt,
-        dueAt: q.dueAt ?? null,
-        showOptions: q.showOptions,
-        maxMarks: q.maxMarks,
-      })),
+      questions: enrichedQuestions,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
     };
