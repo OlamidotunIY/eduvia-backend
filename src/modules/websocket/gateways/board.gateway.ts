@@ -93,6 +93,78 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('board:stroke')
+  handleBoardStroke(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { boardId: string; stroke: Record<string, unknown> },
+  ): void {
+    if (!data?.boardId || !data?.stroke) return;
+
+    const room = `board:${data.boardId}`;
+    const userId = client.auth?.userId || client.auth?.sub;
+
+    client.to(room).emit('board:stroke_drawn', {
+      boardId: data.boardId,
+      userId,
+      stroke: data.stroke,
+      timestamp: Date.now(),
+    });
+  }
+
+  @SubscribeMessage('board:clear')
+  handleBoardClear(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { boardId: string },
+  ): void {
+    if (!data?.boardId) return;
+
+    const room = `board:${data.boardId}`;
+    const userId = client.auth?.userId || client.auth?.sub;
+
+    client.to(room).emit('board:canvas_cleared', {
+      boardId: data.boardId,
+      userId,
+      timestamp: Date.now(),
+    });
+  }
+
+  @SubscribeMessage('board:surface')
+  handleBoardSurface(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { boardId: string; surfaceStyle: string },
+  ): void {
+    if (!data?.boardId || !data?.surfaceStyle) return;
+
+    const room = `board:${data.boardId}`;
+    const userId = client.auth?.userId || client.auth?.sub;
+
+    client.to(room).emit('board:surface_changed', {
+      boardId: data.boardId,
+      userId,
+      surfaceStyle: data.surfaceStyle,
+      timestamp: Date.now(),
+    });
+  }
+
+  @SubscribeMessage('board:canvas_replace')
+  handleBoardCanvasReplace(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: { boardId: string; strokes: Array<Record<string, unknown>> },
+  ): void {
+    if (!data?.boardId || !Array.isArray(data?.strokes)) return;
+
+    const room = `board:${data.boardId}`;
+    const userId = client.auth?.userId || client.auth?.sub;
+
+    client.to(room).emit('board:canvas_replaced', {
+      boardId: data.boardId,
+      userId,
+      strokes: data.strokes,
+      timestamp: Date.now(),
+    });
+  }
+
   public broadcastModeChange(boardId: string, mode: string): void {
     if (!this.server) return;
     this.server.to(`board:${boardId}`).emit('board:mode_changed', {
