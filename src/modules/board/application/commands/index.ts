@@ -53,3 +53,7 @@ export * from './submit-student-response/submit-student-response.handler';
 export * from './mark-student-response/mark-student-response.command';
 export * from './mark-student-response/mark-student-response.result';
 export * from './mark-student-response/mark-student-response.handler';
+
+export * from './save-canvas-state/save-canvas-state.command';
+export * from './save-canvas-state/save-canvas-state.result';
+export * from './save-canvas-state/save-canvas-state.handler';

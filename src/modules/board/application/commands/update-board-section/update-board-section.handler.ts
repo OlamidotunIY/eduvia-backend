@@ -6,6 +6,7 @@ import {
   IBoardSectionRepository,
   LearningBoardNotFoundError,
   BoardSectionNotFoundError,
+  BoardLockedError,
 } from '../../../domain';
 
 @CommandHandler(UpdateBoardSectionCommand)
@@ -19,19 +20,20 @@ export class UpdateBoardSectionHandler
 
   async execute(command: UpdateBoardSectionCommand): Promise<UpdateBoardSectionResult> {
     const { payload } = command;
-    const correlationId = payload.correlationId ?? crypto.randomUUID();
 
     const board = await this.boardRepository.findById(payload.boardId);
     if (!board) {
       throw new LearningBoardNotFoundError({ boardId: payload.boardId });
     }
+    if (board.isLocked) {
+      throw new BoardLockedError();
+    }
 
     const section = await this.sectionRepository.findById(payload.sectionId);
-    if (!section) {
+    if (!section || section.boardId !== payload.boardId) {
       throw new BoardSectionNotFoundError({ sectionId: payload.sectionId });
     }
 
-    board.updateSection(payload.sectionId, payload.content, correlationId);
     section.updateContent(payload.content);
 
     await this.sectionRepository.save(section);

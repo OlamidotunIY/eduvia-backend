@@ -5,3 +5,6 @@ export * from './attach-question.dto';
 export * from './submit-response.dto';
 export * from './mark-response.dto';
 export * from './get-upload-url.dto';
+export * from './add-section.dto';
+export * from './update-section.dto';
+export * from './save-canvas-state.dto';

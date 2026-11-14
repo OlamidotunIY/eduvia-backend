@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,9 @@ import {
   SubmitResponseDto,
   MarkResponseDto,
   GetUploadUrlDto,
+  AddSectionDto,
+  UpdateSectionDto,
+  SaveCanvasStateDto,
 } from '../dto';
 
 @Controller()
@@ -67,7 +71,7 @@ export class BoardController {
     return this.boardService.switchMode(
       boardId,
       dto,
-      user.id,
+      user.userId ?? user.sub,
       correlationId,
     );
   }
@@ -78,7 +82,7 @@ export class BoardController {
     @CurrentUser() user: CurrentUserPayload,
     @CorrelationId() correlationId: string,
   ) {
-    return this.boardService.lockBoard(boardId, user.id, correlationId);
+    return this.boardService.lockBoard(boardId, user.userId ?? user.sub, correlationId);
   }
 
   @Post('organizations/:organizationId/boards/:boardId/unlock')
@@ -87,7 +91,7 @@ export class BoardController {
     @CurrentUser() user: CurrentUserPayload,
     @CorrelationId() correlationId: string,
   ) {
-    return this.boardService.unlockBoard(boardId, user.id, correlationId);
+    return this.boardService.unlockBoard(boardId, user.userId ?? user.sub, correlationId);
   }
 
   @Post('organizations/:organizationId/boards/:boardId/import')
@@ -100,9 +104,43 @@ export class BoardController {
     return this.boardService.importContent(
       targetBoardId,
       dto,
-      user.id,
+      user.userId ?? user.sub,
       correlationId,
     );
+  }
+
+  @Post('organizations/:organizationId/boards/:boardId/sections')
+  async addSection(
+    @Param('boardId') boardId: string,
+    @Body() dto: AddSectionDto,
+    @CurrentUser() user: CurrentUserPayload,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.boardService.addSection(
+      boardId,
+      dto,
+      user.userId ?? user.sub,
+      correlationId,
+    );
+  }
+
+  @Patch('organizations/:organizationId/boards/:boardId/sections/:sectionId')
+  async updateSection(
+    @Param('boardId') boardId: string,
+    @Param('sectionId') sectionId: string,
+    @Body() dto: UpdateSectionDto,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.boardService.updateSection(boardId, sectionId, dto, correlationId);
+  }
+
+  @Delete('organizations/:organizationId/boards/:boardId/sections/:sectionId')
+  async removeSection(
+    @Param('boardId') boardId: string,
+    @Param('sectionId') sectionId: string,
+    @CorrelationId() correlationId: string,
+  ) {
+    return this.boardService.removeSection(boardId, sectionId, correlationId);
   }
 
   @Get('organizations/:organizationId/boards/:boardId/questions')
@@ -144,7 +182,7 @@ export class BoardController {
     @Body() dto: SubmitResponseDto,
     @CorrelationId() correlationId: string,
   ) {
-    return this.boardService.submitResponse(bqId, user.id, dto, correlationId);
+    return this.boardService.submitResponse(bqId, user.userId ?? user.sub, dto, correlationId);
   }
 
   @Get('boards/:boardId/questions/:bqId/responses')
@@ -157,7 +195,7 @@ export class BoardController {
     @Param('bqId') bqId: string,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.boardService.getResponse(bqId, user.id);
+    return this.boardService.getResponse(bqId, user.userId ?? user.sub);
   }
 
   @Post('boards/:boardId/questions/:bqId/responses/:respId/mark')
@@ -167,7 +205,7 @@ export class BoardController {
     @Body() dto: MarkResponseDto,
     @CorrelationId() correlationId: string,
   ) {
-    return this.boardService.markResponse(respId, user.id, dto, correlationId);
+    return this.boardService.markResponse(respId, user.userId ?? user.sub, dto, correlationId);
   }
 
   @Post('boards/:boardId/upload-url')
@@ -176,5 +214,21 @@ export class BoardController {
     @Body() dto: GetUploadUrlDto,
   ) {
     return this.boardService.getUploadUrl(boardId, dto);
+  }
+
+  @Patch('boards/:boardId/canvas')
+  async saveCanvasState(
+    @Param('boardId') boardId: string,
+    @Body() dto: SaveCanvasStateDto,
+  ) {
+    return this.boardService.saveCanvasState(boardId, dto);
+  }
+
+  @Patch('organizations/:organizationId/boards/:boardId/canvas')
+  async saveOrgCanvasState(
+    @Param('boardId') boardId: string,
+    @Body() dto: SaveCanvasStateDto,
+  ) {
+    return this.boardService.saveCanvasState(boardId, dto);
   }
 }
