@@ -59,6 +59,7 @@ export const ORGANIZATION_ROLE_DEFAULTS: OrganizationRoleDefault[] = [
       OrganizationPermission.LESSONS_READ,
       OrganizationPermission.LESSONS_SCHEDULE,
       OrganizationPermission.LESSONS_MANAGE,
+      OrganizationPermission.QUESTIONS_READ,
       OrganizationPermission.ASSESSMENTS_READ,
       OrganizationPermission.ASSESSMENTS_CREATE,
       OrganizationPermission.PROGRESS_READ,
