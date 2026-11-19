@@ -35,7 +35,7 @@ export class NotificationsController {
     const parsedLimit = limit ? parseInt(limit, 10) : 50;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
     return this.notificationsService.getNotifications(
-      user.id,
+      user.userId,
       status,
       parsedLimit,
       parsedOffset,
@@ -44,7 +44,7 @@ export class NotificationsController {
 
   @Get('notifications/count')
   async getUnreadCount(@CurrentUser() user: CurrentUserPayload) {
-    return this.notificationsService.getUnreadCount(user.id);
+    return this.notificationsService.getUnreadCount(user.userId);
   }
 
   @Post('notifications/mark-read')
@@ -52,7 +52,7 @@ export class NotificationsController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto?: MarkNotificationReadDto,
   ) {
-    return this.notificationsService.markRead(user.id, dto?.notificationId);
+    return this.notificationsService.markRead(user.userId, dto?.notificationId);
   }
 
   @Post('devices/tokens')
@@ -60,7 +60,7 @@ export class NotificationsController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: RegisterDeviceTokenDto,
   ) {
-    return this.notificationsService.registerDeviceToken(user.id, dto);
+    return this.notificationsService.registerDeviceToken(user.userId, dto);
   }
 
   @Delete('devices/tokens/:token')
