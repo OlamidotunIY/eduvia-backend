@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { GetUserByIdQuery } from '../../application';
+import { GetParentStudentsQuery, GetUserByIdQuery } from '../../application';
 import { UpdateUserCommand } from '../../application/commands/update-user';
 import { CompleteUserOnboardingDto, RegisterStudentDto, UpdateUserDto } from '../dto';
 import { UserId } from '../../domain';
@@ -16,6 +16,10 @@ export class UserService {
 
   async getMe(userId: string) {
     return this.queryBus.execute(new GetUserByIdQuery({ userId }));
+  }
+
+  async getParentStudents(parentUserId: string) {
+    return this.queryBus.execute(new GetParentStudentsQuery(parentUserId));
   }
 
   async updateProfile(
@@ -44,7 +48,12 @@ export class UserService {
   async registerStudent(parentUserId: string, dto: RegisterStudentDto) {
     return this.commandBus.execute(
       new RegisterStudentCommand({
-        userId: UserId.from(parentUserId),
+        parentUserId: UserId.from(parentUserId),
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        username: dto.username,
+        passwordRaw: dto.password,
         dateOfBirth: new Date(dto.dateOfBirth),
         countryCode: dto.countryCode,
         timezone: dto.timezone,

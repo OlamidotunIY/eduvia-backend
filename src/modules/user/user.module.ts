@@ -15,6 +15,7 @@ import { MarkEmailVerifiedHandler } from './application/commands';
 import { RegisterStudentHandler } from './application/commands/register-student';
 import { UpdateUserHandler } from './application/commands/update-user';
 import {
+  GetParentStudentsHandler,
   GetUserByEmailHandler,
   GetUserByIdHandler,
 } from './application/query';
@@ -46,7 +47,7 @@ const CommandHandlers = [
   UpdateUserHandler,
 ];
 const EventProcessors = [UserEventProcessor];
-const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler];
+const QueryHandlers = [GetUserByEmailHandler, GetUserByIdHandler, GetParentStudentsHandler];
 
 @Module({
   imports: [CqrsModule, BullModule.registerQueue({ name: 'user-events' })],

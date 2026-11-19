@@ -39,6 +39,12 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('parents/students')
+  async getParentStudents(@CurrentUser() currentUser: CurrentUserPayload) {
+    return this.userService.getParentStudents(currentUser.userId);
+  }
+
+  @UseGuards(AuthGuard)
   @Post('parents/students')
   async registerStudent(
     @CurrentUser() currentUser: CurrentUserPayload,
