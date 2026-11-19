@@ -23,8 +23,14 @@ export class PrismaUserRepository
   }
 
   public async getUserByEmail(email: string): Promise<User | null> {
-    const userRecord = await this.delegate.findUnique({
-      where: { email: email.toLowerCase() },
+    const normalized = email.toLowerCase().trim();
+    const userRecord = await this.delegate.findFirst({
+      where: {
+        OR: [
+          { email: normalized },
+          { username: normalized },
+        ],
+      },
     });
     if (!userRecord) return null;
 

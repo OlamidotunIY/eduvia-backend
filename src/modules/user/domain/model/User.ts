@@ -118,6 +118,7 @@ export class User extends AggregateRoot<UserId> {
     email: string;
     firstName: string;
     lastName: string;
+    username?: string | null;
     image?: string | null;
     emailVerified?: boolean;
     timezone?: string;
@@ -135,7 +136,7 @@ export class User extends AggregateRoot<UserId> {
       firstName,
       lastName,
       email,
-      null,
+      params.username?.trim().toLowerCase() || null,
       params.image?.trim() || null,
       params.emailVerified ?? false,
       false,
