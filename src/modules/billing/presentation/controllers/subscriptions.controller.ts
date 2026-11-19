@@ -25,12 +25,51 @@ export class SubscriptionsController {
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: SubscribeParentDto,
   ) {
-    return this.billingService.subscribeParent(user.id, dto);
+    return this.billingService.subscribeParent(user.userId, dto);
   }
 
   @Get('subscriptions')
   async listSubscriptions(@CurrentUser() user: CurrentUserPayload) {
-    return this.billingService.getParentSubscriptions(user.id);
+    return this.billingService.getParentSubscriptions(user.userId);
+  }
+
+  @Get('billing/history')
+  async getBillingHistory(
+    @CurrentUser() user: CurrentUserPayload,
+    @Query('orgId') orgId?: string,
+    @Query('subscriptionId') subscriptionId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    if (orgId) {
+      const parsedLimit = limit ? parseInt(limit, 10) : 50;
+      return this.billingService.getBillingHistory(orgId, subscriptionId, parsedLimit);
+    }
+
+    const subs = await this.billingService.getParentSubscriptions(user.userId);
+    if (!subs || subs.length === 0) {
+      return [];
+    }
+    const results = [];
+    for (const sub of subs) {
+      const events = await this.billingService.getBillingHistory(sub.orgId, sub.id);
+      for (const event of events) {
+        results.push({
+          id: event.id,
+          invoiceNumber: `INV-${event.id.slice(0, 8).toUpperCase()}`,
+          childName: '',
+          orgName: '',
+          subjectName: '',
+          amount: (event.amount ?? 0) / 100,
+          currency: event.currency ?? 'NGN',
+          date:
+            event.occurredAt instanceof Date
+              ? event.occurredAt.toISOString()
+              : String(event.occurredAt),
+          status: 'paid',
+        });
+      }
+    }
+    return results;
   }
 
   @Get('subscriptions/:id')
@@ -44,7 +83,7 @@ export class SubscriptionsController {
     @Param('id') id: string,
     @Body() dto?: CancelSubscriptionDto,
   ) {
-    return this.billingService.cancelSubscription(id, user.id, dto?.reason);
+    return this.billingService.cancelSubscription(id, user.userId, dto?.reason);
   }
 
   @Post('subscriptions/:id/pause')
@@ -52,7 +91,7 @@ export class SubscriptionsController {
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
   ) {
-    return this.billingService.pauseSubscription(id, user.id);
+    return this.billingService.pauseSubscription(id, user.userId);
   }
 
   @Post('subscriptions/:id/resume')
@@ -60,16 +99,6 @@ export class SubscriptionsController {
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
   ) {
-    return this.billingService.resumeSubscription(id, user.id);
-  }
-
-  @Get('billing/history')
-  async getBillingHistory(
-    @Query('orgId') orgId: string,
-    @Query('subscriptionId') subscriptionId?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 50;
-    return this.billingService.getBillingHistory(orgId, subscriptionId, parsedLimit);
+    return this.billingService.resumeSubscription(id, user.userId);
   }
 }
